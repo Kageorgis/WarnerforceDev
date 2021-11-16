@@ -1,0 +1,74 @@
+<apex:component controller="CRM_AssortmentApprovalEmailTemplateCtrl" access="global">
+  
+    <apex:attribute assignTo="{!assortment}" name="assortmentRec" type="Bundle__c" required="true" description="Id Of Assortment" access="global"/>
+  
+    <apex:variable value="{!LEFT($Api.Enterprise_Server_URL_300, FIND('/services',$Api.Enterprise_Server_URL_300))}" var="CustomURL"/>
+    
+    <apex:outputPanel rendered="{!assortmentRec.Account_Count__c != null && assortmentRec.Account_Count__c != 0}">
+        <br/>
+        <table style="width:70%;font-size: 15px;">
+            <thead>
+                <tr>
+                    <th>Account Name</th>
+                    <th>Account Number</th>
+                    <th>Deal Code</th>
+                </tr>
+            </thead>
+            <tbody>
+               <apex:repeat VAlue="{!assortmentRec.Assortment_Accounts__r}" Var="acc">
+                    <apex:outputPanel rendered="{!acc.Send_To_OTC__c}">
+                        <tr style="border:1px solid black">
+                            <td><a href="{!CustomURL+""+acc.Account__c}"><span class="accountName"><apex:outputText value="{!acc.Account__r.Name}"/></span></a></td>
+                            <td>{!acc.Account_Number__c}</td>
+                            <td><apex:outputText value="{!accountDealCodeMap[acc]}"/></td>
+                        </tr>
+                    </apex:outputPanel>
+                </apex:repeat>
+                
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    
+    <apex:outputPanel rendered="{!assortmentRec.Config_Count__c != null && assortmentRec.Config_Count__c != 0}">
+        <br/>
+        <table style="width:70%;font-size: 15px;">
+            <thead>
+                <tr>
+                    <th>Config Id</th>
+                    <th>Config Name</th>
+                    <th>Record Type Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat Value="{!assortmentRec.Configs__r}" Var="config">
+                    <tr style="border:1px solid black">
+                        <td><a href="{!CustomURL+""+config.id}">{!config.Config_Number_Txt__c}</a></td>
+                        <td>{!config.Name}</td>
+                        <td>{!config.Record_Type_Name__c}</td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+        
+    <apex:outputPanel rendered="{!assortmentRec.Product_Count__c != null && assortmentRec.Product_Count__c != 0}">
+        <br/>
+        <table style="width:70%;font-size: 15px;">
+            <thead>
+                <tr>
+                    <th>UNBW Code</th>
+                    <th>UNBW Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat Value="{!AssortmentProducts}" Var="ap">
+                    <tr style="border:1px solid black">
+                        <td>{!ap.Product_Code__c}</td>
+                        <td>{!ap.Product__r.Name}</td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+   
+</apex:component>

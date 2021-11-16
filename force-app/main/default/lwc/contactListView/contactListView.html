@@ -1,0 +1,40 @@
+<template>
+    <div class="slds-page-header_joined slds-page-header slds-page-header--object-home" style="background-color: rgb(242, 242, 242);">
+        <div class="slds-grid">
+            <div class="slds-col slds-has-flexi-truncate firstHeaderRow">
+                <lightning-tile>
+                    <div style="display: flex;align-items: center;">
+                        <lightning-icon size="medium" icon-name="standard:contact" alternative-text="Contact" title="Contact" ></lightning-icon>
+                        <h1 class="slds-page-header__title listViewTitle slds-truncate slds-var-p-left_xx-small" title="Contacts">Contacts</h1>
+                    </div>
+                </lightning-tile>
+            </div>
+            <div class="slds-col slds-no-flex slds-grid slds-align-top slds-var-p-bottom_xx-smallest-lvmForceActionsContainer" >
+                <lightning-button label="New" onclick={createContactAction}></lightning-button>
+                <div hidden={isUserRoleNotRegLocal}>
+                <lightning-button label="Import" onclick={redirectToImportPage} disabled={isUserRoleNotRegLocal}></lightning-button>
+                </div>
+                <lightning-button label="Send Email" onclick={sendEmailMeth} ></lightning-button>
+            </div>
+        </div>
+    </div>
+    <!--lightning-card-->
+        <template if:false={isLoaded}>
+            <div class="spinner_class_div">
+                <lightning-spinner class="spinner_class" alternative-text="Loading" variant="brand">
+                </lightning-spinner>
+            </div>
+        </template>
+        <lightning-datatable
+            key-field="Id"
+            data={contactRecs}
+            default-sort-direction={defaultSortDirection}
+            sorted-direction={sortDirection}
+            sorted-by={sortedBy}
+            columns={columns}
+            onsort={onHandleSort}
+            onrowaction={handleRowAction}>
+        </lightning-datatable>
+    <!--/lightning-card-->
+    <c-delete-contact-confirm-modal visible={isDialogVisible} name="deleteCompModal" onclick={handleClick}></c-delete-contact-confirm-modal>
+</template>

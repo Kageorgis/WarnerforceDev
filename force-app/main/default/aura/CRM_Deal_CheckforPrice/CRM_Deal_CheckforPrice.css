@@ -1,0 +1,31 @@
+.THIS {
+}
+
+.THIS.c-container{
+    background:white;
+}
+
+.THIS .spinner-style, .THIS .scroll-height{
+    height:100%;
+}
+
+.THIS .header-style th {
+    color: white;
+    background-color: #005fb2;
+}
+
+.THIS .table-style td, .THIS .table-style th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.THIS .slds-cell-shrink{
+    width: auto;
+}
+
+.THIS .currentDeal{
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

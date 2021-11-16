@@ -1,0 +1,111 @@
+<apex:component id="multiPicklist" controller="MultiSelectPicklistController">
+
+    <apex:attribute name="aLeftOptions" description="Options list for left listbox." type="SelectOption[]" required="true" assignTo="{!leftOptions}" />
+    <apex:attribute name="aRightOptions"  description="Options list for right listbox." type="SelectOption[]" required="true" assignTo="{!rightOptions}" /> 
+    <apex:attribute name="size" description="Size of listboxes." type="Integer" required="true" />
+    <apex:attribute name="width" description="Width of listboxes." type="String" required="true" />
+    <apex:attribute name="leftLabel" description="Label on left listbox." type="String" required="true" /> 
+    <apex:attribute name="rightLabel" description="Label on right listbox." type="String" required="true" /> 
+
+    
+    <apex:outputPanel id="multiselectPanel" layout="block" styleClass="duelingListBox">
+        <table class="layout">
+            <tbody>
+                <tr>
+                    <td class="selectCell">
+                        <apex:outputPanel layout="block" styleClass="selectTitle"> 
+                            <apex:outputLabel value="{!leftLabel}" for="multiselectPanel:leftList" /> 
+                        </apex:outputPanel> 
+                        <select id="{!$Component.multiselectPanel}:leftList" class="multilist" multiple="multiple" size="{!size}" style="width: {!width};"> 
+                        <apex:repeat value="{!leftOptions}" var="option"> 
+                            <option value="{!option.value}">{!option.label}</option> 
+                        </apex:repeat> 
+                        </select> 
+                    </td>
+                    <td class="buttonCell">
+                        <apex:outputPanel layout="block" styleClass="text">Add</apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="text">
+                            <apex:outputLink value="javascript:moveSelectedOptions('{!$Component.multiselectPanel}:leftList', '{!$Component.multiselectPanel}:rightList', '{!$Component.leftHidden}', '{!$Component.rightHidden}');" id="btnRight">
+                                <apex:image value="/s.gif" alt="Add" styleClass="rightArrowIcon" title="Add" /> 
+                            </apex:outputLink>
+                        </apex:outputPanel>                    
+                        
+                        <apex:outputPanel layout="block" styleClass="text">    
+                            <apex:outputLink value="javascript:moveSelectedOptions('{!$Component.multiselectPanel}:rightList', '{!$Component.multiselectPanel}:leftList', '{!$Component.rightHidden}', '{!$Component.leftHidden}');" id="btnleft">
+                                <apex:image value="/s.gif" alt="Remove" styleClass="leftArrowIcon" title="Remove" /> 
+                            </apex:outputLink>
+                        </apex:outputPanel> 
+                        <apex:outputPanel layout="block" styleClass="text">Remove</apex:outputPanel>                        
+                    </td>
+                    <td class="selectCell"> 
+                        <apex:outputPanel layout="block" styleClass="selectTitle"> 
+                            <apex:outputLabel value="{!rightLabel}" for="multiselectPanel:rightList" /> 
+                        </apex:outputPanel> 
+                        <select id="{!$Component.multiselectPanel}:rightList" class="multilist" multiple="multiple" size="{!size}" style="width: {!width};"> 
+                            <apex:repeat value="{!rightOptions}" var="option"> 
+                                <option value="{!option.value}">{!option.label}</option> 
+                            </apex:repeat> 
+                        </select> 
+                    </td> 
+                </tr>
+            </tbody>
+        </table>  
+        <apex:inputHidden value="{!leftOptionsHidden}" id="leftHidden" /> 
+        <apex:inputHidden value="{!rightOptionsHidden}" id="rightHidden" /> 
+                          
+    </apex:outputPanel>
+    
+    <script type="text/javascript">    
+        function moveSelectedOptions (idFrom, idTo, idHdnFrom, idHdnTo) {
+            listFrom = document.getElementById(idFrom);
+            listTo = document.getElementById(idTo);
+            
+            for ( var x = 0; x < listTo.options.length; x++) { 
+                listTo.options[x].selected = false; 
+            } 
+            
+            for ( var x = 0; x < listFrom.options.length; x++) { 
+                if (listFrom.options[x].selected == true) { 
+                    listTo.appendChild(listFrom.options[x]);
+                     // As per CRRT2 Phase 2 Requirment for sorting the Available country 
+                   var options = $('[id$=availableCountry]').find('[id$=leftList] option');
+                    var arr = options.map(function(_, o) {
+                        return {
+                            t: $(o).text(),
+                            v: o.value
+                        };
+                    }).get();
+                    arr.sort(function(o1, o2) {
+                        return o1.t > o2.t ? 1 : o1.t < o2.t ? -1 : 0;
+                    });
+                    options.each(function(i, o) {
+                        o.value = arr[i].v;
+                        $(o).text(arr[i].t);
+                    });
+                    //CRRT2 changes ends here
+                    x--; 
+                } 
+            } 
+            listTo.options.selectedIndex = 0
+            //listTo.focus(top);
+            buildOutputString(listFrom, document.getElementById(idHdnFrom)); 
+            buildOutputString(listTo, document.getElementById(idHdnTo)); 
+
+        }
+
+        function buildOutputString (listBox, hiddenInput) {
+             var str = '';
+             
+             for ( var x = 0; x < listBox.options.length; x++) {
+                  str += encodeURIComponent(listBox.options[x].value) + '#' + encodeURIComponent(listBox.options[x].text) + '&';
+             }
+             str.length--;
+             hiddenInput.value = str.slice(0, -1);
+        }
+        
+        // initialize the string representations 
+        buildOutputString(document.getElementById('{!$Component.multiselectPanel}:leftList'), document.getElementById('{!$Component.leftHidden}')); 
+        buildOutputString(document.getElementById('{!$Component.multiselectPanel}:rightList'), document.getElementById('{!$Component.rightHidden}')); 
+
+    </script>
+</apex:component>

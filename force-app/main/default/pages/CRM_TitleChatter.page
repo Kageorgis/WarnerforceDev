@@ -1,0 +1,3 @@
+<apex:page standardController="Product2" showHeader="false" sidebar="false">
+	<chatter:feed entityId="{!Product2.Local_Title__c}" />
+</apex:page>

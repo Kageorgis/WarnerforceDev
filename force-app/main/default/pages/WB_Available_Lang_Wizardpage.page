@@ -1,0 +1,121 @@
+<apex:page StandardController="Available_Languages__c" recordSetVar="Available_Languages__c" extensions="WB_Available_Lang_Wizardcontroller" >
+<apex:form > 
+<script >
+var idList=[];
+function originalClick(id){
+    
+    var reqId= id;
+    var selLang = document.getElementById(reqId).value ;
+    var id= document.getElementById(reqId).name;
+    //alert('selLang'+selLang);
+    var langtypeCheck= selLang.substring(18);
+    //alert('langtypeCheck'+langtypeCheck);
+    for(i = 0; i < idList.length; i++){        
+        var splitId=idList[i].substring(0,18);
+        if(splitId == id){            
+            idList.splice(i,1);
+        }
+        
+    }
+    if(langtypeCheck!='none') {
+        
+        idList.push(selLang); 
+    }
+     
+    }
+var finalIdList= '';    
+function selectedLang(){
+    if(idList.length==0) {
+        alert('Kindly select a record to proceed');
+    }   
+    else{
+    for(i = 0; i < idList.length; i++){
+        finalIdList+=idList[i]+',';
+    }
+   setVal();
+    //selLangFun(finalIdList);
+    }
+}
+
+
+</script>
+<script>
+function setVal(){
+    
+    //document.getElementById('hdnField').value = 'Test'; 
+    document.getElementById("{!$Component.hdnField}").value=finalIdList;  
+    }
+</script>
+<!--
+ <apex:actionFunction name="selLangFun" action="{!selLang}"  reRender="">
+
+  <apex:param name="param" value="" assignTo="{!selLang}"/>
+
+</apex:actionFunction> -->
+ <apex:inputHidden id="hdnField" value="{!theValue}" />
+  <apex:sectionHeader subtitle="Available Languages Wizard"/> 
+  <apex:pageBlock >
+    <apex:pageBlockSection title="Adding Languages to Title " columns="1">
+        <apex:outputpanel id="myPanel" layout="block" style="overflow:auto;height:530px;">
+            <apex:pageBlockTable value="{!availLangDisplay}" var="lang"   rules="rows">
+                 <apex:column title="Language1" headerValue="Languages ">
+                    <apex:outputLink value="/{!lang.availLangList.id}">{!lang.availLangList.name}</apex:outputLink>
+                 </apex:column> 
+               
+                <apex:column rendered="{!if(lang.flag='checked', true, false)}"> 
+                                     
+                     <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.defaultNone }" value="{!lang.defaultNone }" onclick="originalClick(id);" > None</input>                    
+                           
+                </apex:column>
+                 <apex:column rendered="{!if(lang.flag!='checked', true, false)}"> 
+                                     
+                     <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.defaultNone }" value="{!lang.defaultNone}" checked='true' onclick="originalClick(id);"> None</input>                    
+                           
+                </apex:column>
+                 
+                
+                <apex:column rendered="{!AND(if(lang.flag='checked', true, false),if(lang.LangType='Sub', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.subSelected }" value="{!lang.subSelected }" onclick="originalClick(id);" checked='true'> Sub</input>                    
+                                 
+                </apex:column> 
+                <apex:column rendered="{!!AND(if(lang.flag='checked', true, false),if(lang.LangType='Sub', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.subSelected }" value="{!lang.subSelected }" onclick="originalClick(id);"> Sub</input>                    
+                                 
+                </apex:column> 
+                
+                
+                <apex:column rendered="{!AND(if(lang.flag='checked', true, false),if(lang.LangType='Audio', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.audioSelected }" value="{!lang.audioSelected }" onclick="originalClick(id);" checked='true' > Audio </input>                    
+                   
+                </apex:column>
+                 <apex:column rendered="{!!AND(if(lang.flag='checked', true, false),if(lang.LangType='Audio', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.audioSelected }" value="{!lang.audioSelected }" onclick="originalClick(id);" > Audio </input>                    
+                   
+                </apex:column> 
+                 <apex:column rendered="{!AND(if(lang.flag='checked', true, false),if(lang.LangType='Sub & Audio', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.subAudioSelected }" value="{!lang.subAudioSelected }" onclick="originalClick(id);" checked='true'> Sub &amp; Audio</input>                    
+                   
+                </apex:column>
+                 <apex:column rendered="{!!AND(if(lang.flag='checked', true, false),if(lang.LangType='Sub & Audio', true, false))}">                    
+                   
+                    <input type="radio" name="{!lang.availLangList.id}"  id="{!lang.subAudioSelected }" value="{!lang.subAudioSelected }" onclick="originalClick(id);" > Sub &amp; Audio</input>                    
+                   
+                </apex:column>
+               
+               
+            </apex:pageBlockTable>
+        </apex:outputpanel>
+       
+    </apex:pageBlockSection>
+    <apex:commandButton value="Add Language"  action="{!post}" onclick="selectedLang();" style="align:middle;margin-left:30em;"/>
+   
+     <apex:commandButton value="Cancel" action="{!cancel}" /> 
+  </apex:pageBlock>
+ 
+</apex:form>  
+</apex:page>

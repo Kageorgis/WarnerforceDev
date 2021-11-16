@@ -1,0 +1,74 @@
+<apex:component controller="CRM_DealApprovalEmailTemplateCtrl" access="global">
+	
+	<apex:attribute assignTo="{!deal}" name="dealRec" type="Opportunity" required="true" description="Id Of Deal" access="global"/>
+	
+	<apex:outputPanel rendered="{!IF(DealProducts != null, true, false)}">
+		<br/><br/>{!$Label.CRM_Deal_Product_Information}<br/><br/>
+		<table class="dealInfoTbl">
+			<tr>
+				<td class="labelCol">{!$ObjectType.Product2.Fields.Name.label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.ProductCode.Label}</td>
+				<td class="labelCol">{!$ObjectType.Product2.Fields.Street_Date__c.label}</td>
+				
+				<td class="labelCol">Minimum Sell Price</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Promoted_Price__c.Label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Price_is_Minimum__c.Label}</td>
+				
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Quantity.Label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Initial_Quantity__c.Label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Replen_Quantity__c.Label}</td>
+				
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.TotalPrice.Label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Minimum_Contribution__c.Label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Contribution__c.label}</td>
+				<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Contribution_is_Minimum__c.Label}</td>
+			</tr>
+
+			<apex:repeat value="{!DealProducts}" var="key">
+				<tr>
+					<td>{!DealProducts[key].Product2.Name}</td>   
+					<td>{!DealProducts[key].ProductCode}</td>
+					<td>
+						<apex:outputText value="{0,date,long}"> 
+							<apex:param value="{!DealProducts[key].Product2.Street_Date__c}"/>
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,###,###,###.00}">
+							<apex:param value="{!IF(DealProducts[key].Minimum_Price__c != null,DealProducts[key].Minimum_Price__c, DealProducts[key].Account_Price__c)}" />
+						</apex:outputText>
+					</td> 
+					<td>
+						<apex:outputText value="{0,number,###,###,###.00}">
+							<apex:param value="{!DealProducts[key].Promoted_Price__c}" />
+						</apex:outputText>
+					</td>
+					<td>{!DealProducts[key].Price_is_Minimum__c}</td>
+					<td>
+						<apex:outputText value="{0,number,###,###,###}">
+							<apex:param value="{!DealProducts[key].Quantity}" />
+						</apex:outputText>
+					</td> 
+					<td>
+						<apex:outputText value="{0,number,###,###,###}">
+							<apex:param value="{!DealProducts[key].Initial_Quantity__c}" />
+						</apex:outputText>
+					</td> 
+					<td>
+						<apex:outputText value="{0,number,###,###,###}">
+							<apex:param value="{!DealProducts[key].Replen_Quantity__c}" />
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputText value="{0,number,###,###,###.00}">
+							<apex:param value="{!DealProducts[key].TotalPrice}" />
+						</apex:outputText>
+					</td> 
+					<td>{!DealProducts[key].Minimum_Contribution__c}</td> 
+					<td>{!DealProducts[key].Contribution__c}</td>
+					<td>{!DealProducts[key].Contribution_is_Minimum__c}</td> 
+				</tr>
+			</apex:repeat>
+		</table>
+	</apex:outputPanel>
+</apex:component>

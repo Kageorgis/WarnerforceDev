@@ -1,0 +1,19 @@
+<!--
+   @Author Cognizant
+   @name WB_CreateClientAvail_Lightning_List.
+   @CreateDate 12 July 2018
+   @Description - Visualforce page for Create Client Avail List button on Release Plan
+   @Version <1.0>
+  
+-->
+
+<apex:page standardController="Commercial_Avail__c" recordSetVar="Commercial_Avail__c" extensions="WB_CreateClientAvail_Lightning" action="{!forwardToListController}">
+
+    <apex:form >
+        <apex:outputPanel id="output" rendered="{!errorMessage}">
+            <apex:pageMessages ></apex:pageMessages>  
+            <apex:commandButton value="Cancel" action="{!Cancel}" rendered="{!errorMessage}" style="Margin-left: 44%;margin-bottom: 5px;margin-top: 2%;"/>
+        </apex:outputPanel>    
+    </apex:form>
+    
+</apex:page>

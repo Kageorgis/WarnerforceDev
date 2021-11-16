@@ -1,0 +1,140 @@
+<aura:component description="cp_prodUploaderGrid" controller="cp_prodUploaderGridContoller">
+    <ltng:require styles="{!join(',',$Resource.agGrid + '/ag-grid-community/dist/styles/ag-grid.css',
+                          $Resource.agGrid + '/ag-grid-community/dist/styles/ag-theme-balham.css')}"
+                  scripts="{!join(',',$Resource.agGrid + '/ag-grid-community/dist/ag-grid-enterprise.min.noStyle.js',
+                           $Resource.jsXLSX + '/js-xlsx-master/dist/xlsx.full.min.js')}"
+                  afterScriptsLoaded="{!c.scriptsLoaded}"/>
+    
+    <aura:attribute name="fieldSetList" type="List"/>
+    <aura:attribute name="valSets" type="List" />
+    <aura:attribute name="parsedData" type="Object" />
+    <aura:attribute name="gridRef" type="Object" />
+    <aura:attribute name="blankRow" type="Object" />
+    <aura:attribute name="gridData" type="cp_prodUploaderGridContoller.ProductWrapper[]" />
+    <aura:attribute name="rowCount" type="Integer" default="0"/>
+    <aura:attribute name="savedRecords" type="Integer" default="0"/>
+    <aura:attribute name="starLabsRecords" type="Integer" default="0"/>
+    <aura:attribute name="failedRecords" type="Integer" default="0"/>
+    <aura:attribute name="showSpinner" type="Boolean" default="true"/>
+    <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}"/>
+    <aura:attribute name="selectedPropertyRecord" type="sObject" default="{}"/>
+    <aura:attribute name="colors" type="String[]" default="Insert Row,Delete Selected,Clear Grid"/>    
+    <aura:attribute name="lstContentDoc" type="List"/>
+    
+    <aura:handler event="c:cp_errorEvent" action="{!c.hideSpinner}"/>
+    
+    <lightning:layout multipleRows="true" >        
+        <lightning:spinner aura:id="mySpinner" class="slds-hide" alternativeText="Loading" size="large" />      
+        <lightning:layoutItem size="2" padding="slds-p-right_small">
+            <div class="slds slds-text-align_center slds-box " style="padding: 10px;height: 109px;">
+                <div class="slds-text-align_center">
+                    <p class="slds-text-heading_small" style="font-size: small;">Template Download</p>
+                </div>
+                <div class="slds-card__body slds-p-around_small slds-border_top">
+                    <lightning:layout multipleRows="true">
+                        <aura:iteration items="{!v.lstContentDoc}" var="CD">
+                            <aura:if isTrue="{!CD.Title == 'UPC Collection Template - XLSX'}" >
+                                <lightning:layoutItem size="6" class="slds-text-align_center">
+                                    <a onclick="{!c.downloadTemplate}" data-Id="{!CD.Id}">
+                                        <lightning:icon iconName="doctype:excel" variant="bare" alternativeText="Excel Template"  title="Excel Template" />
+                                        <p>Excel</p>
+                                    </a>
+                                </lightning:layoutItem>
+                                <aura:set attribute="else">
+                                    <lightning:layoutItem size="6" class="slds-text-align_center">
+                                        <a onclick="{!c.getSelected}" data-Id="{!CD.Id}">
+                                            <lightning:icon iconName="doctype:csv" variant="bare" alternativeText="CSVTemplate"  title="CSV Template" />
+                                            <p>CSV</p>
+                                        </a>
+                                    </lightning:layoutItem>
+                                </aura:set>
+                            </aura:if>
+                        </aura:iteration>
+                    </lightning:layout>                           
+                </div>
+            </div>
+        </lightning:layoutItem>        
+        <lightning:layoutItem size="4" padding="horizontal-small">
+            <c:ExcelImport onImport="{!c.handleImport}"/>
+            <p style="font-size: smaller;padding-top: 5px;">The Mass Importer accepts .csv and .xlsx files Only</p>
+        </lightning:layoutItem>        
+        <lightning:layoutItem size="2"  padding="slds-p-left_small">
+            <div class="slds slds-text-align_center slds-box slds-theme_shade" style="height: 109px;">
+                <span class="slds-text-heading_large"> {!v.rowCount}</span>
+                <p class="slds-text-heading_small " > Pending<br/> Records</p>
+            </div>
+        </lightning:layoutItem>       
+        <lightning:layoutItem size="2" padding="horizontal-small" >
+            <div class="slds-text-align_center slds-box slds-theme_success" style="height: 109px;">
+                <span class="slds-text-heading_large"> {!v.savedRecords}</span>
+                <p class="slds-text-heading_small" style="color: white;"> Successfully <br/>Saved</p>
+            </div>
+        </lightning:layoutItem>
+        <!-- (hide StarLabs box from UI)
+        <lightning:layoutItem size="2" padding="horizontal-small" >
+            <div   class="slds slds-text-align_center slds-box slds-theme_warning">
+                <div class="slds-text-heading_large "> {!v.starLabsRecords}</div>
+                <p class="slds-text-heading_small" >   Saved</p>
+                <p class="slds-text-body_small" > (No StarLabs Match)</p>
+            </div>            
+        </lightning:layoutItem>
+		-->        
+        <lightning:layoutItem size="2" padding="slds-p-left_small">
+            <div  class="slds slds-text-align_center slds-box slds-theme_error" style="height: 109px;">
+                <div class="slds-text-heading_large" style="color:#fff"> {!v.failedRecords}</div>
+                <p class="slds-text-heading_small " style="color: white;">  Failed</p>
+                <p class="slds-text-body_small" >(Review Results)</p>
+            </div>            
+        </lightning:layoutItem>        
+        <lightning:layoutItem size="2"/>        
+        <lightning:layoutItem size="12" class="slds-p-top_medium ">
+            <lightning:layout multipleRows="true" class=" slds-p-top_small slds-p-left_small slds-p-right_small slds-p-bottom_medium slds-border_bottom slds-border_top slds-theme_shade">
+                <lightning:layoutItem size="3">
+                    Bulk Actions
+                </lightning:layoutItem>
+                <lightning:layoutItem size="1"/>
+                <lightning:layoutItem size="3">
+                    Licensee Name Lookup
+                </lightning:layoutItem>
+                <lightning:layoutItem size="3">
+                    Property Lookup
+                </lightning:layoutItem>
+                <lightning:layoutItem size="2"/>
+                <lightning:layoutItem size="2">
+                    <lightning:select aura:id='bulk' name="select">
+                        <aura:iteration items="{!v.colors}" var="color">
+                            <option text="{!color}" value="{!color}"></option>
+                        </aura:iteration>
+                    </lightning:select>                    
+                </lightning:layoutItem>
+                <lightning:layoutItem size="1" >
+                    <lightning:button type="button" variant="brand" label="Apply" onclick="{!c.handleBulkAction}"/>                    
+                </lightning:layoutItem>
+                <lightning:layoutItem size="1"/>
+                <lightning:layoutItem size="2" >                    
+                    <c:cp_licenseeLookup objectAPIName="account" IconName="standard:account" selectedRecord="{!v.selectedLookUpRecord}"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem size="1">
+                    <lightning:button iconName="utility:copy_to_clipboard"
+                                      onclick="{!c.copyLicensee}"
+                                      aura:id="licenseeBtn"/>
+                </lightning:layoutItem>                
+                <lightning:layoutItem size="2" class="" >
+                    <c:cp_propertyLookup objectAPIName="Property__c" IconName="custom:custom52" selectedRecord="{!v.selectedPropertyRecord}"/>                    
+                </lightning:layoutItem>
+                <lightning:layoutItem size="1">
+                    <lightning:button iconName="utility:copy_to_clipboard"
+                                      onclick="{!c.copyProperty}"
+                                      aura:id="licenseeBtn"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem size="2" class="slds-text-align_right">                    
+                    <lightning:button type="button" variant="brand" label="Process Records" onclick="{!c.saveTable}"/>
+                </lightning:layoutItem>
+            </lightning:layout>
+        </lightning:layoutItem>        
+        <lightning:layoutItem size="12" class="slds-p-top_medium ">
+            <div id="myGrid" aura:id="myGrid" style="height: 600px;width:100%;" class="ag-theme-balham"></div>            
+        </lightning:layoutItem>
+    </lightning:layout>
+    {!v.body}
+</aura:component>

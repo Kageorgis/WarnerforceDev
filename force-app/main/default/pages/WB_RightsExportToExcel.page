@@ -1,0 +1,44 @@
+<apex:page StandardController="Title__c" tabStyle="Title__c" recordSetVar="Title__c"  extensions="WB_View_Rights" 
+contentType="application/vnd.ms-excel#Rights_{!TODAY()}.xls" cache="false" readOnly="true">
+    
+<apex:pageMessages />
+<apex:form >
+    <apex:pageBlock id="pageBlockId" rendered="{!rightsDisplayBlock}" >
+        <apex:pageBlockSection title="List Of Rights" columns="1" collapsible="false">
+            <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;"  layout="block" >
+                <apex:pageBlockTable value="{!rightsList}" id="pageBlockTableId" var="rights" width="500PX" rules="rows" border="1">
+                    <!--ER-000959 Start: headerValues added along with new field  Record Type-->
+                    <apex:column headerValue="VV/MPM " value="{!rights.MPM__c}" />  
+                    <apex:column headerValue="Title/MPM Description" value="{!rights.MPM_Short_Description__c}" />
+                    <apex:column headerValue="Record Type" value="{!rights.RecordType.Name}" />
+                    <!--ER-000959 End-->
+                    <apex:column value="{!rights.Rights_Group__c}"/>
+                    <apex:column value="{!rights.Channel__c}"/>
+                    <apex:column value="{!rights.Status__c}" />
+                    <apex:column value="{!rights.RT_Lifecycle__c}" />
+                    <apex:column value="{!rights.Request_Refresh__c}" />
+                    <apex:column value="{!rights.Date_Last_Changed__c}" />
+                    <apex:column value="{!rights.Notes__c}" />
+                    <apex:column value="{!rights.Rights_Start__c}" /> 
+                    <apex:column value="{!rights.Rights_End__c}" />
+                    <apex:column value="{!rights.Rights_Start_2__c}" /> 
+                    <apex:column value="{!rights.Rights_End_2__c}" />
+                    <apex:column value="{!rights.Rights_Start_3__c}" />
+                    <apex:column value="{!rights.Rights_End_3__c}" /> 
+                    <apex:column value="{!rights.Rights_Start_4__c}" /> 
+                    <apex:column value="{!rights.Rights_End_4__c}" />
+                    <apex:column value="{!rights.Rights_Start_5__c}" /> 
+                    <apex:column value="{!rights.Rights_End_5__c}" />
+                    <apex:column title="Rights Name" headerValue="Rights">
+                    <apex:outputLink value="/{!rights.id}">{!rights.name}</apex:outputLink>
+                    </apex:column>
+                 </apex:pageBlockTable>
+                  <apex:commandbutton value="Export To Excel" action="{!exportToExcel}"/> 
+                  
+            </apex:outputPanel> 
+              
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    
+</apex:form>
+</apex:page>

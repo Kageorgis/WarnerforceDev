@@ -1,0 +1,19 @@
+/**
+ * Created by XMMORENO on 2/10/2020.
+ */
+
+.THIS {
+}
+.THIS #hot-display-license-info{
+    visibility: hidden;
+}
+
+.THIS .gridSize #handsOnTableDiv{
+    overflow: hidden;
+}
+.THIS .left-align {
+    text-align: left;
+}
+.THIS .right-align {
+    text-align: right;
+}

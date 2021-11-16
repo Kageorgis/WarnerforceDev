@@ -1,0 +1,13 @@
+<apex:page showHeader="false" showChat="false" standardController="Local_Title__c" sidebar="false"> 
+<apex:outputPanel rendered="false">
+    <p>Calendar is not applicable for CAS team and local data for physical products</p>
+    
+</apex:outputPanel>
+<apex:outputPanel rendered="true">
+    
+<SLCA2:calendar namespace="SLCA2"
+calendar="{!$Setup.CRM_Calendar_Settings__c.Local_Data_Calendar_Id__c}"
+settings="['l_ds','c_t', 'r_d', 'r_w', 'r_c','r_a','r_s']" urlparams="sb=2&url=0&v=g&g_v=week&g_p=03&pv1={!Local_Title__c.Id}">
+</SLCA2:calendar> 
+</apex:outputPanel>
+</apex:page>

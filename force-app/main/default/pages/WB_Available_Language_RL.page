@@ -1,0 +1,72 @@
+<!--
+Page- WB_Available_Language_RL
+Version- 1.0
+Creation Date- 27 AUG 2015
+Author- Prachi Gadewar
+Last Modified Date - 31/8 
+Last Modified by  - Prachi Gadewar
+Description- Update more than one announcement type scheduling information.
+-->
+
+<apex:page standardController="Title__c" extensions="WB_Available_Language_RL_Controller">
+<apex:form >
+    <apex:pageBlock id="pageBlock">        
+        <div align="Center" draggable="false" style="height: 20px;">
+            <apex:outputLink target="_top" title="Update Languages" value="/apex/WB_Available_Lang_Wizardpage_New?id={!titleId}" styleClass="btn" style="
+         text-decoration: none;font-size: .9em;font-weight: bold;font-family: Arial,Helvetica,sans-serif;-webkit-border-radius: 3px;border-radius: 3px;padding: 2px 3px;">Update Languages
+            </apex:outputLink>
+            
+            <apex:outputLink target="_top" title="Copy Languages" value="/apex/WB_Copy_Lang_Wizard?id={!titleId}" styleClass="btn" style="
+         text-decoration: none;font-size: .9em;font-weight: bold;font-family: Arial,Helvetica,sans-serif;-webkit-border-radius: 3px;border-radius: 3px;padding: 2px 3px;">Copy Languages
+            </apex:outputLink>
+            <!--<apex:commandButton value="Add Available Languages" action="{!NewAvailLanguage}"/>-->
+        </div>
+        <apex:outputPanel id="myPanel" layout="block" style="overflow:auto;height:150px;">
+            <!-- CH01: commented as requirment has been changed. 
+            <!--<apex:pageBlockTable value="{!availablelang_lst}" var="availableLang" rendered="{!availablelang_lst.size > 0}">
+                <apex:column headerValue="Action" width="55px">
+                    <apex:outputLink value="/{!availableLang.id}/e?retURL={!titleId}" style="color:#015ba7;text-decoration: none" target="_top">Edit</apex:outputLink>&nbsp;|&nbsp;
+                    <apex:commandLink style="color:#015ba7;text-decoration: none" action="{!DeleteRecord}" reRender="pageBlock">Del
+                            <apex:param name="LangAvailId" value="{!availableLang.id}" assignTo="{!LangAvailId}" />
+                    </apex:commandLink>
+                </apex:column>
+                <apex:column headerValue="Language">
+                    <apex:outputLink value="{!URLFOR($Action.Language__c.View,availableLang.Language__c)}" target="_top">{!availableLang.Language__r.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column headerValue="Language Types">
+                    <apex:outputField value="{!availableLang.Language_Types__c}"/> 
+                </apex:column>
+                <apex:column headerValue="Clear to Avail">
+                    <apex:outputField value="{!availableLang.Clear_to_Avail__c}"/> 
+                </apex:column>
+                <apex:column headerValue="Mastering Reason Code">
+                    <apex:outputField value="{!availableLang.Mastering_Reason_Code__c}"/> 
+                </apex:column>
+                <apex:column headerValue="Mastering Cost">
+                    <apex:outputField value="{!availableLang.Mastering_Cost__c}"/>
+                </apex:column>
+                <apex:column headerValue="GPP Status">
+                    <apex:outputField value="{!availableLang.GPP_status__c}"/> 
+                </apex:column>
+                <apex:column headerValue="Notes">
+                    <apex:outputField value="{!availableLang.Notes__c}"/> 
+                </apex:column>
+            </apex:pageBlockTable>-->
+            <!-- CH01: Added pageblock table as requirment has been changed. -->
+            <apex:pageBlockTable value="{!langIdSet}" var="langId" rendered="{!availablelang_lst.size > 0}" styleClass="avaiLangTbl">
+                <apex:column headerValue="Language">
+                    <apex:outputLink value="/{!langId}" target="_parent">{!langIdAndNameMap[langId]}</apex:outputLink>
+                </apex:column>
+                 <apex:column headerValue="Provisional">
+                     {!langNameAndProvisionalMap[langId]}
+                </apex:column>
+                <apex:column headerValue="Clear to Avail">
+                    {!langNameAndCTAMap[langId]}
+                </apex:column>
+            </apex:pageBlockTable>
+            <apex:outputLabel >{!message}</apex:outputLabel>
+        </apex:outputPanel>
+    </apex:pageBlock>
+    
+</apex:form>
+</apex:page>

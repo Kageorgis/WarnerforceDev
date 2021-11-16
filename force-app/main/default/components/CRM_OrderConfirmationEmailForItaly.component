@@ -1,0 +1,99 @@
+<apex:component access="global">
+    <apex:attribute name="Order" type="Order" description="Related Order" />
+    <apex:stylesheet value="{!URLFOR($Resource.OrderConfirmationCSS)}" />
+
+    <html>
+    <body>
+        <table class="mainContainer">
+            <tr>
+                <td style="width: 51%; vertical-align: top;">
+                    <table>
+                        <tr>
+                            <td><img src='{!URLFOR($Resource.CRM_WB_LogoBlue)}'
+                            title="logo" height="100" width="100" /></td>
+                            <td style="font-size: 14px;">
+                                <p>
+                                    <b>{!$Label.CRM_OrderConfirmationPDFForItaly1}</b><br /> {!$Label.CRM_OrderConfirmationPDFForItaly2}
+                                    <br />{!$Label.CRM_OrderConfirmationPDFForItaly3}
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 10%"></td>
+                <td style="width: 40%;">
+                    <table class="customerDetail" style="font-size: 10px;">
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly4}</td>
+                            <td class="dataCol">
+                                <apex:outputText value="{0, date, dd/MM/YYYY}">
+                                    <apex:param value="{!TODAY()}" /> 
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly5}</td>
+                            <td class="dataCol">{!Order.Account.Name}</td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly6}</td>
+                            <td class="dataCol">{!Order.Account.AccountNumber}</td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly7}</td>
+                            <td>
+                                 <!-- <apex:outputText value="{!Order.Italy_Customer_Address__c}" escape="false" styleClass="dataCol"/> -->
+                                 <apex:outputText value="{!Order.Account.BillingStreet}" escape="false" styleClass="dataCol"/><br />
+                                 <apex:outputText value="{!Order.Account.BillingPostalCode}" escape="false" styleClass="dataCol"/>&nbsp;-&nbsp;<apex:outputText value="{!Order.Account.BillingCity}" escape="false" styleClass="dataCol"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly8}</td>
+                            <td class="dataCol">{!Order.OrderNumber}</td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol">{!$Label.CRM_OrderConfirmationPDFForItaly16}</td>
+                            <td class="dataCol">{!Order.Customer_PO_Number__c}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    
+        <table class="order-products">
+            <tr>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly9}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly10}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly11}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly12}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly13}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly14}</td>
+                <td>{!$Label.CRM_OrderConfirmationPDFForItaly15}</td>
+            </tr>
+            <apex:repeat var="lineItem" value="{!Order.OrderItems}">
+                <tr>
+                    <td>{!lineItem.PricebookEntry.Product2.Name}</td>
+                    <td>{!lineItem.Material_Number__c}</td>
+                    <td>{!lineItem.PricebookEntry.Product2.Universal_Picture_Code__c}</td>
+                    <td><apex:outputField value="{!lineItem.PricebookEntry.Product2.Product_Format__c}"/>
+                    </td>
+                    <td><apex:outputtext value="{0, date, dd'/'MM'/'yyyy}">
+                            <apex:param value="{!lineItem.PricebookEntry.Product2.Street_Date__c}"/>
+                        </apex:outputtext></td>
+                    <td>
+                        <apex:outputField value="{!lineItem.SAP_Applied_Price__c}"/>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0,number,#}" rendered="{!(Order.Config__r.Record_Type_Name__c != 'SBOM')}">                             
+                             <apex:param value="{!lineItem.Quantity}"/>                             
+                        </apex:outputText> 
+                        <apex:outputText value="{0,number,#}" rendered="{!(Order.Config__r.Record_Type_Name__c == 'SBOM')}">                             
+                             <apex:param value="{!lineItem.Total_Quantity__c}"/>                             
+                        </apex:outputText>
+                    </td>
+                </tr>
+            </apex:repeat>
+        </table>
+      </body>  
+     </html>
+    </apex:component>

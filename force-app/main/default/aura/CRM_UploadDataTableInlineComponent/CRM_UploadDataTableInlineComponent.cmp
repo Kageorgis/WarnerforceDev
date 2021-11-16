@@ -1,0 +1,63 @@
+<aura:component controller ="CRM_UploadComponentController" >
+    <aura:attribute name="showSaveCancelBtn" type="boolean"/>
+    <aura:attribute name ="spinner" type ="Boolean"/>
+    <aura:attribute name="records" type="sObject"/>
+    <aura:attribute name="columns" type="Object"/>
+    <aura:attribute name="fieldValue" type="Object"/>
+    <aura:attribute name="CoopReasonTaticList" type="string[]" />
+    <aura:attribute name="myAttribute" type="String"/>
+    <aura:attribute name="opportunity" type="sObject"/>
+    <aura:attribute name="fieldName" type="String"/>
+    <aura:attribute name ="isSpinner" type ="Boolean"/>
+    <aura:attribute name ="spinnerPerPage" type ="Integer"/>
+    <aura:attribute name="sNo" type ="Integer"/>
+    <aura:attribute name="editedRecords" type="Map" default=""/>
+    <aura:attribute name="enableEdit" type="Boolean" default="false" />
+    <aura:attribute name="isTextField" type="Boolean" default="false"/>
+    <aura:attribute name="editpickList" type="Boolean" default="false"/>
+    <aura:attribute name="isDateField" type="Boolean" default="false"/>
+    <aura:attribute name="objInfoForPicklistValues" type="opportunityLineItem" default="{sobjectType : 'opportunityLineItem'}" />
+    <aura:attribute name="colourChange" type="Boolean" default="false"/>
+    <aura:attribute name="labelString" type="String" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+   <div aura:id="colorChange">
+    <span class="slds-grid slds-grid_align-spread" >
+    <aura:if isTrue="{!v.columns.editable}">
+        <span class="slds-truncate">{!v.fieldValue}</span>
+        <button onclick="{!c.inlineEdit}" class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small" tabindex="0" >
+            <lightning:icon iconName="utility:edit" size="xx-small" alternativeText="edit" variant="brand"/>
+        </button>
+        <aura:if isTrue ="{!v.enableEdit}">
+            <section  class="slds-popover"  style="position: absolute; top: 0px;width:110%" >
+                           <aura:if isTrue="{!v.isTextField}">
+                                <ui:inputText aura:id="{!v.records.Id}"
+                                              class="slds-select  input-field-width"
+                                              blur="{!c.closeEditBox}"
+                                              change="{!c.onEditBox}"
+                                              value="{!v.fieldValue}" 
+                                              /></aura:if>
+                            <aura:if isTrue ="{!v.editpickList}">
+                                <ui:inputSelect aura:id="oppltReason"
+                                                class="{!v.columns.fieldName}"
+                                                blur="{!c.closeEditBox}"
+                                                change="{!c.onEditBox}"
+                                                value="{!v.fieldValue}"
+                                                />
+                            </aura:if>
+                            <aura:if isTrue ="{!v.isDateField}">
+                                <ui:inputDate aura:id="{!v.records.Id}" 
+                                              class="slds-select input-field-width"
+                                              blur="{!c.closeEditBox}"
+                                              change="{!c.onEditBox}"
+                                              value="{!v.fieldValue}"
+                                              displayDatePicker="true"/> 
+                            </aura:if>
+                <span id="form-end" tabindex="0"></span>
+            </section>
+            </aura:if>
+        <aura:set attribute="else">
+            <div class="slds-truncate ">{!v.fieldValue}</div>
+        </aura:set>
+        </aura:if></span>
+      </div>
+</aura:component>

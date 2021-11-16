@@ -1,0 +1,33 @@
+<apex:component controller="CRM_DealApprovalEmailTemplateCtrl_BE" access="global">
+	
+	<apex:attribute assignTo="{!deal}" name="dealRec" type="Opportunity" required="true" description="Id Of Deal" access="global"/>
+	<apex:variable value="{!LEFT($Api.Enterprise_Server_URL_300, FIND('/services',$Api.Enterprise_Server_URL_300))}" var="URL"/>
+	
+	<apex:outputPanel rendered="{!AND(DealRec != null, DealRec.Count_Opportunity_Products__c != null, DealRec.Count_Opportunity_Products__c != 0)}">
+		<br/>
+		<table style="width:80%;font-size: 15px;">
+			<thead>
+				<tr>
+					<th>Product Name</th>
+					<th style="width:10%">{!$ObjectType.OpportunityLineItem.fields.ProductCode.Label}</th>
+					<th style="width:10%">{!$ObjectType.OpportunityLineItem.fields.Account_Price__c.Label}</th>
+					<th style="width:10%">{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.Label}</th>
+					<th style="width:10%">{!$ObjectType.OpportunityLineItem.fields.Contribution__c.Label}</th>
+					<th style="width:10%">{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<apex:repeat Value="{!DealProducts}" Var="key">
+					<tr style="border:1px solid black">
+						<td style="width:30%"><a href="{!URL+""+DealProducts[key].Product2Id}">{!DealProducts[key].Product2.Name}</a></td>
+						<td style="width:10%">{!DealProducts[key].ProductCode}</td>
+						<td style="width:10%">{!DealProducts[key].Account_Price__c}</td>
+						<td style="width:10%">{!DealProducts[key].Promoted_Price__c}</td>
+						<td style="width:10%">{!DealProducts[key].Contribution__c}</td> 
+						<td style="width:10%">{!DealProducts[key].Quantity}</td>
+					</tr>
+				</apex:repeat>
+			</tbody>
+		</table>
+	</apex:outputPanel>
+</apex:component>

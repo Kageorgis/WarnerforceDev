@@ -1,0 +1,4 @@
+<aura:event type="APPLICATION" description="cp_accountCreateSuccesEvent">
+    <aura:attribute name="recordTypeId" type="String"/>
+    <aura:attribute name="isRetailer" type="Boolean" />
+</aura:event>

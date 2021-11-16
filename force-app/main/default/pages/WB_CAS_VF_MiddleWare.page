@@ -1,0 +1,39 @@
+<!--
+  Name - WB_CAS_VF_MiddleWare
+  CreateDate 18 July 2019
+  Description- This visualforce page is created as Middleware to open another VF in new tab of same window.
+  Author- Shubham Agrawal (Cognizant)
+  
+-->
+
+<apex:page >
+    <script type = "text/javascript">
+        function pageLoad(){
+            var Id = '{!$CurrentPage.parameters.ID}';
+            var action = '{!$CurrentPage.parameters.action}';
+            var endPage = '{!$CurrentPage.parameters.endPage}'; 
+            
+            //console.log('-----> : ',Id,'------------',action,'------------',endPage);
+            
+            var mainURL = '/apex/'+endPage+'?';
+            
+            if(action){
+               mainURL += 'action='+action; 
+            }
+            if(Id){
+                mainURL += '&ID='+Id;
+            }
+            
+            console.log('mainURL : ',mainURL);
+            
+            var newWin = window.open(mainURL,'_blank');
+            if(!newWin || newWin.closed || typeof newWin.closed=='undefined'){ 
+                alert('Please allow the pop-up and Refresh the Page.');
+            }else{
+                //window.open('/'+Id,'_parent');
+                history.back();
+            }
+        }
+        window.onload = pageLoad;
+    </script>
+</apex:page>

@@ -1,0 +1,73 @@
+<apex:component controller="CRM_DealApprovalEmailTemplateCtrl_IT_ES" access="global">
+	
+	<apex:attribute assignTo="{!deal}" name="dealRec" type="Opportunity" required="true" description="Id Of Deal" access="global"/>
+	<apex:variable value="{!LEFT($Api.Enterprise_Server_URL_300, FIND('/services',$Api.Enterprise_Server_URL_300))}" var="URL"/>
+	
+	<apex:outputPanel rendered="{!(DealRec != null && DealRec.Product_Price_is_Under_Minimum__c != null && DealRec.Product_Price_is_Under_Minimum__c > 0 && !(DealRec.RecordType.DeveloperName == 'Digital_Deal' && DealRec.Account.Digital_Country_Code__c == '772'))}">
+		<br/>
+		<br/>
+		<p>
+			{!$Label.CRM_DealProduct_Info_Label}
+		</p>
+		<table class="dealInfoTbl">
+			<thead>
+				<tr style="border:1px solid black">
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Product2Id.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.ProductCode.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Promoted_Price__c.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Account_Price__c.label}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<apex:repeat VAlue="{!DealProducts}" Var="key">
+					<apex:outputPanel rendered="{!(DealProducts[key].Price_is_Minimum__c)}">
+						<tr>
+							<td><a href="{!URL+""+DealProducts[key].Id}">{!DealProducts[key].Product2.Name}</a></td>
+							<td>{!DealProducts[key].Product2.ProductCode}</td>
+							<td>{!DealProducts[key].Promoted_Price__c}</td>
+							<td>{!DealProducts[key].Account_Price__c}</td>
+						</tr>
+					</apex:outputPanel>
+				</apex:repeat>
+			</tbody>
+		</table>    
+	</apex:outputPanel>
+	
+	<apex:outputPanel rendered="{!(DealRec != null && (DealRec.Product_Contribution_is_Under_Minimum_S__c != null && DealRec.Product_Contribution_is_Under_Minimum_S__c > 0) && (DealRec.Sales_Organisation__c == '6008'))}">
+		<br/>
+		<br/>
+		<p>
+			{!$Label.CRM_Catalog_Deal_Info_Label}
+		</p>
+		<table class="dealInfoTbl">
+			<thead>
+				<tr>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Product2Id.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.ProductCode.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Promoted_Price__c.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Account_Price__c.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Contribution__c.label}</th>
+					<th class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Min_Contribution_Sales__c.label}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<apex:repeat VAlue="{!DealProducts}" Var="key">
+                    <apex:outputPanel >
+						<tr>
+							<td><a href="{!URL+""+DealProducts[key].Id}">{!DealProducts[key].Product2.Name}</a></td>
+							<td>{!DealProducts[key].Product2.ProductCode}</td>
+							<td>{!DealProducts[key].Promoted_Price__c}</td>
+							<td>{!DealProducts[key].Account_Price__c}</td>
+							<td>{!DealProducts[key].Contribution__c}</td>
+							<td>{!DealProducts[key].Min_Contribution_Sales__c}</td>
+						</tr>
+					</apex:outputPanel>
+				</apex:repeat>
+			</tbody>
+		</table>
+	</apex:outputPanel>
+	<p>
+		<apex:outputlink value="{!LEFT($Api.Partner_Server_URL_270,FIND('.com',$Api.Partner_Server_URL_270)+4)+DealRec.id}">{!$Label.CRM_Click_Here_ApproveReject}</apex:outputlink>
+	</p> 
+	<p>{!$Label.CRM_Request_Approval_2}</p>
+</apex:component>

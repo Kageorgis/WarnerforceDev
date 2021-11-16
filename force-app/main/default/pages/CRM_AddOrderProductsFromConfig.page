@@ -1,0 +1,288 @@
+<apex:page standardController="Opportunity" extensions="CRM_AddOrderProductsFromConfigController"  applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+   <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+      <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+      <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+      <apex:stylesheet value="https://fonts.googleapis.com/css?family=Open+Sans:400,700,800,300"/>
+    </head>
+    <body>
+    
+    <apex:pageMessages ></apex:pageMessages>
+      
+   <div class="slds" ng-app="AddOrderProdFromConfProdApp" ng-controller="AddConfProdCtrl" ng-init="checkOpportunity();">
+   <!-- ================== SPINNER MODAL ================ -->
+      <div class="spinnerModel" ng-show="showSpinner">
+        <div class="spinnerContent slds-spinner--medium">
+          <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+          <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText"></div>
+        </div>
+      </div>
+   <!--/ ================== SPINNER MODAL ================ -->
+      
+   <!--=================== MASTHEAD ===================-->
+    <div class="slds-page-header" role="banner">
+      <div class="slds-grid">
+        <div class="slds-col slds-has-flexi-truncate">
+            <nav class="slds-m-bottom--xx-small" role="navigation">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}">{!$ObjectType.Opportunity.labelPlural}</a>
+                    </li>
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Opportunity.View, Id)}">{!Opportunity.Name}</a>
+                    </li>
+                </ol>
+            </nav>
+            <div class="slds-col slds-has-flexi-truncate">
+                <h1 class="slds-text-heading--medium slds-truncate" title="Auto Allocate">Add Products</h1>
+            </div>
+        </div>
+
+        <div class="slds-col slds-no-flex slds-align-bottom">
+            <div class="slds-button-group" role="group" ng-show="configs.length > 0">
+                <button class="slds-button slds-button--neutral" ng-click="backToDeal()">Back</button>
+                 <button class="slds-button slds-button--neutral" ng-click="generateOrderFromConfig()">Generate Order</button>
+            </div>      
+        </div>
+      </div>
+    </div>
+   <!-- / ===================MASTHEAD=================== --><br/>
+   <!-- ===================SUCCESS/ERROR MESSAGE=================== -->
+      <div ng-show="msgText" class="slds-col slds-notify slds-notify--alert slds-box--x-small slds-theme--{{msgSeverity}}" role="alert">
+          <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="msgText = '';">
+            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+            </svg>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+
+          <div class="notify__content slds-grid" align="left">
+            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+            </svg>
+
+            <div class="slds-col slds-align-middle">
+                <h2 class="slds-text-heading--small" ng-show="msgText">{{msgText}}</h2>
+            </div>
+          </div>
+        </div>   
+    <!--/ ===================SUCCESS/ERROR MESSAGE=================== --><br/>
+    <!--=======================List Of Configs================================-->
+    <div class="slds-grid">
+     <!-- =======================MAIN CARD======================= -->
+     <div class="slds-col--padded slds-size--6-of-6">       
+          <div class="slds-card" ng-show="configs.length > 0">
+          <!--Heading Config with icon-->
+            <header class="slds-card__header slds-grid">
+              <div class="slds-col slds-media slds-media--center">
+                   <h4 class="slds-col--bump-left"><b>Please Select one Config</b></h4>
+              </div>
+            </header>
+           <!--/Heading Config with icon-->
+            
+            <!-- Config TABLE -->
+            <section class="slds-card__body">
+              <div class="slds-scrollable--x">
+                <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                  <thead>
+                    <tr class="slds-no-hover">
+                      <th class="slds-text-heading--label slds-size--1-of-4" scope="col" style="text-align:center"><b>Select</b></th>
+                      <th class="slds-text-heading--label slds-size--1-of-4" scope="col" style="text-align:center"><b>Config Name</b></th>
+                      <th class="slds-text-heading--label slds-size--1-of-4" scope="col" style="text-align:center"><b>Config Number</b></th>
+                      <th class="slds-text-heading--label slds-size--1-of-4" scope="col" style="text-align:center"><b>Record Type</b></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="slds-hint-parent" ng-repeat="config in configs">
+                      <td class="slds-size--1-of-4" data-label="Select" style="text-align:center">
+                          <input type="radio"  name="options" ng-click="selectedRadio(config.config.Id)" />
+                      </td>  
+                      <td class="slds-size--1-of-4" data-label="Config Name" style="text-align:center">{{config.config.Name}}</td>  
+                      <td class="slds-size--1-of-4" data-label="Config Number" style="text-align:center">{{config.config.Config_Number_Txt__c}}</td>
+                      <td class="slds-size--1-of-4" data-label="Record Type" style="text-align:center">{{config.config.Record_Type_Name__c }}</td>           
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <!-- / Config TABLE -->
+                           
+          </div>
+        </div>
+        <!-- /=======================MAIN CARD======================= -->
+       </div> 
+    <!--/=======================List Of Configs================================-->
+    </div>
+    <!-- End of ng-controller div -->
+    
+    <!--Spinner Style-->
+    <style type="text/css">
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+   
+  </style>
+    <!-- Script Files to run Angular -->    
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+      <script type="text/javascript">
+          angular
+              .module('AddOrderProdFromConfProdApp', [])
+              .controller('AddConfProdCtrl', function($scope){
+                $scope.configs = [];
+                $scope.selectedConfig;
+                $scope.showSpinner = false;
+                $scope.msgText;
+                $scope.msgSeverity;
+             /*Function to Keep Track of Selected Config*/   
+                $scope.selectedRadio = function (s) {
+                    $scope.selectedConfig = s;
+                    console.log($scope.selectedConfig);
+                };
+                
+             /*Function to Check Opportunity*/
+              $scope.checkOpportunity = function(){
+              $scope.showSpinner = true; 
+              CRM_AddOrderProductsFromConfigController.initCheck("{!Opportunity.Id}",function(result, event) {
+                console.log(result, event);
+          
+                 if (!event.status) {
+                  $scope.$apply(function(){
+                    $scope.msgText = event.message;
+                    $scope.msgSeverity = 'error';
+                    $scope.showSpinner = false;
+                  });
+                 }
+                else {
+                    $scope.$apply(function(){
+                    $scope.showSpinner = false;
+                    console.log('result===='+result);
+                    if(result != null){
+                        $scope.navigateToURL(result);
+                    }
+                    else{
+                        $scope.loadConfigs();
+                    }
+                  });
+                }
+              },{
+                    escape: false,
+                    timeout: 120000
+             });
+             };//Endof Check Opportunity Function
+                
+              /*Function to load Configs Intially*/
+                $scope.loadConfigs = function(){
+                $scope.showSpinner = true; 
+             
+              CRM_AddOrderProductsFromConfigController.getConfig("{!Opportunity.Bundle__c}", function(result, event) {
+                console.log(result, event);
+          
+                 if (!event.status) {
+                  $scope.$apply(function(){
+                    $scope.msgText = event.message;
+                    $scope.msgSeverity = 'error';
+                    $scope.showSpinner = false;
+                  });
+                 }
+                else {
+                  $scope.$apply(function(){
+                    $scope.configs = result;
+                    $scope.showSpinner = false;
+                  });
+                }
+              },{
+                    escape: false,
+                    timeout: 120000
+             });
+          };//Endof load Configs Function
+          
+          
+          $scope.navigateToURL = function(url) {
+              var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                                 
+              if ($scope.isLightningExperienceOrSf1) {
+                      sforce.one.navigateToURL(url);
+               }
+              else {
+                      console.log(url);
+                      document.location.href = url;
+                    }
+          };
+          
+        /* Function to redirect user back to Config Detail page */
+            $scope.backToDeal = function() {
+              var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+              var url = "{!URLFOR($Action.Opportunity.View, Id)}";
+    
+              if ($scope.isLightningExperienceOrSf1)
+                  sforce.one.navigateToURL(url);
+              else
+                  document.location.href = url;
+            };
+      /* Function to generate Order and Order Product From Selected Config */
+          $scope.generateOrderFromConfig = function(){ 
+               var configList = angular.copy($scope.configs);
+               var selectConfig = angular.copy($scope.selectedConfig);             
+               $scope.showSpinner = true;
+               /* Conditional Check for atleast one record is selected */
+                   if(!$scope.selectedConfig){
+                        $scope.msgText = 'Please Select atleast one config';
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                        return false;
+                   }
+               
+                    CRM_AddOrderProductsFromConfigController.generateOrder(selectConfig,"{!Opportunity.Id}", function(result, event){
+                    console.log(result, event);
+        
+                    if (!event.status) {
+                      $scope.$apply(function(){
+                        $scope.msgText = event.message;
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                      });
+                    }
+                    else {
+                      $scope.$apply(function(){
+                        $scope.msgText = 'Order with Order Products have been generated Successfully';
+                        $scope.msgSeverity = 'success';
+                        $scope.showSpinner = false;
+                        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                          if ($scope.isLightningExperienceOrSf1)
+                              sforce.one.navigateToURL(result);
+                          else
+                              document.location.href = result;
+                                   
+                              
+                      });
+                    }
+        
+                  },{
+                    timeout: 120000
+                  });
+              };         
+          
+                                   
+      });//End of Controller
+      </script>
+    </body>  
+   </html>  
+</apex:page>

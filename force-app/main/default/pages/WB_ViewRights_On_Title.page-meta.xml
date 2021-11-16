@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>44.0</apiVersion>
+    <availableInTouch>true</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>To be added to Title Display Page :
+Title Page � Displays the Rights entries for the MPM of the Title</description>
+    <label>WB_ViewRights_On_Title</label>
+</ApexPage>

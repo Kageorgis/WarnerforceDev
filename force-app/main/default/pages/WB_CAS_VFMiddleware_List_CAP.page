@@ -1,0 +1,33 @@
+<apex:page StandardController="Client_Avail_Price__c" recordSetVar="caps" extensions="WB_PriceWizardController">
+<apex:includeScript value="/soap/ajax/30.0/connection.js"/>    
+<apex:includeScript value="/soap/ajax/30.0/apex.js"/>    
+
+<script type = "text/javascript">
+    function pageLoad(){
+        var selectedRecs = ('{!selectedCAP}').split(",");
+            
+        var ids = selectedRecs.join(',');
+        ids = ids.replace(/\s|\[|\]/g,"");
+        
+        if(selectedRecs.length<=50){
+            window.open('apex/WB_PriceWizard?action=priceUpdate&ID='+ids,'_blank');
+            //window.history.go(-1)
+            history.back();
+        }
+        else{
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            var uniqueId = sforce.connection.getUserInfo().userId + '' + new Date().getTime(); 
+            var ClientAvailIdStore = new sforce.SObject("Client_Avail_Id_Store__c"); 
+            ClientAvailIdStore.Key__c = uniqueId; 
+            ClientAvailIdStore.ID_Store__c = ids; 
+            ClientAvailIdStore.Re_Price_User__c = sforce.connection.getUserInfo().userId; 
+            //alert(ClientAvailIdStore.ID_Store__c);
+            sforce.connection.create([ClientAvailIdStore]); 
+            window.open('apex/WB_PriceWizard?action=priceUpdate&UNIQUEID='+uniqueId,'_blank'); 
+            //window.history.go(-1)
+            history.back();
+        }
+    }
+    window.onload = pageLoad;
+</script> 
+</apex:page>

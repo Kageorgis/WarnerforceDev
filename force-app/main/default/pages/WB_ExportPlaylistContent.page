@@ -1,0 +1,28 @@
+<apex:page controller="WB_ExportPlaylistContentController" action="{!exportToExcel}" readOnly="true" cache="true" contenttype="application/x-excel#PlaylistContent.xls" showheader="false">
+
+      <!--<apex:repeat value="{!listPlaylistContents}" var="playlist">
+          <apex:pageBlockTable value="{!playlist.listPlaylistContent}"  var="cont">
+              <apex:column headerValue="Playlist content for {!playlist.PlaylistName}">
+                  
+              </apex:column>
+              <apex:column headerValue="Title Name">
+                  {!cont.titleName}
+              </apex:column>
+              <apex:column headerValue="Video Version Number">
+                  {!cont.videoVersionNumber}
+              </apex:column>
+              <apex:column headerValue="Sequence Number">
+                  {!cont.sequenceNumber}
+              </apex:column>
+          </apex:pageBlockTable>
+          
+      </apex:repeat>-->
+      <apex:repeat value="{!listPlaylistContents}" var="playlist">
+          {!nextLine} Playlist content for {!playlist.PlaylistName}
+          {!header}
+          <apex:repeat value="{!playlist.listPlaylistContent}" var="cont">
+              {!cont.titleName}{!cont.videoVersionNumber}{!cont.sequenceNumber}
+          </apex:repeat>
+      </apex:repeat>
+
+</apex:page>

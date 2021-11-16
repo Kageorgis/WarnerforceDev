@@ -1,0 +1,239 @@
+<apex:page showHeader="false" standardController="Config__c" extensions="CRM_AddConfigProductsController" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+<body style="margin:0">
+
+  <!-- REQUIRED SLDS WRAPPER -->
+  <div class="slds" ng-app="AddConfProdApp" ng-controller="AddConfProdCtrl" ng-init="loadProducts()">
+
+    <!-- MASTHEAD -->
+    <div class="slds-page-header" role="banner">
+      <div class="slds-grid">
+        <div class="slds-col slds-has-flexi-truncate">
+            <nav class="slds-m-bottom--xx-small" role="navigation">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Config__c.Tab, $ObjectType.Config__c)}">{!$ObjectType.Config__c.labelPlural}</a>
+                    </li>
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Config__c.View, Id)}">{!Config__c.Name}</a>
+                    </li>
+                </ol>
+            </nav>
+            <div class="slds-col slds-has-flexi-truncate">
+                <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Add_Product_Label}">{!$Label.CRM_Add_Product_Label}</h1>
+            </div>
+        </div>
+
+        <div class="slds-col slds-no-flex slds-align-bottom">
+            <div class="slds-button-group" role="group">
+                <button class="slds-button slds-button--neutral" ng-click="backToConfig()">{!$Label.CRM_Button_Back}</button>
+                <button class="slds-button slds-button--neutral" ng-click="saveConfigProducts(true)">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                <button class="slds-button slds-button--neutral" ng-click="saveConfigProducts(false)">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- / MASTHEAD -->
+
+    <!-- PRIMARY CONTENT WRAPPER -->
+    <div class="slds-grid">
+
+      <!-- ================== SPINNER MODAL ================ -->
+      <div class="spinnerModel" ng-show="showSpinner">
+        <div class="spinnerContent slds-spinner--medium">
+          <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+          <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+        </div>
+      </div>
+
+      <!-- SUCCESS/ERROR MESSAGE -->
+      <div ng-show="msgText" class="slds-col slds-notify slds-notify--toast slds-box--x-small slds-theme--{{msgSeverity}}" role="alert">
+          <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="msgText = '';">
+            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+            </svg>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+
+          <div class="notify__content slds-grid">
+            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+            </svg>
+
+            <div class="slds-col slds-align-middle">
+                <h2 class="slds-text-heading--small" ng-show="msgText">{{msgText}}</h2>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- CONFIG PRODUCTS TABLE -->
+    <div class="slds-col slds-col--padded">
+      <table class="slds-table slds-table--bordered slds-table--bordered slds-max-medium-table--stacked-horizontal">
+        <thead>
+          <tr class="slds-text-heading--label">
+            <th class="slds-cell-shrink">
+              <label class="slds-checkbox">
+                <input type="checkbox" name="options" ng-click="checkUncheckAll(checkAll)" ng-model="checkAll"/>
+                <span class="slds-checkbox--faux"></span>
+                <span class="slds-assistive-text">Select All</span>
+              </label>
+            </th>
+            <th class="slds-is-sortable" scope="col">
+              <div class="slds-truncate">{!$ObjectType.Product2.fields.Name.Label}</div>
+            </th>
+            <th class="slds-is-sortable" scope="col">
+              <div class="slds-truncate">{!$ObjectType.Product2.fields.ProductCode.Label}</div>
+            </th>
+            <th class="slds-is-sortable" scope="col">
+              <div class="slds-truncate">{!$ObjectType.Product2.fields.Universal_Picture_Code__c.Label}</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="slds-hint-parent" ng-repeat="confProd in configProducts">
+            <td class="slds-cell-shrink" data-label="Select Row">
+              <label class="slds-checkbox">
+                <input type="checkbox" name="options" ng-model="confProd.isSelected" />
+                <span class="slds-checkbox--faux"></span>
+                <span class="slds-assistive-text">Select Row</span>
+              </label>
+            </td>
+            <th scope="row" data-label="{!$ObjectType.Product2.fields.Name.Label}">{{confProd.product.Name}}</th>
+            <td data-label="{!$ObjectType.Product2.fields.ProductCode.Label}">{{confProd.product.ProductCode}}</td>
+            <td data-label="{!$ObjectType.Product2.fields.Universal_Picture_Code__c.Label}">{{confProd.product.Universal_Picture_Code__c}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- / PRIMARY CONTENT WRAPPER -->
+
+  </div>
+  <!-- / REQUIRED SLDS WRAPPER -->
+
+</body>
+
+<head>
+  <title>Add Config Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+
+  <style type="text/css">
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+
+  </style>
+
+  <script type="text/javascript">
+    angular
+      .module('AddConfProdApp', [])
+      .controller('AddConfProdCtrl', function($scope){
+        $scope.configProducts = [];
+        $scope.showSpinner = false;
+        $scope.msgText;
+        $scope.msgSeverity;
+
+        /* Function to load the products initially */
+        $scope.loadProducts = function(){
+          $scope.showSpinner = true;
+
+          CRM_AddConfigProductsController.getConfigProducts("{!Config__c.Id}", function(result, event) {
+            console.log(result, event);
+
+            if (!event.status) {
+              $scope.$apply(function(){
+                $scope.msgText = event.message;
+                $scope.msgSeverity = 'error';
+                $scope.showSpinner = false;
+              });
+            }
+            else {
+              $scope.$apply(function(){
+                $scope.configProducts = result;
+                $scope.showSpinner = false;
+              });
+            }
+          },{
+            escape: false,
+            timeout: 120000
+          });
+        };
+
+        /* Function to check/uncheck all the config products */
+        $scope.checkUncheckAll = function(val){
+          angular.forEach($scope.configProducts, function(item, key){
+            item.isSelected = val;
+          });
+        };
+
+        /* Function to redirect user back to Config Detail page */
+        $scope.backToConfig = function() {
+          var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+          var url = "{!URLFOR($Action.Config__c.View, Id)}";
+          
+          if (isLightningExperienceOrSf1){
+              sforce.one.navigateToURL('/lightning/r/Config__c/'+'{!Config__c.Id}'+'/view');                  
+          }else{
+              document.location.href = url;
+          }
+        };
+
+        /* Function to save the config products */
+        $scope.saveConfigProducts = function(quickSave){
+          $scope.showSpinner = true;
+          var configProducts = angular.copy($scope.configProducts);
+
+          CRM_AddConfigProductsController.setConfigProducts("{!Config__c.Id}", configProducts, function(result, event){
+            console.log(result, event);
+
+            if (!event.status) {
+              $scope.$apply(function(){
+                $scope.msgText = event.message;
+                $scope.msgSeverity = 'error';
+                $scope.showSpinner = false;
+              });
+            }
+            else {
+              $scope.$apply(function(){
+                $scope.msgText = '{!$Label.CRM_AddConfigProducts_Msg_Success}';
+                $scope.msgSeverity = 'success';
+                $scope.showSpinner = false;
+
+                if(!quickSave){
+                  $scope.backToConfig();
+                }
+
+              });
+            }
+
+          },{
+            timeout: 120000
+          });
+        };
+      });
+  </script>
+</head>
+
+</html>
+</apex:page>

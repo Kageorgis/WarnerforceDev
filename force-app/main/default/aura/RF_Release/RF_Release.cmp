@@ -1,0 +1,115 @@
+<aura:component controller="RF_ReleaseController" implements="force:lightningQuickActionWithoutHeader,force:hasRecordId" >
+    <aura:html tag="style">
+        .closeIcon {
+        display:none !important;
+        }
+        .slds-modal__content{
+        position: relative;
+        }
+    </aura:html>
+    
+    <aura:attribute name="recordId" type="String" />
+      
+    <aura:attribute name="releaseName" type="String" />
+  
+    <aura:attribute name="countryName" type="String[]" default="Select,USA,Canada"/>
+     <aura:attribute name="selectedValue" type="String" access="PRIVATE"/>
+    <aura:attribute name="shortDesc" type="String"/>
+    
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <aura:attribute name="record" type="Object" />
+    <aura:attribute name="simpleRecord" type="Object" />
+    <aura:attribute name="recordError" type="String" />
+    
+    <!--########## Start of Auto Lookup component attributes######--> 
+    <aura:handler name="oSelectedRecordEvent" event="c:SelectedRecordEvent" action="{!c.handleComponentEvent}"/>
+      <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}"/>
+    <aura:attribute name="selectedRecord" type="sObject" default="{}" description="Use,for store SELECTED sObject Record"/>
+    <aura:attribute name="listOfSearchRecords" type="List" description="Use,for store the list of search records which returns from apex class"/>
+     <aura:attribute name="SearchKeyWord" type="string"/>
+    <aura:attribute name="objectAPIName" type="string" default=""/>
+    <aura:attribute name="IconName" type="string" default=""/>
+    <aura:attribute name="label" type="string" default=""/>
+    <aura:attribute name="Message" type="String" default=""/>
+     <!--########## End of Auto Lookup component attributes ######--> 
+    
+    <force:recordData aura:id="recordEditor"
+                      fields="MPM_Short_Desc__c"
+                      layoutType="COMPACT"
+                      recordId="{!v.recordId}"
+                      targetError="{!v.recordError}"
+                      targetRecord="{!v.record}"
+                      targetFields="{!v.simpleRecord}"
+                      mode="EDIT" />
+     
+     <aura:if isTrue="{!v.isOpen}">
+   
+            <!--###### MODAL BOX Start######--> 
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"></h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <p><b>
+                           <lightning:input type="string" value="{!v.shortDesc}" label="Release Name:" />
+                                                      
+                            <div class="slds-form-element">
+                                 <ui:inputSelect label="Country" required="true" class="dynamic" aura:id="InputSelectedCountry"/> 
+                            </div>
+                             	<div class="slds-form-element">
+                      				<ui:inputSelect label="Record Type" required="true" class="dynamic" aura:id="InputRecordType"/> 
+        				  		 </div>
+                            <div class="slds-form-element">
+                            <c:customLookup objectAPIName="RF_Studio__c" IconName="standard:account" selectedRecord="{!v.selectedLookUpRecord}" label="Studio:"/>
+                                <aura:iteration items="{!v.listOfSearchRecords}" var="singleRec">
+                                    <c:customLookupResult oRecord="{!singleRec}" IconName="{!v.IconName}"/>
+                                </aura:iteration>
+                            </div>
+                            
+                                <div class="slds-form-element">
+       						           <ui:inputDate label="Physical Street Date" displayDatePicker="true" class="dynamic" aura:id="inputPhysicalStreetDate"/> 
+                               </div>
+                                
+                                <div class="slds-form-element">
+                                       <ui:inputDate label="VOD Date" displayDatePicker="true"  class="dynamic" aura:id="inputVODDate"/> 
+                                </div>
+                              
+                                
+                                <div class="slds-form-element">
+                                       <ui:inputDate label="EST Date" displayDatePicker="true" class="dynamic" aura:id="inputESTDate"/> 
+                 		         </div>
+                                                            
+                            </b>
+                        </p>
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" 
+                                          label="Close"
+                                          title="Close" 
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button variant="brand" 
+                                          label="Create"
+                                          title="Create"
+                                          onclick="{! c.createReleaseFromMPM }"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            <!--###### MODAL BOX Part END Here ######-->
+            
+        </aura:if>
+    
+    
+</aura:component>

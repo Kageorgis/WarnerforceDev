@@ -1,0 +1,68 @@
+<aura:component controller="WBCP_SendEmailController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+    
+    <aura:registerEvent name="emailTempSendEvent" type="c:SendEmailTemplateBody"/>
+    <aura:handler event="c:WBCP_SendEmailEvent" action="{!c.doAction}"/>
+    
+    <aura:attribute name="loaded" type="Boolean" default="true" />
+    <aura:attribute name="showModal" type="boolean" default="false"/>
+    <aura:attribute name="searchText" type="string" />
+    <aura:attribute name="folderId" type="string" default="All"/>
+    <aura:attribute name="emailfolderVSTemplateList" type="object[]" default="[]" />
+    <aura:attribute name="folderOptions" type="List" default="[]" />
+    <aura:attribute name="emailTemplateList" type="object[]" default="[]" />
+    <aura:attribute name="columns" type="List"/>
+    
+    <aura:attribute name="sortDirection" type="String" default="asc" />
+    <aura:attribute name="defaultSortDirection" type="String" default="asc" />
+    <aura:attribute name="sortedBy" type="String" default="Name"/>
+    
+    <aura:if isTrue="{!v.showModal}">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aura:id="Modalbox" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open" style="background-color: #4a484854;">
+            <div class="slds-modal__container tempContainer">
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModel }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Insert Email Template</h2>
+                </header>
+                <div class="slds-modal__content" id="modal-content-id-1">
+                    <div class="exampleHolder">
+                        <aura:if isTrue="{! v.loaded }">
+                            <lightning:spinner alternativeText="Loading"/>
+                        </aura:if>
+                    </div>
+                    <div class="slds-container--medium">
+                        <div class="slds-grid slds-gutters" id="selectFolder">
+                           <div class="slds-col">
+                               <lightning:combobox aura:id="folder" name="folder" label="Folder" value="All" options="{!v.folderOptions}" onchange="{!c.onSelectEmailFolder}"/>
+                            </div>
+                            <div class="slds-col">
+                                <label class="slds-form-element__label" for="select-Folder">Search</label>
+                                <lightning:input aura:id="inputText" type="search" id="searchText" placeholder="Search templates..." value="{!v.searchText}" onchange="{!c.onSearchTemplates}"/>
+                            </div>
+                        </div>
+                        <div class="slds-form--stacked mainTempDiv">
+                            <lightning:datatable
+                                                 keyField="Id"
+                                                 data="{! v.emailTemplateList }"
+                                                 columns="{! v.columns }"
+                                                 hideCheckboxColumn="true"
+                                                 onrowaction="{! c.handleRowAction }"
+                                                 defaultSortDirection="{!v.defaultSortDirection}"
+                                                 sortedDirection="{!v.sortDirection}"
+                                                 sortedBy="{!v.sortedBy}"
+                                                 onsort="{!c.handleSort}"/>
+                            
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeModel}">Cancel</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>

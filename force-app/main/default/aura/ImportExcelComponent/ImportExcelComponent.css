@@ -1,0 +1,33 @@
+.THIS .slds-page-header{
+    border-bottom: 0 !important;
+	box-shadow: none !important;
+    border: 0 !important;
+}
+
+.THIS .file-style{
+    margin-top:3%;
+}
+
+.THIS .progress-style{
+    float:right;
+}
+.THIS .back-button{
+    flex:none;
+    margin-top: 2.27%;
+}
+@media only screen and (max-width: 1800px)  {
+  .THIS .back-button{
+    margin-top: 2%;
+    }
+}
+
+@media only screen and (max-width: 1440px)  {
+  .THIS .back-button{
+    margin-top: 2.3%;
+    }
+}
+@media only screen and (max-width: 1280px) {
+  .THIS .back-button{
+    margin-top: 2.1%;
+    }
+}

@@ -1,0 +1,13 @@
+<apex:page standardController="Promotion__c" extensions="WB_PromotionClone" lightningStylesheets="true" action="{!clonePromotion}">
+    <!--apex:form >
+        <apex:inputField value="{!promo.Name}"/>
+        <apex:inputHidden value="{!promo.OwnerId}"/>
+        <apex:inputField value="{!promo.Start_Date__c}"/>
+        <apex:inputField value="{!promo.End_Date__c}"/>
+        <apex:inputField value="{!promo.Promotion_Owner__c}"/>
+        <apex:inputField value="{!promo.Description__c}"/>
+        <apex:inputField value="{!promo.Status__c}"/>
+        <apex:inputField value="{!promo.Promotion_Grouping__c}"/>
+        <apex:commandButton action="{!clonePromotion}" value="Save" id="theButton"/>
+    </apex:form-->
+</apex:page>

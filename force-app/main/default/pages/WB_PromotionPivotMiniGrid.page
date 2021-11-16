@@ -1,0 +1,460 @@
+<apex:page standardController="Promotion__c" extensions="DPT_PromotionPivotMiniGrid" showHeader="false" sidebar="false">
+<MiniGrid:GridRelatedListByObject val="{!$CurrentPage.parameters.id}"
+    obj="Promotion__c"
+    relObj="Promotion_Title__c"
+    disableBulkEdit="true"
+    disablePropertiesPanel="true"
+    defaultTemplateName="{!$CurrentPage.parameters.defaultTemplateName}"
+/>
+<style>
+div.gridbox_dhx_skyblue table.obj tr td { border-width: 1px 1px 0px 0px; }
+</style>
+<script>
+showHideShowFieldsButton = false;
+
+var pivot_point, num_cols_after_pivot;
+
+var channels = '{!JSENCODE(Promotion__c.Channels__c)}';
+var formats = '{!JSENCODE(Promotion__c.Formats__c)}';
+var pivot_groups_full = []; // the broken out channel/format listing in order
+var pivot_groups = []; // display name for the channel/format combo
+var pivot_groups_ord = {}; // sequence of the channel/format combination in the grid columns
+if (channels != '' && formats != '') {
+  channels = channels.split(';');
+  formats = formats.split(';');
+  var x = 0;
+  for (var i = 0; i < channels.length; i++) {
+    for (var j = 0; j < formats.length; j++) {
+      pivot_groups.push(channels[i] + '-' + formats[j]);
+      pivot_groups_full.push({'channel': channels[i], 'format': formats[j], 'cn': channels[i] + '_' + formats[j]});
+      pivot_groups_ord[channels[i] + '_' + formats[j]] = x;
+      x++;
+    }
+  }
+}
+
+function dieOut(msg) {
+  alert(msg);
+  CF_beginProgress(msg);
+  throw msg;
+}
+function addOpenLinkToFieldDef(fieldDef, dynamicBegin) {
+}
+function postProcessMetaResults(flds, objType) {
+    var tmpl = selectedTemplate[objType];
+    if (!tmpl || tmpl == '') {
+        dieOut('Default template must be specified for pivot grid.');
+    }
+    var sel = getTemplateById(objType, selectedTemplate[objType]);
+    var flds = sel.PowerLoader__BulkEditTemplateFields__r;
+    var hasTitle = false;
+    for (var i = 0; i < flds.length; i++) {
+        if (flds[i].Name == 'Title__c') {
+            hasTitle = true;
+        } else if (flds[i].Name == 'Channel__c') {
+            if (i == 0) dieOut('Expecting columns before Channel__c');
+            if (!hasTitle) dieOut('Expecting Title__c somewhere before Channel__c');
+
+            // make sure next one is called Format__c
+            if (i == (flds.length - 1) || flds[i+1].Name != 'Format__c') dieOut('Expecting Format__c after Channel__c');
+
+            if ((i + 1) == (flds.length - 1)) dieOut('Expecting some columns after Format__c');
+
+            // things look good
+            return;
+        }
+    }
+    dieOut('Unable to find Channel__c in template');
+}
+var OLD_templateFieldsToFieldDef = templateFieldsToFieldDef;
+templateFieldsToFieldDef = function(fieldsLoaded, templateFields, allFieldsByAPIName, obj, hiddenFields) {
+  var ret = OLD_templateFieldsToFieldDef(fieldsLoaded, templateFields, allFieldsByAPIName, obj, hiddenFields);
+  var x = [];
+  pivot_point = 0;
+  var cp;
+  var splitPoint = false;
+
+  // get all hidden fields after Format__c and put them before Channel__c
+  for (var i = 0; i < ret.length; i++) {
+    if (ret[i].field == 'Channel__c') {
+      for (var j = i + 1; j < ret.length; j++) {
+        if (ret[j].hidden) {
+          ret.splice(i, 0, ret.splice(j, 1).pop());
+        }
+      }
+      break;
+    }
+  }
+
+  for (var i = 0; i < ret.length; i++) {
+    ret[i].summary = false;
+
+    // don't allow a split at or after Channel__c
+    if (ret[i].split && (pivot_point > 0 || ret[i].field == 'Channel__c')) ret[i].split = false;
+
+    if (ret[i].field == 'Format__c') pivot_point = i;
+  }
+
+  // get everything up till format
+  x = ret.splice(0, pivot_point + 1 - 2);
+
+  // get rid of channel and format
+  ret.splice(0, 2);
+  pivot_point = x[x.length - 1].field;
+
+  num_cols_after_pivot = ret.length;
+
+  for (var i = 0; i < pivot_groups.length; i++) {
+    for (var j = 0; j < ret.length; j++) {
+      cp = $.extend({}, ret[j]);
+      cp.pivot_field = cp.field;
+      cp.export_label = pivot_groups[i] + ' ' + cp.name;
+      cp.pivot_ind = i;
+      cp.field += '__X' + i;
+      x.push(cp);
+    }
+  }
+  return x;
+}
+function buildGrid(fieldDef, func) {
+    __cf._attachGrid(gridCell, {
+        'var': 'mygrid',
+        grid: {
+            fields: fieldDef,
+            allowFilter: true,
+            toolbar: {items: getToolbar(selRel.childSObjectAPIName, 'mygrid')},
+            allowBulkEdit: true,
+            postInit: function(grid) {
+                grid.CF_searchGetIdsFunc = WB_doRemoterSearchGetIds;
+                grid.CF_searchLoadDataForIdsFunc = doRemoterGetDataForIds;
+                grid.CF_saveRecsFunc = doRemoterSaveRecs;
+
+                var meth = grid.attachEvent('CF_onLoadComplete', function() {
+                    var seq = $.getUrlParam('sortSeq');
+                    if (seq) {
+                        mygrid.CF_forceSort(JSON.parse(seq));
+                    }
+                    grid.detachEvent(meth);
+                });
+                if (func) func();
+            },
+            preInit: function(grid) {
+                var x = [];
+                pivot_point = grid.CF_indexByField[pivot_point] + 1;
+                for (var i = 0; i < grid.CF_fieldDef.length; i++) {
+                    if (i < pivot_point) x.push('');
+                    else x.push((i - pivot_point) % num_cols_after_pivot == 0 ? pivot_groups[(i - pivot_point) / num_cols_after_pivot] : '#cspan');
+                }
+                var s = [];
+                for (var i = 0; i < x.length; i++) s.push('font-weight: bold;');
+                grid.attachHeader(x, s);
+
+                var colors = [];
+                for (var i = 0; i < pivot_point; i++) {
+                    colors.push('');
+                }
+                for (var i = 0; i < pivot_groups.length; i++) {
+                    var color = i % 2 == 0 ? '#fff8dc' : '#eee';
+                    for (var j = 0; j < num_cols_after_pivot; j++) {
+                        colors.push(color);
+                    }
+                }
+                grid.setColumnColor(colors.join(','));
+            }
+        }
+    });
+}
+function WB_doRemoterSearchGetIds(loadPageSize, searchResultsHandler, extraParams) {
+    {!$RemoteAction.DPT_PromotionPivotMiniGrid.getIdsByCriteria}('{!JSENCODE($CurrentPage.parameters.id)}', fieldsLoaded[selRel.childSObjectAPIName], loadPageSize, searchResultsHandler, extraParams);
+}
+
+
+function postProcessToolbar(toolbar, objType, grid_var) {
+  for (var i = toolbar.length - 1; i >= 0; i--) {
+    if (toolbar[i].id == 'Edit' || toolbar[i].id == 'add') toolbar.splice(i, 1);
+    if (toolbar[i].id == 'delete') {
+      toolbar[i].onClick = function(grid) {
+          var sel = grid.getSelectedRowId();
+          if (!sel) return;
+          if (!$.isTemporaryId(sel)) {
+            alert('Only new records can be deleted.');
+            return;
+          }
+
+          grid.CF_idsToDel = {};
+          grid.CF_deleteRow(sel);
+          grid.CF_idsToDel[sel] = 1;
+          grid.CF_flushIdsToDel();
+      };
+    }
+  }
+}
+
+var OLD_grid_CF_displayData = dhtmlXGridObject.prototype.CF_displayData;
+dhtmlXGridObject.prototype.CF_displayData = function() {
+    // create a new data sequence
+    var CF_dataSequence = [];
+    var CF_dataById = [];
+    var CF_idsByUniq = {};
+    for (var x = 0; x < this.CF_dataSequence.length; x++) {
+        // see if we already have this grouping
+        var idd = this.CF_dataSequence[x];
+        var row = this.CF_dataById[idd];
+
+        var uniq = row['Title__c'];
+        var newRow = CF_dataById[uniq];
+        if (!newRow) {
+            CF_idsByUniq[uniq] = {};
+            CF_dataSequence.push(uniq);
+            newRow = {'Id': uniq};
+            CF_dataById[uniq] = newRow;
+            for (var i = 0; i < pivot_point; i++) {
+                var fld = this.CF_fieldDef[i].field;
+                if (row[fld] !== undefined) {
+                    newRow[fld] = row[fld];
+                    if (fld.endsWith('__c')) fld = fld.substring(0, fld.length - 1) + 'r';
+                    if (row[fld] !== undefined) newRow[fld] = row[fld];
+                }
+            }
+        }
+        var cn = row['Channel__c'] + '_' + row['Format__c'];
+        var cnip = '__X' + pivot_groups_ord[cn];
+        CF_idsByUniq[uniq][cn] = row.Id;
+        CF_dataById[uniq].Id = uniq;
+        for (var i = pivot_point; i < pivot_point + num_cols_after_pivot; i++) {
+            var fld = this.CF_fieldDef[i].pivot_field;
+            if (row[fld] !== undefined) {
+                newRow[fld + cnip] = row[fld];
+                if (fld.endsWith('__c')) fld = fld.substring(0, fld.length - 1) + 'r';
+                if (row[fld] !== undefined) newRow[fld + cnip] = row[fld];
+            }
+        }
+    }
+    this.CF_dataById = CF_dataById;
+    this.CF_idsByUniq = CF_idsByUniq;
+    this.CF_dataSequence = CF_dataSequence;
+    return OLD_grid_CF_displayData.call(this);
+}
+
+dhtmlXGridObject.prototype.CF_beginVFEdit = function(idd, ind) {
+   if (this != this.CF_getRealGrid()) {
+        return this.CF_getRealGrid().CF_beginVFEdit(idd, ind);
+   }
+
+   var fld = this.CF_fieldDef[ind]['pivot_field'];
+   if (!fld) fld = this.CF_fieldDef[ind]['field'];
+
+   // in case the user doesn't have create access
+   var sampleIdd;
+   if (!idd) {
+     // bulk editing - assuming we're here because something is already checked (calling function takes care of this)
+     sel = this.CF_getGridCheckedRows();
+     if (sel.length == 0) return;
+     /*
+     var rec = false;
+     for (var i = 0; i < sel.length; i++) {
+        rec = this.CF_getBufferSequenceRec(sel[i]);
+        if ($.isLiveId(rec.idd)) {
+            sampleIdd = rec.idd;
+            break;
+        }
+     }
+     */
+   } else if ($.isLiveId(idd)) {
+        for (var x in this.CF_idsByUniq[idd]) {
+            if ($.isLiveId(this.CF_idsByUniq[idd][x])) {
+                sampleIdd = this.CF_idsByUniq[idd][x];
+                break;
+            }
+        }
+   } else {
+        sampleIdd = false;
+   }
+   var dependencyList = this.CF_getFieldDependency(ind);
+
+   var vfUrl = $.CF_getApexURL(CF_NAMESPACE_PREFIX + 'Configero_PropSelector?t=' + escape(this.CF_fieldDef[ind]['object']) + (sampleIdd ? '&idd=' + escape(sampleIdd) : '') + '&f=' + escape(fld));
+
+   var g = this;
+   var selectFunc = function(vals) {
+        var recs = [];
+        if (!idd) {
+            for (var i = 0; i < sel.length; i++) {
+                rec = g.CF_getBufferSequenceRec(sel[i]);
+                if (g.CF_getUserData(rec.idd, 'deleted') || $.isGroupId(rec.idd))
+                    continue;
+                recs.push(rec);
+            }
+        } else {
+            recs.push(g.CF_getByIdFromBackingData(idd));
+        }
+        for (var i = 0; i < vals.length; i++) {
+            for (var k = 0; k < recs.length; k++) {
+                g.CF_setValueInCellRec(recs[k], ind, vals[i].value);
+                g.CF_checkWasChanged(recs[k].idd, ind, vals[i].value);
+            }
+        }
+        $('#CF_vfDialog').dialog('close');
+   };
+   var initFunc = function() {
+     var vals = [];
+     if (idd) {
+       vals.push({field: fld, value: g.CF_getRowValueInCell(idd, ind)});
+     }
+     return vals;
+   };
+   var ifr = $('<iframe style="width: 100%; height: 100%; border: 0px" />').attr('src', vfUrl);
+   ifr.get(0).selectFunc = selectFunc;
+   ifr.get(0).initFunc = initFunc;
+   $('#CF_vfDialog').html(ifr).dialog('open');
+}
+
+dhtmlXGridObject.prototype.CF_refreshSpecificRecordIds = function(idsRequested) {
+    // don't do this any more
+}
+function getEntireRemoterSaveRecsBeforePivot(x) {
+    var rec = mygrid.CF_getByIdFromBackingData(x);
+    var ret = {};
+
+    // send everything up till this point
+    for (var j = 0; j < pivot_point; j++) {
+        if (mygrid.CF_fieldDef[j]['skip_track_changes']) continue;
+
+        var newVal = false;
+        if (mygrid.CF_fieldDef[j]['related']) {
+            newVal = mygrid.CF_getUserData(rec.idd, mygrid.CF_fieldDef[j]['field']);
+        } else {
+            newVal = mygrid.CF_getValueFromCellRec(rec, j);
+        }
+        if ((mygrid.CF_fieldDef[j]['type'] == 'ch' || mygrid.CF_fieldDef[j]['type'] == 'chro') && newVal == '0') {
+            newVal = null;
+        }
+
+        // no need to send if not defined
+        if (newVal == null || newVal === undefined || newVal === '') continue;
+
+        if (newVal && mygrid.CF_fieldDef[j].soapType == 'DATE') {
+            newVal = $.formatDate($.parseDate(newVal), 'mm/dd/yy');
+        } else if (newVal && mygrid.CF_fieldDef[j].soapType == 'DATETIME') {
+            newVal = $.formatDateTime($.parseDateTime(newVal), 'mm/dd/yy');
+        }
+        ret[mygrid.CF_fieldDef[j].field] = newVal;
+    }
+    return ret;
+}
+function doRemoterSaveRecs(recsToSend, saveChangesHandler, extraParams) {
+    var objType = selRel.childSObjectAPIName;
+    var toSend = {};
+    var errors = {};
+    var sendIds = {};
+    for (var x in recsToSend) {
+        // see which formats/channels need to be sent
+        var grpsToSend = {};
+        var grp_num = -1;
+
+        // entire recordset up till pivot point
+        var xas = getEntireRemoterSaveRecsBeforePivot(x);
+
+        // only modified entries up till pivot point
+        var xay = {};
+        for (var i = 0; i < pivot_point; i++) {
+            if (recsToSend[x][mygrid.CF_fieldDef[i].field] !== undefined) {
+                xay[mygrid.CF_fieldDef[i].field] = recsToSend[x][mygrid.CF_fieldDef[i].field];
+            }
+        }
+
+        if ($.isLiveId(x) && !$.isEmptyObject(xay)) {
+            // at least one thing in this row is in the DB - so queue up any changes till this point
+            for (var y in mygrid.CF_idsByUniq[x]) {
+                var tmp_grp_num = pivot_groups_ord[y];
+                grpsToSend[tmp_grp_num] = {'Id': mygrid.CF_idsByUniq[x][y]};
+
+                for (var z in xay) {
+                    grpsToSend[tmp_grp_num][z] = xay[z];
+                }
+
+                sendIds[grpsToSend[tmp_grp_num]['Id']] = {'cn': y, 'uniq': x};
+            }
+        }
+
+        for (var i = pivot_point; i < mygrid.CF_fieldDef.length; i++) {
+            if ((i - pivot_point) % num_cols_after_pivot == 0) grp_num++;
+
+            if (recsToSend[x][mygrid.CF_fieldDef[i].field] !== undefined) {
+                var cnn = pivot_groups_full[grp_num]['cn'];
+                if (!grpsToSend[grp_num]) {
+                    grpsToSend[grp_num] = {};
+                    if (mygrid.CF_idsByUniq[x]) {
+                        grpsToSend[grp_num]['Id'] = mygrid.CF_idsByUniq[x][cnn];
+                    }
+                    if (!grpsToSend[grp_num]['Id']) {
+                        // this is a new record - put everything up till pivot_point in it - along with Channel and Format
+                        grpsToSend[grp_num]['Channel__c'] = pivot_groups_full[grp_num]['channel'];
+                        grpsToSend[grp_num]['Format__c'] = pivot_groups_full[grp_num]['format'];
+
+                        for (var y in xas) {
+                            grpsToSend[grp_num][y] = xas[y];
+                        }
+
+                        // make up a temporary ID for this thing and keep track of it
+                        var idd = '-' + __cf._rndstr(20);
+                        grpsToSend[grp_num]['Id'] = idd;
+                    }
+
+                    // keep track of this ID
+                    sendIds[grpsToSend[grp_num]['Id']] = {'cn': cnn, 'uniq': x};
+                }
+                grpsToSend[grp_num][mygrid.CF_fieldDef[i].pivot_field] = recsToSend[x][mygrid.CF_fieldDef[i].field];
+            }
+        }
+
+        if ($.isLiveId(x)) {
+            for (var y in grpsToSend) {
+                toSend[grpsToSend[y]['Id']] = grpsToSend[y];
+            }
+        } else {
+            // everything in here is new - need to send a made up fake Id, everything including channel/format, and stuff after pivot point
+            if ($.isEmptyObject(grpsToSend)) {
+                // this is an error condition - only non pivot fields were defined - we need more than that
+                errors[x] = ['Values after Channel/Format need to be specified'];
+            } else {
+                for (var y in grpsToSend) {
+                    toSend[grpsToSend[y]['Id']] = grpsToSend[y];
+                }
+            }
+        }
+    }
+    for (var x in toSend) {
+        delete toSend[x]['Id'];
+    }
+    PowerLoader.Configero_Framework.saveRecs(objType, fieldsLoaded[objType], toSend, function(res, event) {
+        var successes = {};
+        if (event.status) {
+            for (var idd in res['errors']) {
+                errors[sendIds[idd]['uniq']] = [res['errors'][idd][0]];
+            }
+            for (var idd in res['success']) {
+                var uniq = sendIds[idd]['uniq'];
+                if ($.isTemporaryId(idd)) {
+                    // keep track of the new Id
+                    if (!mygrid.CF_idsByUniq[uniq]) mygrid.CF_idsByUniq[uniq] = {};
+                    mygrid.CF_idsByUniq[uniq][sendIds[idd]['cn']] = res['success'][idd][0];
+                }
+                if (errors[uniq] === undefined) {
+                    // no errors in this whole line - add it to successes
+                    successes[uniq] = [$.isTemporaryId(idd) ? res['success'][idd][0] : idd];
+                }
+            }
+            for (var idd in successes) {
+                if ($.isTemporaryId(idd)) {
+                    mygrid.CF_idsByUniq[successes[idd]] = mygrid.CF_idsByUniq[idd];
+                    delete mygrid.CF_idsByUniq[idd];
+                }
+            }
+        }
+        res['success'] = successes;
+        res['errors'] = errors;
+        saveChangesHandler(res, event);
+    }, extraParams);
+}
+</script>
+</apex:page>

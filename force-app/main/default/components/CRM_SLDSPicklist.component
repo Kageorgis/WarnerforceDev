@@ -1,0 +1,30 @@
+<apex:component >
+<script type="text/ng-template" id="multiselect-picklist.html">
+    <div class="slds-picklist" aria-expanded="true">
+        <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="openPopup = !openPopup">
+            <span class="slds-truncate" ng-hide="selectedopts.length > 0">{{placeholder ? placeholder  : '&nbsp;'}}</span>
+            <span class="slds-truncate" ng-show="selectedopts.length == 1">{{selectedopts[0].label}}</span>
+            <span class="slds-truncate" ng-show="selectedopts.length > 1">{{selectedopts.length}} Selected</span>
+            <svg aria-hidden="true" class="slds-icon">
+                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#down'}}"></use>
+            </svg>
+        </button>
+        <div class="slds-dropdown slds-dropdown--left slds-dropdown--menu" ng-show="openPopup">
+            <ul class="slds-dropdown__list" role="menu">
+                <li href="#" class="slds-dropdown__item slds-truncate" ng-repeat="opt in options" ng-class="{'slds-is-selected' : opt.selected }" ng-hide="opt.removeAccess">
+                    <a href="javascript:void(0)" role="menuitemradio" ng-click="onItemClick(opt)" >
+                        <p class="slds-truncate">
+    
+                            <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#check'}}"></use>
+                            </svg>
+                            {{opt.label}}
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>  
+</script>
+
+</apex:component>

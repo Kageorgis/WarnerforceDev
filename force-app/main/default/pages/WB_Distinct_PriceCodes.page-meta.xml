@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>38.0</apiVersion>
+    <availableInTouch>false</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Page used in grid to show the distinct price codes as a dropdown.</description>
+    <label>WB Distinct PriceCodes</label>
+    <packageVersions>
+        <majorNumber>1</majorNumber>
+        <minorNumber>328</minorNumber>
+        <namespace>PowerLoader</namespace>
+    </packageVersions>
+</ApexPage>

@@ -1,0 +1,11 @@
+<apex:page standardController="EC_Tracker__c" showHeader="false" sidebar="false"  extensions="WB_Sequence_Running_Order"><apex:slds />
+
+    <apex:form id="updateform">
+      <apex:actionFunction name="updateSequenceRunnigOrder" action="{!updateSequence_Running_Order}" rerender="updateform">
+          <apex:param name="ECTracker_Id" value="{!EC_Tracker__c.Id}" assignTo="{!ECTracker_Id}"/>
+     </apex:actionFunction> 
+     </apex:form>
+
+    <PowerGrid:PowerGrid gridTemplateId="a4R0B000000PDrLUAW" />
+
+</apex:page>

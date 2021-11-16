@@ -1,0 +1,23 @@
+<apex:page StandardController="Announcement_Rule__c" recordSetVar="AnnouncementRules" extensions="WB_Announcement_Confirmation_Controller">
+<script type = "text/javascript">
+    function pageLoad(){
+        var SelARsize = '{!selectedARsize}';
+        var selectedRecs = ('{!selectedAR}').split(",");
+        
+        if(SelARsize == 0){
+            alert("Please select at least one row");
+            history.back();
+        }else{
+            var ids = selectedRecs.join(',');
+            ids = ids.replace(/\s|\[|\]/g,"");
+            var newWin = window.open("apex/WB_Announcement_Confirmation?ID="+ids+"&param=AnnocementTypeListView","_blank"); 
+            if(!newWin || newWin.closed || typeof newWin.closed=='undefined'){ 
+                    alert('Please allow the pop-up and Refresh the Page.');
+            }else{
+                    history.back();
+            }
+        }
+    }
+    window.onload = pageLoad;
+</script> 
+</apex:page>

@@ -1,0 +1,199 @@
+<apex:page standardController="Local_Title__c" recordSetVar="Local_Title__c" tabStyle="Local_Title__c" extensions="WB_ManagePlayListLocalData_Controller">
+
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css" rel="stylesheet"/>
+ <script src="https://code.jquery.com/jquery-1.8.2.js"></script>
+ <script src="https://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css"/>
+<style type="text/css">
+.dateFormat{
+   visibility:hidden;
+}
+
+.round-button {
+    width:35%;
+}
+.round-button-circle {
+    width: 90%;
+    height:0;
+    padding-bottom: 90%;
+    border-radius:50%;
+    border:7px solid lightgreen;
+    overflow:hidden;
+    
+    background: lightgreen; 
+    box-shadow: 0 0 0px lightgreen;
+}
+.round-button-circle:hover {
+    background:lightgreen;
+}
+.round-button a {
+    display:block;
+    float:left;
+    width:100%;
+    padding-top:50%;
+    padding-bottom:50%;
+    line-height:1em;
+    margin-top:-0.5em;
+    
+    text-align:center;
+    color:darkgreen;
+    font-family:Verdana;
+    font-size:0.5em;
+    font-weight:bold;
+    text-decoration:none;
+}
+.autoComplete_fixedHeight {
+    font-size:12px;
+    max-height: 250px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+.labelCaptionValue {
+	font-size: 13px;
+	font-weight:Bold;
+	color:Blue;
+
+}
+.labelCaption {
+	font-size: 13px;
+	font-weight:Bold;
+
+}
+
+</style>
+ 
+    <apex:outputpanel >
+     <apex:actionstatus id="loadingStatus">
+      <apex:facet name="start">
+          <div class="waitingSearchDiv" id="el_loading" style="background-color: #DCD6D6; height: 100%;opacity:0.80;width:100%;">
+          <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+            <img class="waitingImage" src="/img/loading.gif"     title="Please Wait..." />
+            <span class="waitingDescription">Processing...</span>
+          </div>
+          </div>
+      </apex:facet>
+     </apex:actionstatus>
+    </apex:outputpanel>
+    
+    <apex:form >
+        <apex:pageMessages id="pgmsg"/>
+                    
+        <apex:outputPanel id="msgPanelHeader" title="Content Local Data">
+        <font size="4">
+            <p><b>&emsp;<font color="Maroon">Playlist Local Data Maintenance </font><br/> </b></p>
+        </font>
+           <!-- <p><b>
+            &emsp;&emsp;Season Title&nbsp;: &emsp;<i> <a href="/{!playlistLD.Id}"> <font color="Blue">{!playlistVV} </font></a></i> <br/> 
+            &emsp;&emsp;Country &emsp;&nbsp;&nbsp;&nbsp;&nbsp;: &emsp;<font color="Blue"><i>  {!playlistCountry} </i></font> <br/> 
+            &emsp;&emsp;Language &emsp;&nbsp;: &emsp;<font color="Blue"><i> {!playlistLanguage} </i></font> <br/>
+            &emsp;&emsp;Playlist &emsp;&emsp;&nbsp;&nbsp;: &emsp;<font color="Blue"><i> {!playlistName} </i></font><br/>
+            &emsp;&emsp;Local Data Sync &nbsp;&nbsp;: &emsp; <font><i><apex:inputText styleClass="autocomplete" value="{!selectedlocalDataSyncGrNm}"/></i></font></b></p><br/>
+            -->
+            
+            <table style="margin-left:16px">
+                <tr>
+                    <td><apex:outputText value="Season Title: " styleclass="labelCaption" /></td>
+                    <td><apex:outputLink value="/{!playlistLD.Id}" styleClass="labelCaptionValue">{!playlistVV}</apex:outputLink></td>
+                </tr>
+                <tr>
+                    <td><apex:outputText value="Country: " styleClass="labelCaption"/></td>
+                    <td><apex:outputText value="{!playlistCountry}" styleClass="labelCaptionValue"/></td>
+                </tr>
+                <tr>
+                    <td><apex:outputText value="Language: " styleClass="labelCaption"/></td>
+                    <td> <apex:outputText value="{!playlistLanguage}" styleClass="labelCaptionValue"/></td>
+                </tr>
+                <tr>
+                    <td><apex:outputText value="Playlist: " styleClass="labelCaption"/></td>
+                    <td><apex:outputText value="{!playlistName}" styleClass="labelCaptionValue"/></td>
+                </tr>
+                <tr>
+                    <td><apex:outputText value="Local Data Sync: " styleClass="labelCaption"/></td>
+                    <td><apex:inputText styleClass="autocomplete" value="{!selectedlocalDataSyncGrNm}"/></td>
+                </tr>
+            </table>
+        </apex:outputPanel>
+            
+        <apex:pageBlock id="PageBlock">
+
+
+            <apex:outputPanel id="msgPanel" rendered="{!isError}">
+                <p><b><font color="red"> Warning:  Some Episodes for the Playlist do not have a Local Data record yet, and will not appear in the list below. </font></b></p> <br/>
+            </apex:outputPanel>
+            
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Update" action="{!updateContentLocalData}"  reRender="msgPanel, infoPanel, pgmsg " status="loadingStatus" oncomplete="clearSyncGroup();"/>
+                <apex:commandButton value="Reset" action="{!getContentLocalData}"  status="loadingStatus"/>
+                <apex:commandButton value="Back" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection id="infoPanel" columns="1">
+                <apex:pageBlockTable id="table" value="{!contentLocalData}" var="ldvar" >
+                    <apex:column headerValue="Title" style="width: 3500px;">
+                        <a href="/{!ldvar.Id}">{!ldvar.TitleF__c}</a>
+                        <!--{!ldvar.TitleF__c}-->
+                    </apex:column>    
+                    <apex:column headerValue="Local Title" style="width: 1000px;">
+                        <apex:inputTextarea value="{!ldvar.Local_Title__c}" style="width: 300px;">
+                        </apex:inputTextarea>
+                    </apex:column>    
+                   <apex:column headerValue="Local Category" >
+                        <apex:outputField value="{!ldvar.Local_Category__c}" />
+                    </apex:column>    
+                    <apex:column headerValue="Category Override" >
+                        <apex:inputField value="{!ldvar.Category__c}" >
+                        </apex:inputField>
+                    </apex:column>   
+                   <apex:column headerValue="US TV Air Date" >
+                        <apex:outputField value="{!ldvar.Title__r.US_TV_Air_Date_Formula__c}" />
+                    </apex:column>    
+                    <apex:column headerValue="Local TV Air Date" >
+                        <apex:inputField value="{!ldvar.Local_TV_Air_Date__c}" style="width: 70px;">
+                        </apex:inputField>
+                    </apex:column>                 
+                    <!--                   
+                    <apex:column headerValue="Local Run Time" >
+                        <apex:inputField value="{!ldvar.Local_Run_Time__c}" style="width: 80px;">
+                        </apex:inputField>
+                    </apex:column>
+                    <apex:column headerValue="Local Season" >
+                        <apex:inputField value="{!ldvar.Local_Season__c}" style="width: 80px;">
+                        </apex:inputField>
+                    </apex:column>
+                    -->
+                    <apex:column headerValue="Local Episodes" >
+                        <apex:inputField value="{!ldvar.Local_Episodes__c}" style="width: 80px;">
+                        </apex:inputField>
+                    </apex:column>
+                    <apex:column headerValue="Local Rating" >
+                        <apex:inputField value="{!ldvar.Local_Rating__c}" style="width: 80px;">
+                        </apex:inputField>
+                    </apex:column>                    
+                </apex:pageBlockTable> 
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>        
+    </apex:form>
+    
+    <!--ER-1002
+        Added By - CAS Team
+        Date -     15 July'17-->
+    <script type="text/javascript"> 
+        //var j$ = jQuery.noConflict();
+        var localDataSyncGroupList =[];
+        <apex:repeat value="{!LocalDataSyncGroup}" var="group">            
+            localDataSyncGroupList.push('{!group.name}');            
+        </apex:repeat>
+        //on Document ready
+            $(document).ready(function(){
+               $(".autocomplete").autocomplete({
+                   source : localDataSyncGroupList,
+            });
+            $(".autocomplete").autocomplete("widget").addClass("autoComplete_fixedHeight"); 
+        });   
+        function clearSyncGroup() {
+          $(".autocomplete").val("");
+        }
+</script>
+</apex:page>

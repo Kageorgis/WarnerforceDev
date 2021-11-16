@@ -1,0 +1,173 @@
+<apex:page standardController="Order" extensions="CRM_AddOrderProductsController" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+      <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+      <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+      
+      <script>
+            window.$Label = window.$Label || {}; 
+            window.$Label.addSuccessMsg = "{!$Label.CRM_Deal_Entry_Add_Products_Message}";
+      </script>
+      
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular-sanitize.min.js')}" />
+      <!-- <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/underscore-min.js')}" /> -->
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/ng-infinite-scroll.min.js')}" />
+      
+      <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/AddProductsController.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+      
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.min.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library)}/datepicker/locales/bootstrap-datepicker.{!UserLocaleLanguage}.min.js" />
+      <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+      
+      <!-- svg4everybody.js was not used since causing performance issues in IE and overkilling the CPU -->
+      <!-- <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svg4everybody.js')}" /> -->
+      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+      
+      <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" />
+      <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/ngsf-directives.js')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'css/AddProducts.css')}" />
+
+      <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+       <!-- <apex:includeScript value="/lightning/lightning.out.js" /> -->
+       <!-- <apex:includeScript value="/canvas/sdk/js/publisher.js" /> -->
+      
+      <script> 
+        /* Login to sforce proxy service */
+        sforce.connection.sessionId = "{!$Api.Session_ID}";
+        
+        /* Pass a few dynamic parameters */
+        angular.module("appConfig", [])
+            .service("appConfig", function() {
+                return {
+                    resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                    resourceAddProducts : '{!URLFOR($Resource.CRM_AddProducts_Resources)}'.replace('?isdtp=p1',''),
+                    recordType: 'Order',
+                    recordId: '{!Order.Id}',
+                    userTerritory : '{!TEXT($User.Territory__c)}',
+                    breadcrumbObjectName: '{!$ObjectType.Order.labelPlural}',
+                    breadcrumbObjectLink: '{!URLFOR($Action.Order.Tab, $ObjectType.Order)}',
+                    breadcrumbRecordName: "{!Order.OrderNumber}",
+                    breadcrumbRecordLink: '{!URLFOR($Action.Order.View,Id)}',
+                    priceBookId: '{!Order.Pricebook2Id}',
+                    apexController: CRM_AddOrderProductsController,
+                    clientIpAddress: '{!sourceIp}',
+                    onSaveSuccessUrl: '{!URLFOR($Page.CRM_EditOrderProducts,null,[ordid=Order.Id])}',
+                    datepickerOptions: {language : '{!userLocale}', format: '{!UserDateFormat}', todayHighlight: true, clearBtn: true, todayBtn: true},
+                    isItaly : {!isItaly} //US#788 UNBW products displayed for Italy
+                };
+            });
+        
+        function checkUncheckAll() {
+            var val = $("#select-all").prop("checked");
+            $("input[id^='select-row-']").prop('checked', val);
+        }
+         /*
+        $(document).ready(function(){
+            svg4everybody();
+        });
+        */
+      </script>
+    </head>
+    <body>
+      <div xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmAddProduct" ng-cloak="ngCloak" class="slds" ng-controller="crmAddProductController" ng-init="loadNextProducts()">
+        <div class="spinnerModel" ng-show="showSpinner">
+          <div class="spinnerContent slds-spinner--large">
+            <img src="{{appConfig.resourceSlds+'/assets/images/spinners/slds_spinner_brand.gif'}}" alt="Loading..." />
+          </div>
+        </div>
+        
+        <!-- HEADER /SIDEBAR -->
+        <crm-add-products-header></crm-add-products-header>
+        
+        <!-- Main Content with Filter and results -->
+        <div class="slds-col slds-grid-frame">
+          <div class="slds-grid">
+            <div class="slds-col--padded slds-max-x-small-hide" id="sidebar" ng-class="{'slds-hide': !sidebarOn}">
+                <crm-add-products-sidebar select-Options="selectOptions" search="search" on-refine="refineFilters()" on-reset="clearFilters()"></crm-add-products-sidebar>
+            </div>
+            
+            <!-- RESULT VIEW: STARTS -->
+            <div class="slds-col--padded slds-size--1-of-1">
+              
+              <div ng-show="pageMsg" class="slds-size--1-of-1 slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                <span class="slds-assistive-text">Info</span>
+                <button class="slds-button slds-notify__close" ng-click="pageMsg=''">
+                  <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                    <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                  </svg>
+                  <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid">
+                  <h2 class="slds-col slds-text-heading--small">{{pageMsg}}</h2>
+                </div>
+              </div>
+
+              <div class='slds-clearfix slds-has-divider--bottom slds-list__item'>
+                  <div class='slds-grid slds-float--right'>
+                    <div class="slds-col slds-m-around--x-small slds-button-group" role="group">
+                        <button ng-disabled="search.pageCount <= 1  || search.streetDate != null || search.listPriceFrom != null || search.listPriceTo != null" ng-click="loadPrevProducts()" class="slds-button slds-button--small slds-button--neutral">
+                            <svg aria-hidden="true" class="slds-button__icon">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#chevronleft'}}"></use>
+                            </svg>
+                            {!$Label.CRM_Prev}
+                        </button>
+                        <button ng-disabled="search.pageCount >= maxPageCount || search.streetDate != null || search.listPriceFrom != null || search.listPriceTo != null" ng-click="loadNextProducts()" class="slds-button slds-button--small slds-button--neutral">
+                          {!$Label.CRM_Next}
+                          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--right">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#chevronright'}}"></use>
+                            </svg>
+                        </button>
+                    </div>
+                  </div>
+              </div>
+
+              <!-- RESULT: GRID VIEW -->
+              <crm-add-products-grid-view></crm-add-products-grid-view>
+              <!-- RESULT: GRID VIEW ENDS -->
+              
+              <!-- RESULT: LIST VIEW -->
+              <crm-add-products-list-view></crm-add-products-list-view>
+              <!-- RESULT: LIST VIEW ENDS -->
+            </div><!-- RESULT VIEW: ENDS --> 
+          </div><!-- GRID ENDS         -->
+          
+          
+          <!-- Modal dialog for product details -->
+          <div id="productMoreInfoPopup" ng-show="moreInfoProduct">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+              <div class="slds-modal__container" ng-click="$event.stopPropagation()">
+                <div class="slds-modal__header">
+                  <h2 class="slds-text-heading--medium" ng-bind-html="moreInfoProduct.name"></h2>
+                  <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="hideMoreInfoPopup()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                </div>
+                <div class="slds-modal__content">
+                    <iframe style="height:100%" src="{{moreInfoProductUrl}}" id="wb-moreInfo" />
+                </div>
+              </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+          </div>
+          
+        </div>
+        
+        <c:CRM_SLDSPicklist />
+        <c:CRM_AddProductsSidebar />
+        <c:CRM_AddProductsHeader />
+        <c:CRM_AddProductsGridview />
+        <c:CRM_AddProductsListview /> 
+      </div>
+      <!-- SLDS ENDS -->
+    </body>
+  </html>
+</apex:page>

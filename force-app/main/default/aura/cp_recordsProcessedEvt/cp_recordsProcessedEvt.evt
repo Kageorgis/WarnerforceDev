@@ -1,0 +1,3 @@
+<aura:event type="APPLICATION" description="cp_recordsProcessedEvt">
+    <aura:attribute name="errorList" type="List"/>
+</aura:event>

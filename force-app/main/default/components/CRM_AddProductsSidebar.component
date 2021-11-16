@@ -1,0 +1,158 @@
+<apex:component >
+
+        <script type="text/ng-template" id="add-products-sidebar.html">
+              <div class="slds-form--stacked">
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label" for="titleName">{!$Label.CRM_Product_Title}</label>
+                  <div class="slds-form-element__control">
+                    <input id="titleName" class="slds-input" type="text" ng-model="search.title" ng-keyup="$event.keyCode == 13 && onRefine()"/>
+                  </div>
+                </div>
+
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label" for="materialNumber">{!$Label.CRM_Product_Material_Number}</label>
+                  <div class="slds-form-element__control">
+                    <input id="materialNumber" class="slds-input" type="text" ng-model="search.materialNumber" ng-keyup="$event.keyCode == 13 && onRefine()" />
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Type__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.productTypes" selectedOpts="search.productTypes" multiple="true"/>
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$Label.CRM_Dist_Chain_Product_Status}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.distChainProdStatus" selectedOpts="search.distChainProdStatus" multiple="true"/>
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Release_Category__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.releaseCategories" selectedOpts="search.releaseCategories" multiple="true"/>
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Market__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.productMarkets" selectedOpts="search.productMarkets" multiple="true" />
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Format__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.productFormats" selectedOpts="search.productFormats" multiple="true" />
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Genre__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.productGenres" selectedOpts="search.productGenres" multiple="true" />
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Language_Code__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.prodLanguages" selectedOpts="search.prodLanguages" multiple="true" />
+                  </div>
+                </div>
+                <div class="slds-form-element" ng-show="{!$ObjectType.Product2.fields.Franchise_Type__c.Accessible}">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Franchise_Type__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.franchiseTypes" selectedOpts="search.franchiseTypes" multiple="true" />
+                  </div>
+                </div>
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Product_Rating__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.productRatings" selectedOpts="search.productRatings" multiple="true" />
+                  </div>
+                </div>
+				<!-- US#317 (Japan) Start -->
+                <!--<div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Street_Date__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.StreetDates" selectedOpts="search.StreetDate" multiple="false" />
+                  </div>
+                </div>-->
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Street_Date__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <input placeholder="{!$Label.CRM_From_Label}" type="text" class="slds-input" crm-datepicker="true" dp-model="search.StreetDateFrom" dp-options="appConfig.datepickerOptions" />
+                    <input placeholder="{!$Label.CRM_To_Label}" type="text" class="slds-input" crm-datepicker="true" dp-model="search.StreetDateTo" dp-options="appConfig.datepickerOptions" />
+                </div>
+                </div>
+				<!-- US#317 (Japan) End -->
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.Title__c.fields.Content_Type__c.Label}</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.contentTypes" selectedOpts="search.contentTypes" multiple="true" />
+                  </div>
+                </div>
+                <!-- US#232 added block -->
+                <div class="slds-form-element" ng-show="appConfig.isTerritoryFR">
+                  <label class="slds-form-element__label">Plant Status</label>
+                  <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="selectOptions.plantStatus" selectedOpts="search.plantStatus" multiple="true" />
+                  </div>
+                </div>
+                <!-- uS#232 end -->
+                <!--<div class="slds-form-element" ng-show="appConfig.isUKSalesOrg">
+                  <label class="slds-form-element__label">{!$ObjectType.Product2.fields.Recommended_Price__c.Label}</label>
+                  <div class="slds-form-element__control slds-grid">
+                    <input placeholder="From" type="number" class="slds-input slds-col slds-size--1-of-2" ng-model="search.recommendedPriceFrom" />
+                    <input placeholder="To" type="number" class="slds-input slds-col slds-size--1-of-2" ng-model="search.recommendedPriceTo" />
+                  </div>
+                </div>-->
+                <div class="slds-form-element">
+                  <label class="slds-form-element__label">{!$ObjectType.OpportunityLineItem.fields.ListPrice__c.Label}</label>
+                  <div class="slds-form-element__control slds-grid">
+                    <input placeholder="From" type="number" class="slds-input slds-col slds-size--1-of-2" ng-model="search.listPriceFrom" />
+                    <input placeholder="To" type="number" class="slds-input slds-col slds-size--1-of-2" ng-model="search.listPriceTo" />
+                  </div>
+                </div>
+                
+                <div class="slds-form-element">
+                  <label class="slds-checkbox" for="availedProductsOnly">
+                  <input name="checkbox" type="checkbox" id="availedProductsOnly" ng-model="search.showAvailedProductsOnly"/>
+                  <span class="slds-checkbox--faux"></span>
+                  <span class="slds-form-element__label">{!$Label.CRM_Deal_Entry_Availed_Products_Only}</span>
+                  </label>
+                </div>
+                
+                <div class="slds-form-element" ng-show="appConfig.recordType=='Opportunity'|| appConfig.recordType=='Order'">
+                  <label class="slds-checkbox" for="BundleProductsOnly">
+                  <input name="checkbox" type="checkbox" id="BundleProductsOnly" ng-model="search.bundleProductsOnly" ng-disabled="!appConfig.dealBundleId" />
+                  <span class="slds-checkbox--faux"></span>
+                  <span class="slds-form-element__label">{!$Label.CRM_Bundle_Product_Only_Checkbox}</span>
+                  </label>
+                </div>
+                
+                <!--<div class="slds-form-element">
+                  <label class="slds-checkbox" for="exclusiveProductFlag">
+                  <input name="checkbox" type="checkbox" id="exclusiveProductFlag" ng-model="search.isMarketingMaterial"/>
+                  <span class="slds-checkbox--faux"></span>
+                  <span class="slds-form-element__label">{!$ObjectType.Product2.fields.Marketing_Material__c.Label}</span>
+                  </label>
+                </div>-->
+
+                <!-- Refine Search button -->
+                <div class="slds-grid slds-button-group slds-p-top--medium" role="group">
+                  <button class="slds-col slds-button slds-button--neutral" ng-click="onRefine();">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#search'}}"></use>
+                    </svg>
+                    {!$Label.CRM_Refine_Button_On_Add_Product_Page}
+                  </button>
+                  <button class="slds-col slds-button slds-button--neutral" ng-click="onReset();">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#clear'}}"></use>
+                    </svg>
+                    {!$Label.CRM_Reset_Button_On_Add_Product_Page}
+                  </button>
+                </div>
+              </div>
+        </script>
+
+</apex:component>

@@ -1,0 +1,15 @@
+<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId" controller="CloneDealAndRelatedLists">
+    <aura:attribute name="deal" type="Opportunity" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <!-- Display a header with details about the deal -->
+    <div class="slds-page-header slds-p-bottom_small" role="banner">
+        <h1 class="slds-page-header__title slds-m-right_small slds-truncate slds-align-left">
+            Cloning {! v.deal.Name}...
+        </h1>
+    </div>
+    <div class="slds-grid slds-is-relative" style="width: 100%; height: 150px;">
+        <div class="slds-col">
+            <lightning:spinner variant="brand" alternativeText="loading table" size="medium" />
+        </div>
+    </div>
+</aura:component>

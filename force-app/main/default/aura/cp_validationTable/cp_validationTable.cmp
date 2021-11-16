@@ -1,0 +1,17 @@
+<aura:component description="cp_validationTable">
+    <!-- Imports -->    
+    <!-- attributes -->
+    <aura:attribute name="data" type="Object"/>
+    <aura:attribute name="columns" type="List"/>
+    <!-- handlers-->
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    <aura:handler event="c:cp_recordsProcessedEvt" action="{!c.handleProcessedEvt}"/>
+    <!-- the container element determine the height of the datatable -->
+    <div style="overflow: hidden;height: 450px">
+        <lightning:datatable keyField="id"
+                             data="{!v.data}"
+                             columns="{!v.columns}"
+                             hideCheckboxColumn="true"
+                             wrapTextMaxLines="5"/>
+    </div>    
+</aura:component>

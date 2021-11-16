@@ -1,0 +1,54 @@
+<aura:component description="massCPUploader" implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:appHostable,lightning:isUrlAddressable"  controller="massCPUploaderApexController" access="global">
+    <ltng:require styles="{!$Resource.handsOnTable + '/dist/handsontable.full.min.css'}" scripts="{!$Resource.handsOnTable+'/dist/handsontable.full.js'}"  afterScriptsLoaded="{!c.loadTable}"/>
+    
+    <aura:attribute name="handsOnTableRef" type="object"/>    
+    <aura:attribute name="handsOnTableData" type="massCPUploaderApexController.ProductWrapper[]" />
+    <aura:attribute name="retValues" type="List"/>
+
+  <lightning:card class="slds-box slds-box_border">
+<lightning:layout multipleRows="true">
+
+
+                    <!--lightning:button variant="brand" label="Back To Home" title="Back To Home" onclick="{!c.backToHome}"/ -->
+
+<lightning:layoutItem size="9" class="slds-align-content-center slds-text-align--center">
+    <lightning:layoutItem size="12" class="slds-text-align--center">
+        <lightning:button variant="brand" label="Save Records" title="Save Records" onclick="{!c.saveRecords}"/>
+        <!--lightning:button variant="neutral" label="Download Template" title="Download Template" onclick="{!c.handleTemplateDownload}"/-->
+        <lightning:button variant="neutral" label="Download Template" title="Download Template" onclick="{!c.exportCSVFile}"/>
+
+    </lightning:layoutItem>
+</lightning:layoutItem>
+<lightning:layoutItem size="" class="slds-box slds-box_border slds-p-right--small">
+    <h1 class="slds-text-heading--label slds-text-align--center slds-border--bottom">Table Results Legend</h1>
+<p class="slds-p-around--x-small">
+<span class="slds-avatar slds-avatar_circle slds-avatar--small">
+  <img src="{!$Resource.cp_green}" alt="person name" />
+</span>
+    Product was saved successfully.
+</p>
+<p class="slds-p-around--x-small">
+    <span class="slds-avatar slds-avatar_circle slds-avatar--small">
+  <img src="{!$Resource.cp_yellow}" alt="person name" />
+
+</span>
+    Product was saved with no StarLabs Submission.
+</p>
+    <p class="slds-p-around--x-small">
+       <span class="slds-avatar slds-avatar_circle slds-avatar--small">
+  <img src="{!$Resource.cp_red}" alt="person name" />
+</span>
+        Product was not saved. Check error messages.
+    </p>
+
+</lightning:layoutItem>
+
+       <lightning:layoutItem size="12" class="slds-card__body slds-p-around--small">
+           <div id="handsOnTableDiv" class="slds-scrollable" style="height:auto;min-height: 400px"/>
+
+       </lightning:layoutItem>
+
+</lightning:layout>
+  </lightning:card>
+
+</aura:component>

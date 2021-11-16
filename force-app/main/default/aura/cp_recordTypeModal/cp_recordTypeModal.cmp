@@ -1,0 +1,48 @@
+<aura:component controller="cp_recordTypeModal" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global">
+
+<aura:handler name="init" value="{!this}" action="{!c.fetchListOfRecordTypes}"/>
+<aura:attribute name="lstOfRecordType" type="String[]" />
+<aura:attribute name="isOpen" type="boolean" default="false" />
+    <aura:attribute name="options" type="List" default="[
+    {'label': 'Licensee', 'value': 'WBCP Licensee'},
+    {'label': 'Retailer', 'value': 'WBCP Retailer'}
+    ]"/>
+    <aura:attribute name="value" type="String" default="WBCP Licensee"/>
+
+    <aura:registerEvent name="appEvent" type="c:cp_accountCreateSuccesEvent"/>
+
+
+<!-- Model Box Start -->
+<aura:if isTrue="{!v.isOpen}">
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <div class="slds-modal__header">
+
+                <h2 id="header43" class="slds-text-heading--medium">New Account</h2>
+            </div>
+
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-size--1-of-2 slds-large-size--1-of-2">
+                        <div class="slds-align--absolute-center">Select an Account Type</div>
+                    </div>
+                    <div class="slds-size--1-of-2 slds-large-size--1-of-2">
+                        <lightning:radioGroup aura:id="selectid" name="radioGroup"
+
+                                              options="{!v.options }"
+                                              value="{!v.value}"
+                                              type="radio"/>
+
+                    </div>&nbsp; &nbsp;
+                </div>
+            </div>
+
+            <div class="slds-modal__footer">
+                <lightning:button class="slds-button slds-button--neutral" onclick="{!c.closeModal}">Cancel</lightning:button>
+                <lightning:button class="slds-button slds-button--brand" onclick="{!c.createRecord}">Next</lightning:button>
+            </div>
+        </div>
+    </div>
+    <div class="slds-backdrop slds-backdrop--open"></div>
+</aura:if>
+</aura:component>

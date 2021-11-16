@@ -1,0 +1,13 @@
+<design:component label="Custom Video Gallery">
+    <design:attribute name="FileName1" label="ContentDocumentID 1" default="" placeholder="06955000000pje5AAA"/> 
+    <design:attribute name="Title1" label="Title 1" default=""/>
+    <design:attribute name="Description1" label="Description 1" default=""/>
+    
+    <design:attribute name="FileName2" label="ContentDocumentID 2" default="" placeholder="06955000000pje5AAA"/> 
+    <design:attribute name="Title2" label="Title 2" default=""/>
+    <design:attribute name="Description2" label="Description 2" default=""/>
+    
+    <design:attribute name="FileName3" label="ContentDocumentID 3" default="" placeholder="06955000000pje5AAA"/> 
+    <design:attribute name="Title3" label="Title 3" default=""/>
+    <design:attribute name="Description3" label="Description 3" default=""/>
+</design:component>

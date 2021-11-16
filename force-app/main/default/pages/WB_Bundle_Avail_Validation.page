@@ -1,0 +1,370 @@
+<apex:page controller="WB_Bundle_Avail_Validation" showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="true">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+<head>
+  <title>Bundle Validation</title>	  
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" />
+  
+  <apex:stylesheet value="{!URLFOR($Resource.WBSLDSv1, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+  
+ <!-- <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />-->
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  <!--<apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/UploadDealProducts.js')}" /> -->
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.svg4everybody)}" /> 
+<style>
+    .wbslds .slds-dropdown--small {
+      min-width: 10rem; }
+    .wbslds .slds-dropdown {
+    min-width: 6rem;
+    max-width: 10rem; } 
+    .wbslds .slds-picklist__label {
+    width: 10rem; }
+    
+    .handsontable {
+      font-size:11px
+    }
+    
+    .handsontable .relative {
+        text-align: left
+    }
+    
+    .handsontable col.rowHeader {
+        width: 200px !important;
+    }
+    
+    .handsontable thead th {
+        background-color: #4F6A92;
+        color: white
+    }
+    
+    .handsontable tbody th {
+        background-color: #A7B8D1
+    }
+    
+    .handsontable td {
+        -webkit-transition: all 0.5s ease;
+        -moz-transition: all 0.5s ease;
+        -o-transition: all 0.5s ease;
+        transition: all 0.5s ease;
+    }
+    
+    .has-changed {
+    	color: red;
+    }
+    /*
+    .handsontable tr:first-child td {
+    	background-color: #4F6A92;
+        color: white;
+    }
+    */
+    .total-row {
+        font-weight: bold
+    }
+    
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+    
+    .sortClass a {
+    	color: white;
+    	text-decoration: underline;
+    	transition: color .1s linear;
+	}
+	
+	.sortClass a:focus, .sortClass a:hover {
+    	text-decoration: underline;
+    	color: white;
+	}
+    
+    .currentRow {
+      background-color: #FFE09F !important;
+      color: #222 !important;
+    }
+        
+      
+
+</style>
+
+<script>
+//$.noConflict();
+//Test
+svg4everybody(); //This is for SFDC LDS CSS to render preperly in IE.
+
+		     
+angular.module("BundleAvailValidation", ['ngHandsontable'])
+    .controller("BundleAvailValidationController", ['$scope', function($scope) {
+        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.sourceEvent;
+        $scope.tableWidth = (jQuery(document).width()-100);
+        $scope.errorHeight = (jQuery(document).height()/3);
+        $scope.caErrorHotInstance = null;
+        $scope.rpErrorHotInstance = null;
+        $scope.bundleAvailInputWrapper = {releasePlans:'{!selectedRPs}',accounts:'{!selectedClients}',startDateOverride:'{!selectedDate}'};
+         
+        $scope.caErrorHeaders = ['Error Message','Title Name','Video Version','Country','Language','Language Type','Channel','Format','Account Name','Client Start','Client End','Status','Title Category','New Price Code','Price Tier','WS Cost','SR Price','Episode Price Tier','Episode Price','Episode SR Price','Pre-Order Date','Suppression End Date','Avail Notes','Retailer Product ID','Local Data Rating','Local Data # of Episodes','Local Edit Required','Change Context','Announce Override','Vendor ID'];
+        //Title Name	Video Version	Country	Language	Language Type	Channel	Format	Account Name	Client Start	Client End	Status	Title Category	New Price Code	Price Tier	WS Cost	SR Price	Episode Price Tier	Episode Price	Episode SR Price	Pre-Order Date	Suppression End Date	Avail Notes	Retailer Product ID	Local Data Rating	Local Data # of Episodes	Local Edit Required	Change Context	Announce Override	Vendor ID
+        
+        $scope.rpErrorHeaders = ['Error Message','Video Version#','Title','Country','Channel','Format','Language','Language Type'];
+                 
+        $scope.init = function() {
+            $scope.showSpinner = true;
+            $.when(
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} )
+            ).then(function() {
+                $scope.GetRecords();
+                $scope.$apply();
+           });
+        };
+        
+        $scope.pageRefresh = function(){
+            $scope.GetRecords();
+        }
+        
+        /*
+        $scope.goToHomePage = function(){
+        	window.location = '/';
+        }*/
+        
+        $scope.GetRecords = function(){ 
+           $scope.showSpinner = true; 
+           WB_Bundle_Avail_Validation.getRecords($scope.bundleAvailInputWrapper,
+               function(result,event){
+                   if (!event.status) {
+                       console.log('In exception case ', event.status);
+                       $scope.$apply(function() {
+                           $scope.msgText = event.message;
+                           $scope.msgSeverity = 'error';
+                           $scope.showSpinner = false;
+                       });
+                   }else {
+                       $scope.$apply(function() {
+                       	   
+                       	   $scope.errorData.caErrorItems = result.caErrors;
+                       	   $scope.errorData.rpErrorItems = result.rpErrors;
+                       	                          	   	
+                           $scope.spinnerText = '';
+                           $scope.showSpinner = false;
+                       });
+                   }
+               },{
+                   escape: false,
+                   timeout: 120000,
+                   buffer: false
+               });
+        }
+        
+		$scope.errorData = {
+        	caErrorItems: [],
+        	rpErrorItems: []
+        }
+        
+        $scope.caErrorSettings = {
+            colHeaders: $scope.caErrorHeaders,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+            copyRowsLimit:2000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.caErrorRenderer;
+                return cellProperties;
+            },
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+            afterInit: function() {
+        		$scope.caErrorHotInstance = this;
+    		}
+        };
+		$scope.caErrorRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            var item = $scope.errorData.caErrorItems[row];
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            return td;
+        };
+        
+        
+        $scope.rpErrorSettings = {
+            colHeaders: $scope.rpErrorHeaders,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+            copyRowsLimit:2000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.rpErrorRenderer;
+                return cellProperties;
+            },
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+            afterInit: function() {
+        		$scope.rpErrorHotInstance = this;
+    		}
+        };
+		$scope.rpErrorRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            var item = $scope.errorData.rpErrorItems[row];
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            return td;
+        };
+                
+        $scope.isEmpty = function(objectjson) {
+            var dataExists = true;
+            $.each(objectjson, function(i, d) {
+                if (d != null && d != '' && typeof d != 'object') {
+                    dataExists = false;
+                }
+            });
+            return dataExists;
+        };
+    }]);
+       
+</script>
+
+
+
+</head>
+
+    <body  style="padding:0px">
+        <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="BundleAvailValidation" ng-controller="BundleAvailValidationController" class="wbslds" ng-init="init()" ng-cloak="ngCloak">
+           <!-- ===========================Spinner================================= -->   
+           <div class="spinnerModel" ng-show="showSpinner">
+             <div class="spinnerContent slds-spinner--medium">
+               <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+               <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+             </div>
+           </div>
+
+            <!-- =========================== HEADER BANNER ================================-->    
+           <div class="slds-page-header" role="banner">
+             <div class="slds-grid">
+                   <div class="slds-col slds-has-flexi-truncate">
+                     <div class="slds-col slds-has-flexi-truncate">
+                       <h1 class="slds-text-heading--medium slds-truncate" title="Client Avails Creation Status">Bundle Validation</h1>
+                     </div>
+                   </div>
+                   
+                   <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                         <!-- 
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="goToHomePage()" onclick="return false;" class="slds-button slds-button--neutral">Home Page</button>
+                             </div>
+                           </div>
+                         </div>
+                          -->
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="pageRefresh()" onclick="return false;" class="slds-button slds-button--neutral">Refresh</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                   </div>
+             </div> 
+           </div>
+		
+	       <div class="slds-form-element">
+			<label class="slds-form-element__label" for="text-input-01">Component Client Avail Errors:</label>
+		   </div>
+           <div class="slds-m-around--x-small" id="priceUpdateTable">
+               <hot-table settings="caErrorSettings" datarows="errorData.caErrorItems" afterRender="firstRowRenderer" height="errorHeight" width="tableWidth">
+                 <hot-column data="errorMessage" read-only="true"></hot-column>
+                 
+                 <hot-column data="title" read-only="true"></hot-column>
+                 <hot-column data="videoVersion" read-only="true"></hot-column>
+                 <hot-column data="country" read-only="true"></hot-column>
+                 <hot-column data="language" read-only="true"></hot-column>
+                 <hot-column data="languageType" read-only="true"></hot-column>
+                 <hot-column data="channel" read-only="true"></hot-column>
+                 <hot-column data="format" read-only="true"></hot-column>
+                 <hot-column data="account" read-only="true"></hot-column>
+                 <hot-column data="startDate" read-only="true"></hot-column>
+                 <hot-column data="endDate" read-only="true"></hot-column>
+                 <hot-column data="status" read-only="true"></hot-column>
+                 <hot-column data="titleCategory" read-only="true"></hot-column>
+                 <hot-column data="newPriceCode" read-only="true"></hot-column>
+                 <hot-column data="priceTier" read-only="true"></hot-column>
+                 <hot-column data="wsCost" read-only="true"></hot-column>
+                 <hot-column data="srPrice" read-only="true"></hot-column>
+                 <hot-column data="episodePriceTier" read-only="true"></hot-column>
+                 <hot-column data="episodePrice" read-only="true"></hot-column>
+                 <hot-column data="episodeSRPrice" read-only="true"></hot-column>
+                 <hot-column data="preOrderDate" read-only="true"></hot-column>
+                 <hot-column data="suppressionEndDate" read-only="true"></hot-column>
+                 <hot-column data="availNotes" read-only="true"></hot-column>
+                 <hot-column data="retailerProductId" read-only="true"></hot-column>
+                 <hot-column data="localDataRating" read-only="true"></hot-column>
+                 <hot-column data="localDataNoOfEpisodes" read-only="true"></hot-column>
+                 <hot-column data="localEditRequired" read-only="true"></hot-column>
+                 <hot-column data="changeContext" read-only="true"></hot-column>
+                 <hot-column data="announceOverride" read-only="true"></hot-column>
+                 <hot-column data="vendorID" read-only="true"></hot-column>
+        
+               </hot-table>
+           </div>
+		   
+		   <div class="slds-form-element">
+			<label class="slds-form-element__label" for="text-input-01">Component Release Plan Errors:</label>
+		   </div>
+		   <div class="slds-m-around--x-small" id="priceUpdateTable">
+               <hot-table settings="rpErrorSettings" datarows="errorData.rpErrorItems" afterRender="firstRowRenderer" height="errorHeight" width="tableWidth">
+                 <hot-column data="errorMessage" read-only="true"></hot-column>
+                 <hot-column data="title" read-only="true"></hot-column>
+                 <hot-column data="videoVersion" read-only="true"></hot-column>
+                 <hot-column data="country" read-only="true"></hot-column>
+                 <hot-column data="channel" read-only="true"></hot-column>
+                 <hot-column data="format" read-only="true"></hot-column>
+                 <hot-column data="language" read-only="true"></hot-column>
+                 <hot-column data="languageType" read-only="true"></hot-column>
+               </hot-table>
+           </div>	        
+        </div>
+    </body>
+</html>
+</apex:page>

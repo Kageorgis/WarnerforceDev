@@ -1,0 +1,15 @@
+<apex:page controller="WB_tabImage_WebserviceController" action="{!WB_Image_WebserviceResponse}">
+    <style type="text/css">
+ table.exceptionText td {
+                 
+                 font-size:13px;
+                 font-weight:bold;
+                 text-align:center;
+                 color:red;}
+</style>
+
+<apex:messages layout="table" styleClass="exceptionText"/>
+<apex:image id="theImage" value="{!imageURL}"  rendered="{!imageRenderBln}" />
+    
+    
+</apex:page>

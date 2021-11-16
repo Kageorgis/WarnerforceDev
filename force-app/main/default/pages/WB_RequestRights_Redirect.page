@@ -1,0 +1,161 @@
+<apex:page standardController="Request_Rights_error_log__c" extensions="WB_RedirectRequestRefresh_Controller" recordSetVar="Request_Rights_error_log__c" tabStyle="MPM__c"  sidebar="false" showheader="false" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:slds />
+            <script>
+                $(window).load(function(){
+                    var w = window.innerWidth;
+                    var h = window.innerHeight;
+                    /*console.log('Main Hight : ',w,'-----------',h);
+                    console.log('mainHeader Hight : ',$(".mainHeader").outerHeight());
+                    console.log('dataTables_scrollHead Hight : ',$(".dataTables_scrollHead").outerHeight());
+                    console.log('Scroll_Boday Hight : ',$(".Scroll_Boday").outerHeight());
+                    console.log('footerDiv Hight : ',$(".footerDiv").outerHeight());*/
+                    
+                    var tb_HD_WD_Map = new Object();
+                    $(".Scroll_Boday table tbody").children("tr:first").children("td").each(function(){
+                        tb_HD_WD_Map[$(this)[0].dataset.label] = $(this).outerWidth();
+                    });
+                    
+                    $(".dataTables_scrollHeadInner table thead tr th").each(function(){
+                        $(this).css('width', (tb_HD_WD_Map[$(this).text()]) + "px");
+                    });
+                    
+                    $(".Scroll_Boday").on( 'scroll.DT', function (e) {
+        			   $(".dataTables_scrollHead").scrollLeft( this.scrollLeft );
+        	        });
+                    var mainDivheight = (h - $(".mainHeader").outerHeight() - $(".dataTables_scrollHead").outerHeight() - $(".footerDiv").outerHeight() - 34);
+                    //console.log("mainDivheight : "+mainDivheight);
+                    $(".Scroll_Boday").css('height',mainDivheight+"px");
+                });
+            </script>
+            <style>
+				.hideHader{
+					padding-top: 0px;
+					padding-bottom: 0px;
+					border-top-width: 0px;
+					border-bottom-width: 0px;
+					height: 0px;
+				}
+			</style>
+        </head>
+        <body>
+            <apex:form >
+                <div class="slds-scope">
+                    <apex:outputPanel id="pannel">
+                        <!---------------Error Message Section Start--------------------------->
+                        <apex:outputPanel rendered="{!RequestSubmited}">
+                            <header class="slds-card__header slds-grid mainHeader" style="padding : 0;">
+                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                        <div class="slds-media__body slds-truncate">
+                                            <nav class="slds-m-around_xx-small" role="navigation">
+                                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Title__c.Tab, $ObjectType.Title__c)}'">{!$ObjectType.Title__c.labelPlural}</a></li>
+                                                    <li class="slds-list__item slds-text-heading--label"><a href="/{!titleId}">{!titleName}</a></li>
+                                                </ol> 
+                                            </nav>
+                                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_info" role="alert">
+                                                <h2 style="font-size:20px;"><apex:outputLabel value="Your Request has been Submitted and processing through Batch. Please close this page."/></h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </header>  
+                        </apex:outputPanel>
+                         <!---------------Error Message Section End----------------------------->
+                         
+                        <apex:outputPanel rendered="{!!RequestSubmited}">
+                            <article class="slds-card">
+                                <!-- =========================== Header Starts =========================== -->
+                                <header class="slds-card__header slds-grid mainHeader" style="padding : 0;">
+                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                        <div class="slds-media__body slds-truncate">
+                                            <nav class="slds-m-around_xx-small" role="navigation">
+                                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Title__c.Tab, $ObjectType.Title__c)}'">{!$ObjectType.Title__c.labelPlural}</a></li>
+                                                    <li class="slds-list__item slds-text-heading--label"><a href="/{!titleId}">{!titleName}</a></li>
+                                                </ol> 
+                                            </nav>
+                                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                                                <h2>
+                                                    <span class="slds-text-heading--small">Some records failed. Please refer to the error report, or press OK to continue.</span>
+                                                </h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </header>  
+                                <div class="slds-card__body" style="overflow-x:auto;overflow-y:hidden;">
+                                   <div class="dataTables_scrollHead" style="overflow: hidden; position: relative; width: 100%;">
+        								<div class="dataTables_scrollHeadInner" style="box-sizing: content-box; width: 1400px;padding-right: 17px;">
+        									<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered" style="width: 1400px">
+        										<thead>
+        											<tr>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Id.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Id.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Id__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Id__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.MPM__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.MPM__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Group__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Group__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Channel__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Channel__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Start_1__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Start_1__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_End_1__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_End_1__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Status__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Status__c.label}</th>
+        												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Reason__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Reason__c.label}</th>
+        											</tr>
+        										</thead>
+        									</table>
+        								</div>
+        							</div>
+        							<div class="Scroll_Boday" style="position: relative; overflow: auto; width: 100%;">
+        								<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered" style="border-top: 0px;width: 1400px;">
+        									<thead>
+        										<tr role="row" style="visibility: collapse;">
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Id.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Id.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Id__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Id__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.MPM__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.MPM__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Group__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Group__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Channel__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Channel__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Start_1__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Start_1__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_End_1__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Rights_End_1__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Status__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Status__c.label}</th>
+    												<th scope="col" title="{!$ObjectType.Request_Rights_error_log__c.fields.Reason__c.label}">{!$ObjectType.Request_Rights_error_log__c.fields.Reason__c.label}</th>
+        										</tr>
+        									</thead>
+        									<tbody>
+        										<apex:repeat value="{!rightsExcpetionDisplay}" var="rightsException">
+        											<tr>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Id.label}">{!rightsException.Id}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Id__c.label}">{!rightsException.Rights_Id__c}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.MPM__c.label}">{!rightsException.MPM__c}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Group__c.label}">{!rightsException.Rights_Group__c}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Channel__c.label}">{!rightsException.Channel__c}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_Start_1__c.label}">
+        													<apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!rightsException.Rights_Start_1__c}"/></apex:outputText>
+        												</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Rights_End_1__c.label}">
+        													<apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!rightsException.Rights_End_1__c}"/></apex:outputText>
+        												</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Status__c.label}">{!rightsException.Status__c}</td>
+        												<td data-label="{!$ObjectType.Request_Rights_error_log__c.fields.Reason__c.label}">{!rightsException.Reason__c}</td>
+        											</tr>
+        										</apex:repeat>
+        									</tbody>
+        								</table>
+        							</div>
+                                </div>
+                                <!---------------------Deal Table End---------------------->
+                                <footer class="slds-card__footer footerDiv">
+                                    <apex:commandLink styleClass="slds-card__footer-action" action="{!proceed}" value="OK" rerender="pannel"/>
+                                </footer>
+                            </article>
+                        </apex:outputPanel>
+                    </apex:outputPanel>    
+                </div>
+            </apex:form>
+        </body>
+    </html>
+</apex:page>

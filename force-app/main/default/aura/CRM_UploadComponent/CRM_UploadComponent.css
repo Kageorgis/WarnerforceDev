@@ -1,0 +1,51 @@
+.THIS .c-container{
+  /* background: rgb(243, 242, 242);*/
+    background:white;
+    padding-bottom: 1%;
+}
+
+.THIS .header-style th {
+    color: white;
+    background-color: #005fb2;
+}
+
+/*.THIS .tableStyle td:nth-child(even){background-color: #f2f2f2;}*/
+
+.THIS .table-style td, .THIS .table-style th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.THIS .spinner-style, .THIS .scroll-height{
+    height:100%;
+}
+
+.THIS .export-button{
+    margin-top: 5.5%;
+}
+@media only screen and (max-width: 1440px) {
+  .THIS .export-button{
+    margin-top: 6%;
+}  
+}
+
+.THIS .advanced-search{
+    margin-right: 10px;
+}
+
+.THIS .error-container{
+    width: auto;
+    height: auto;
+    float: left;
+    margin-top: 235px;
+    margin-left: 20%;
+}
+
+.THIS .error-container-content{
+    background-color: #ff726f;
+    font-weight: bold;
+}
+
+.THIS .error-icon svg{
+    fill: #f70d1a;
+}

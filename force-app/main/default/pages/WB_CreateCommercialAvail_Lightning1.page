@@ -1,0 +1,19 @@
+<!--
+   @Author Cognizant
+   @name WB_CreateCommercialAvail_Lightning.
+   @CreateDate 23 Jan 2018
+   @Description - Visualforce page for Create Release Plan List button on Title
+   @Version <1.0>
+   @Requirement ER-1660
+-->
+
+<apex:page standardController="Title__c" recordSetVar="Title__c" extensions="WB_CreateCommercialAvail_Lightning" action="{!forwardToListController}">
+
+    <apex:form >
+        <apex:outputPanel id="output" rendered="{!titleMessage}">
+            <apex:pageMessages ></apex:pageMessages>  
+            <apex:commandButton value="Cancel" action="{!Cancel}" rendered="{!titleMessage}" style="Margin-left: 44%;margin-bottom: 5px;margin-top: 2%;"/>
+        </apex:outputPanel>    
+    </apex:form>
+    
+</apex:page>

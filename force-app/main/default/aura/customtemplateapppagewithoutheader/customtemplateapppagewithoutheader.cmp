@@ -1,0 +1,26 @@
+<aura:component implements="lightning:appHomeTemplate" description="Lightning Experience app page template with one section but without standard header">
+    <aura:attribute name="firstLine" type="Aura.Component[]" />
+ <ltng:require styles="{!$Resource.NoheaderLightningPage}"/>
+    <aura:attribute name="center" type="Aura.Component[]" />
+    <aura:attribute name="left" type="Aura.Component[]" />
+    <aura:attribute name="right" type="Aura.Component[]" />
+    <div>
+        <lightning:layout horizontalAlign="spread">
+            <lightning:layoutItem flexibility="grow" class="slds-p-around_xx-small">
+                {!v.firstLine}
+            </lightning:layoutItem>
+        </lightning:layout>
+    </div>
+    <div class="slds-grid slds-gutters">
+        <div class="slds-col slds-size_1-of-3">
+            <span>{!v.left}</span>
+        </div>
+        <div class="slds-col slds-size_1-of-3">
+            <span>{!v.center}</span>
+        </div>
+        <div class="slds-col slds-size_1-of-3">
+            <span>{!v.right}</span>
+        </div>        
+    </div>
+    
+</aura:component>

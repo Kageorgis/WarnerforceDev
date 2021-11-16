@@ -1,0 +1,5 @@
+<apex:page sidebar="false" controller="WB_CommunityKeyTabs_Controller" lightningStylesheets="true">   
+    <script>window.sldsPath = '{!URLFOR($Resource.SLDS, 'assets/icons')}'</script>
+    <PowerGrid:PowerGrid gridTemplateId="{!rrtGrid}" />   
+    <link href="{!URLFOR($Page.PowerLoader__FrameworkCustomCSS)}" rel="STYLESHEET" type="text/css" />
+</apex:page>

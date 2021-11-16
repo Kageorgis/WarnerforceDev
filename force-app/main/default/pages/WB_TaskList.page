@@ -1,0 +1,155 @@
+<!--
+Page- WB_TaskList
+Version- 1.0
+Creation Date- 11 SEP 2015
+Author- Prachi Gadewar
+Last Modified Date - 
+Last Modified by  - 
+Description- Show all task which are not completed for logged in user.
+-->
+<apex:page controller="WB_TaskList_Controller">
+
+<style type="text/css">
+
+.inlineEditPencil {
+    padding-right: 16px;
+    background-image:url('{!$Resource.WB_languageReadiness_Pencil}') no-repeat right 2px;
+ }
+ 
+ .SpanClass { 
+
+  background-image:url('{!$Resource.WB_languageReadiness_Pencil}'); 
+  background-repeat: no-repeat;
+  background-position:right;  
+   padding-right: 16px;
+   
+ }
+</style>
+
+    <apex:form id="theform">
+        <apex:pageMessages id="errMsg"/>
+        <apex:pageBlock title="Task Dashboard" id="ThePage" rendered="{!showTable}">
+         
+            <b>Sort by : </b>            
+          
+            <apex:selectList value="{!selectedSortType}" multiselect="false" size="1">
+                <apex:selectOptions value="{!listSortOptions}"/>            
+                <apex:actionSupport action="{!sortedList}" event="onchange" reRender="ThePage" status="selectList"/>    
+            </apex:selectList>&nbsp;   
+            <apex:actionstatus id="selectList" startText="Loading......"/><br/>
+            
+            <!-- need to update Multiple Task using Inline Editing -by Shekhar on 09/29--->
+            <apex:pageblockButtons location="bottom" >
+                <div align='Center'>
+                    <apex:outputLabel > Assign the selected Tasks to:</apex:outputLabel> &nbsp; &nbsp;
+                    <apex:selectList value="{!selectedUserBottomId}" multiselect="false" size="1" >
+                        <apex:selectOptions value="{!listActiveUserOptions}"/>
+                    </apex:selectList>
+        
+                    <apex:commandButton value="Assign" action="{!ChangeOwner}" id="id1"/>
+                    <apex:outputLabel ><b>    OR    </b> Change the selected Task status: </apex:outputLabel>
+                    <apex:CommandButton value="Update" action="{!UpdateStatus}"  />
+                </div>  
+            </apex:pageblockButtons>
+            
+            <apex:pageblockButtons location="top">
+                <div align='Center'>
+                    <apex:outputLabel > Assign the selected Tasks to:</apex:outputLabel> &nbsp; &nbsp;
+                    <apex:selectList value="{!selectedUserId}" multiselect="false" size="1" >
+                        <apex:selectOptions value="{!listActiveUserOptions}"/>
+                    </apex:selectList>
+        
+                    <apex:commandButton value="Assign" action="{!ChangeOwner}" id="id2"/>
+                    <apex:outputLabel ><b>    OR    </b> Change the selected Task status: </apex:outputLabel>
+                    <apex:CommandButton value="Update" action="{!UpdateStatus}"  />
+                </div>  
+            </apex:pageblockButtons>
+
+            <apex:outputPanel layout="block" style="overflow:auto;height:600px;" >
+                <apex:pageBlockTable value="{!listTaskController}" var="taskFromList"  rules="rows" id="table">    
+                
+                    <apex:column headerValue="Action">
+                        <apex:outputLink value="/{!taskFromList.availLang.id}/e?retURL=apex/WB_TaskList" target="_blank">Edit</apex:outputLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:inputCheckbox value="{!AllSelected}">
+                                <apex:actionSupport event="onchange" action="{!SelectAllTask}" reRender="ThePage"/>
+                            </apex:inputCheckbox>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!taskFromList.isSelected}"/>
+                    </apex:column>
+                    <apex:column headerValue="Subject">
+                        <apex:outputLink value="/{!taskFromList.taskInstnace.id}?retURL=apex/WB_TaskList"> {!taskFromList.taskInstnace.Subject}</apex:outputLink>
+                    </apex:column>
+                     <apex:column headerValue="Title">
+                         <apex:outputText title="{!taskFromList.availLang.Title__r.Name}" value="{!taskFromList.TitleName}"/> 
+                    </apex:column> 
+                    <apex:column headerValue="Language Name">
+                       {!taskFromList.LanguageName}
+                    </apex:column>
+                    <apex:column headerValue="Language Record">
+                        <apex:outputField value="{!taskFromList.taskInstnace.WhatId}" style="color:{!taskFromList.colorCode}"/> 
+                    </apex:column>            
+                    <apex:column headerValue="GPP Status">
+                        <apex:outputField value="{!taskFromList.availLang.GPP_status__c}" style="color:{!taskFromList.colorCode}"/> 
+                    </apex:column>
+                    <apex:column headerValue="Mastering/IDS Reason">
+                        <apex:outputField value="{!taskFromList.availLang.Mastering_Reason_Code__c}" style="color:{!taskFromList.colorCode}"/> 
+                    </apex:column>
+                    <apex:column > 
+                        <apex:facet name="header" >
+                        <!-- <span  style = "background-image:url('{!$Resource.WB_languageReadiness_Pencil}'); background-repeat: no-repeat;background-position:right;  margin:0 0 0 5px;"> Status  </span>-->
+                            <span  class= "SpanClass">Task Status  </span>
+                        </apex:facet>
+                            <apex:outputField value="{!taskFromList.taskInstnace.Status}" >
+                                <apex:inlineEditSupport event="ondblclick"  changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>
+                            </apex:outputField>
+                        </apex:column>
+                    <apex:column headerValue="Priority">
+                        <apex:outputField value="{!taskFromList.taskInstnace.Priority}" style="color:{!taskFromList.colorCode}"/> 
+                    </apex:column>
+                    <apex:column headerValue="Due Date">
+                        <span style="color:{!taskFromList.colorCode}">
+                            <apex:outputField value="{!taskFromList.taskInstnace.ActivityDate}"/> 
+                        </span>
+                    </apex:column>
+                    <apex:column headerValue="VV Number">
+                       {!taskFromList.videoVersionNumber}
+                    </apex:column>     
+                    <!--<apex:column > 
+                      <apex:facet name="header" >
+                         <span  class= "SpanClass">GPP Status</span>
+                       </apex:facet>
+                        <apex:outputField value="{!taskFromList.availLang.GPP_status__c}" >
+                         <apex:inlineEditSupport event="ondblclick"  changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>
+                        </apex:outputField>
+                      </apex:column>
+                      <apex:column headerValue="Language Type" width="20px">
+                          <apex:outputField value="{!taskFromList.availLang.Language_Types__c}">
+                          <apex:inlineEditSupport event="ondblclick"  changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>
+                        </apex:outputField>
+                      </apex:column>
+                      <apex:column > 
+                      <apex:facet name="header" >
+                         <span  class= "SpanClass">Mastering/IDS Reason Code</span>
+                       </apex:facet>
+                        <apex:outputField value="{!taskFromList.availLang.Mastering_Reason_Code__c}" >
+                         <apex:inlineEditSupport event="ondblclick"  changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>
+                        </apex:outputField>
+                      </apex:column>-->
+                </apex:pageBlockTable>
+            </apex:outputPanel>  
+            
+            <apex:outputPanel >
+                <apex:commandButton value="First" action="{!First}" disabled="{!!hasPrevious}" reRender="ThePage" />&nbsp;&nbsp;
+                <apex:commandButton value="<<Previous" action="{!previous}" reRender="ThePage" disabled="{!!hasPrevious}"/>&nbsp;&nbsp;
+                <apex:commandButton value="Next >>" action="{!next}" reRender="ThePage" disabled="{!!hasNext}"/>&nbsp;&nbsp;
+                <apex:commandButton value="Last" action="{!Last}" reRender="ThePage" disabled="{!!hasNext}"/>
+            </apex:outputPanel> <br/>
+            
+        </apex:pageBlock>
+        
+        <apex:outputLabel rendered="{!!showTable}">No Tasks assigned/No open tasks available to logged in user.</apex:outputLabel>
+    </apex:form>
+</apex:page>

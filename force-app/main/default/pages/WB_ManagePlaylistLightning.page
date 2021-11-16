@@ -1,0 +1,12 @@
+<!--
+   @Author Cognizant 
+   @name WB_CreateCommercialAvail_Lightning.
+   @CreateDate 23 Jan 2018
+   @Description - Visualforce for  Manage Playlist button on Title
+   @Version <1.0>
+   @Requirement ER-1660
+-->
+
+<apex:page standardController="Title__c" extensions="WB_ManagePlaylistLightning" action="{!forwardIdToPage}">
+
+</apex:page>

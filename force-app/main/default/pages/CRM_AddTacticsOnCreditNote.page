@@ -1,0 +1,591 @@
+<apex:page showHeader="false" standardController="Credit_Note__c" extensions="CRM_AddTacticsOnCreditNoteController" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        
+        <head>
+            <title>{!$Label.CRM_AddTacticLabel}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library)}/datepicker/locales/bootstrap-datepicker.{!UserLocaleLanguage}.min.js" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/simplePagination.js')}"/>
+  
+            <style type="text/css">
+                .spinnerModel {
+                    position: fixed;
+                    font-family: Arial, Helvetica, sans-serif;
+                    top: 0;
+                    left: 0;
+                    background: rgba(0, 0, 0, 0.1);
+                    z-index: 99999;
+                    height: 100%;
+                    width: 100%;
+                }
+                .spinnerContent {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 80%;
+                }
+                
+                #paginationDiv .slds-col{
+                    margin:0px !important;
+                }
+                
+                #headerDiv{
+                    padding: 12px;
+                }
+                #spinnerText{
+                	font-size: 14px !important;
+                	width: 140px;
+                    margin-left: -40px;
+                    text-align: center;
+                }
+            </style>
+        
+            <script type="text/javascript">
+            angular.module("appConfig", [])
+                .service("appConfig", function() {
+                     return {
+                        resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                        cnId: '{!Credit_Note__c.Id}',
+                        cnAccountId: '{!Credit_Note__c.Account__c}',
+                        cnCurrency: '{!Credit_Note__c.CurrencyIsoCode}',
+                        recordTypeId: '{!Credit_Note__c.RecordTypeId}',
+                        userDateFormat: '{!UserDateFormat}',
+                        maxTacticLimit: '{!maxTacticLimit}', //Added for Pagination
+                        coopReason: "{!JSENCODE(Credit_Note__c.Co_op_Reason__c)}" //US: 965 Change
+                    };
+                }
+            );
+            
+            angular.module('AddTacticsApp', ['appConfig','crm-components','simplePagination'])
+                .controller('AddTacticsCtrl', function($scope,$filter,appConfig,$timeout,Pagination){
+                    $scope.appConfig = appConfig;
+                    $scope.showSpinner = false;
+                    $scope.msgText;
+                    $scope.msgSeverity;
+                    $scope.searchtext = ''; //Defect : 4661 : common Search Filter 
+                    $scope.OptionsPicklist = {};
+                    $scope.listCNItems = [];
+                   
+                    $scope.isReadOnly = {!isReadOnly};
+                    $scope.listDealProducts = [];
+                    $scope.filter = {
+                            startDateFrom:null,
+                            endDateTo:null
+                    };
+                    
+                    var initalHeight = ($(window).height() - $('#headerDiv').height() - 25);
+                    $scope.height = initalHeight;
+                    console.log('height : ',$(window).height(),$('#headerDiv').height(),$scope.height,$('#filterDiv').height(),$('#subHeader').height());
+                    function setHeight() {
+                        $scope.height = (initalHeight - $("#msgDiv").height() - 32);
+                    }
+                    
+                    $scope.removeMsgBlock= function(){
+                        $scope.msgText = '';
+                        $scope.height = initalHeight;
+                    };
+         
+                    //Defect#4283 : added user locale date formats
+                    $scope.datepickerOptions = {language : '{!userLocale}',format: '{!UserDateFormat}', clearBtn: true, todayHighlight: true};
+                    
+                    /* Function to check/uncheck all the deals */
+                    $scope.checkAll = false;
+                    $scope.checkUncheckAll = function(val){
+                        //Defect : 4661 : common Search Filter 
+                        angular.forEach($filter('filter')($scope.listDealProducts, $scope.searchtext), function(item, i) {
+                            item.isSelected = val;
+                        });
+                    };
+                    
+                    /* Function to redirect user back to Add Tactic page */
+                    $scope.backToCreditNote = function() {
+                        if (((typeof sforce != 'undefined') && sforce && (!!sforce.one)))
+                            sforce.one.navigateToSObject("{!Credit_Note__c.Id}");
+                        else
+                            document.location.href = "{!URLFOR($Action.Credit_Note__c.View, Id)}";
+                    };
+                    
+                    //Defect : 4661 : common Search Filter 
+                    //Added for Pagination
+                    $scope.filterRecords = function(){
+                        $scope.pagination = Pagination.getNew($scope.appConfig.maxTacticLimit);
+                        console.log('$scope.relatedOrders',$scope.relatedOrders);
+                        $scope.filteredArray = $filter('filter')($scope.listDealProducts, $scope.searchtext);
+                
+                        console.log('$scope.filteredArray.length',$scope.filteredArray.length);
+                        if ($scope.filteredArray.length === 0) {
+                            $scope.pagination.numPages = 1;
+                        } else {
+                            $scope.pagination.numPages = Math.ceil($scope.filteredArray.length/$scope.pagination.perPage);
+                        }
+                        $scope.pagination.page = 0;
+                    };
+                    //Added for Pagination
+                        
+                        
+                    /* Function to search Tactics */
+                    $scope.loadTactics = function(isInitiallyLoad){
+                        
+                        $scope.showSpinner = true;
+                        $scope.msgText = '';
+                        $scope.msgSeverity = '';
+                        $scope.height = initalHeight;
+                        
+                        //Added for Pagination
+                        $scope.pagination = Pagination.getNew($scope.appConfig.maxTacticLimit);
+                        $scope.pagination.page = 0;
+                        
+                        if($scope.isReadOnly){
+                            $scope.msgText = '{!$Label.CRM_AddTactics_Info_Label}';
+                            $scope.msgSeverity = 'info';
+                            $scope.showSpinner = false;
+                            $timeout(setHeight,2);
+                        }
+                        
+                        if($scope.filter.startDateFrom){
+                            var startDateFrom = new Date($scope.filter.startDateFrom.setMinutes($scope.filter.startDateFrom.getMinutes() - $scope.filter.startDateFrom.getTimezoneOffset()));
+                            $scope.filter.startDateFrom = startDateFrom.toUTCString();
+                        }else{
+                            $scope.filter.startDateFrom = null;
+                        }
+                        
+                        if($scope.filter.endDateTo){
+                            var endDateTo = new Date($scope.filter.endDateTo.setMinutes($scope.filter.endDateTo.getMinutes() - $scope.filter.endDateTo.getTimezoneOffset()));
+                            $scope.filter.endDateTo = endDateTo.toUTCString();
+                        }else{
+                            $scope.filter.endDateTo = null;
+                        }
+                        
+                        $scope.isFilteAdded = false;
+                        if($scope.filter.startDateFrom || $scope.filter.endDateTo){
+                            $scope.isFilteAdded = true;
+                        }
+                        
+                        //Clear filters
+                        if(isInitiallyLoad){
+                            $scope.filter.startDateFrom = null;
+                            $scope.filter.endDateTo = null;
+                        }
+                        
+                        if($scope.isFilteAdded || isInitiallyLoad){
+                            $scope.checkAll = false;
+                            CRM_AddTacticsOnCreditNoteController.getTactics($scope.appConfig.cnId,$scope.appConfig.cnAccountId,$scope.appConfig.recordTypeId,$scope.filter,$scope.appConfig.coopReason, function(result, event) {
+                                console.log(result, event);
+                                
+                                if (!event.status) {
+                                    $scope.$apply(function(){
+                                        $scope.msgText = event.message;
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                        $timeout(setHeight,2);
+                                    });
+                                }
+                                else {
+                                    $scope.$apply(function(){
+                                        if($scope.filter.startDateFrom){
+                                            $scope.DateObj = new Date($scope.filter.startDateFrom);
+                                            $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                            $scope.DateObj.setMinutes($scope.totalMinute);
+                                            $scope.filter.startDateFrom = $scope.DateObj;
+                                        }else{
+                                            $scope.filter.startDateFrom = null;
+                                        }
+                                        
+                                        if($scope.filter.endDateTo){
+                                            $scope.DateObj = new Date($scope.filter.endDateTo);
+                                            $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                            $scope.DateObj.setMinutes($scope.totalMinute);
+                                            $scope.filter.endDateTo = $scope.DateObj;
+                                        }else{
+                                            $scope.filter.endDateTo = null;
+                                        }
+                                        
+                                        console.log('RESULT',result);
+                                        $scope.listDealProducts = result;
+                                        if($scope.listDealProducts.length == 0){
+                                            if($scope.msgText == '{!$Label.CRM_AddTactics_Info_Label}'){
+                                                $scope.msgText += '{!$label.CRM_AddTacticRecordInfoLabel}';
+                                            }else{
+                                                $scope.msgText = '{!$label.CRM_AddTacticRecordInfoLabel}';
+                                            }
+                                            $scope.msgSeverity = 'info';
+                                            $timeout(setHeight,2);
+                                        }
+                                        //Defect ID : 4660	CREDIT NOTES - Add Tactics date filters not working correctly start
+                                        //Defect ID : 4716 
+                                        angular.forEach($scope.listDealProducts, function(item, key) {
+                                            if(item.startDate != undefined && item.startDate != null) {                                    
+                                                $scope.DateObj = new Date(item.startDate);
+                                                $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                                $scope.DateObj.setMinutes($scope.totalMinute);
+                                                item.startDate = $scope.DateObj;
+                                            }
+                                            if(item.endDate != undefined && item.endDate != null) {                                    
+                                                $scope.DateObj = new Date(item.endDate);
+                                                $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                                $scope.DateObj.setMinutes($scope.totalMinute);
+                                                item.endDate = $scope.DateObj;
+                                            }
+                                        });
+                                        //Defect ID : 4716
+                                        //Defect ID : 4660	CREDIT NOTES - Add Tactics date filters not working correctly end
+                                        
+                                        $scope.pagination.numPages = Math.ceil($scope.listDealProducts.length/$scope.pagination.perPage) != 0 ? Math.ceil($scope.listDealProducts.length/$scope.pagination.perPage) : 1;
+                                        //Defect : 4661 : common Search Filter 
+                                        $scope.filterRecords();
+                                        $scope.showSpinner = false;
+                                    });
+                                }
+                            },{
+                                escape: false,
+                                timeout: 120000
+                            });
+                        }else{
+                            $scope.msgText = '{!$Label.CRM_AddTacticFilterValidationMsg}';
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                            $timeout(setHeight,2);
+                        }
+                    };
+                    
+                                
+                    /* Function to save the credit note items */
+                    $scope.createCreditNoteItems = function(quickSave){
+                        
+                        var saveStartTime = new Date();
+					    var timeDiff = 0;
+					    var chunkSize = {!ChunkSizeForTradeTactics}; // Recursive batch size
+					    
+                        $scope.showSpinner = true;
+                        var cleanedGridData = [];
+                        $.each($scope.listDealProducts, function(rowIndex, item) {
+                            if(item && item.isSelected){
+                                cleanedGridData.push(item);
+                            }
+                        });
+                        
+                        if(cleanedGridData.length > chunkSize){
+                            $scope.spinnerText = 0 + ' / ' + (cleanedGridData.length);
+                        }else{
+                            $scope.spinnerText = '{!$Label.CRM_MultiOrder_spinnerText_Processing}';
+                        }
+                        
+                        if(cleanedGridData && cleanedGridData.length > 0){
+                            /**
+    						* rowsToProcess - Array of records to save back to salesforce
+    						* returnedResults - Rows already saved to Salesforce
+    						*/
+    						(function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+    						    if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+    								$scope.showSpinner = false;
+    								return;
+    							}
+    
+    							chunkedData = rowsToProcess.splice(0, chunkSize); 
+    							
+    							var chunkTime = new Date();
+                                console.log('Time Elapsed for chunk is', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                timeDiff = (chunkTime - saveStartTime);
+                                
+                                $scope.listdealIds = [];
+                                $scope.listDealProdcuts = [];  //Defect ID : 4716
+                                $.each(chunkedData, function(rowIndex, item) {
+                                    if(item && item.isSelected){
+                                        $scope.listdealIds.push(item.dealPorduct.OpportunityId);
+                                        $scope.listDealProdcuts.push(item.dealPorduct);  //Defect ID : 4716
+                                    }
+                                });
+                                
+                                //Defect ID : 4716 : replaced chunkedData variable with $scope.listDealProdcuts 
+                                CRM_AddTacticsOnCreditNoteController.createCreditNoteItems($scope.appConfig.cnId,$scope.listDealProdcuts,$scope.listdealIds,$scope.appConfig.cnCurrency, function(result, event){
+                                    
+                                    if (!event.status) {
+                                        $scope.$apply(function(){
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                       });
+                                    }else if (cleanedGridData.length > 0) { 
+                                        
+                                        // If successful add results to the main array
+    									returnedResults = returnedResults.concat(result.sucessfullyProcessedDpIds);
+    
+    									var failedCount = (typeof result == 'undefined' || typeof result.numFailedRecords == 'undefined') ? 0 : result.numFailedRecords;
+    									failedRecCount += failedCount;
+    
+    									// Update progress text for user
+    									$scope.$apply(function() {
+    										$scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+    									});
+    									
+    									// Call salesforce again with remaining rows
+    									runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                    }else {
+                                        $scope.$apply(function(){
+                                            var dealProductIds = new Set(returnedResults.concat(result.sucessfullyProcessedDpIds));
+                                            
+                                            var failedCount = (typeof result == 'undefined' || typeof result.numFailedRecords == 'undefined') ? 0 : result.numFailedRecords;
+        									failedRecCount += failedCount; 
+                                            
+                                            $scope.finalTacticWrapper = [];
+                                            $.each($scope.listDealProducts, function(rowIndex, elementP) {
+                                                if(elementP && !dealProductIds.has(elementP.dealPorduct.Id)){
+                                                    elementP.isSelected = false;
+                                                    $scope.finalTacticWrapper.push(elementP);
+                                                }
+                                            });
+                                            $scope.listDealProducts = $scope.finalTacticWrapper;
+                                            
+                                            //Added for Pagination
+                                            $scope.pagination.numPages = Math.ceil($scope.listDealProducts.length/$scope.pagination.perPage);
+                                            
+                                            if (failedRecCount > 0) {
+    											$scope.msgText = failedRecCount.toString() + " {!$Label.CRM_AddTacticErrorMsg}";
+    											$scope.msgSeverity = 'error';
+    										} else {
+    											$scope.msgText = '{!$Label.CRM_AddTacticLabelSucessMsg}';
+                                                $scope.msgSeverity = 'success';
+    										}
+    										
+                                            $scope.showSpinner = false;
+                                            $scope.checkAll = false;
+                                            $scope.filterRecords(); //Defect : 4661 : common Search Filter 
+                                            $timeout(setHeight,2);
+                                            $scope.$apply();
+                                        });
+                                    }
+                                },{
+                                    timeout: 120000
+                                });
+                                
+    						})(cleanedGridData, [], 0);
+						}else{
+                            $scope.msgText = '{!$label.CRM_AddTacticLabelErrorMsg}';
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                            $timeout(setHeight,2);
+                        }
+                        
+                    };
+                });
+            </script>
+        </head>
+    
+        <body style="margin:0">
+        
+            <!-- REQUIRED SLDS WRAPPER -->
+            <div class="slds" ng-app="AddTacticsApp" ng-controller="AddTacticsCtrl" ng-init="loadTactics(true)">
+                
+                <!-- MASTHEAD -->
+                <div id="headerDiv" class="slds-page-header" role="banner">
+                    <div id="subHeader" class="slds-grid">
+                    	<div class="slds-col slds-has-flexi-truncate">
+                    		<nav class="slds-m-bottom--xx-small" role="navigation">
+                    			<p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                    			<ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                    				<li class="slds-list__item slds-text-heading--label">
+                    					<a href="{!URLFOR($Action.Credit_Note__c.Tab, $ObjectType.Credit_Note__c)}">{!$ObjectType.Credit_Note__c.labelPlural}</a>
+                    				</li>
+                    				<li class="slds-list__item slds-text-heading--label">
+                    						<a href="/{!Credit_Note__c.Id}">{!Credit_Note__c.Name}</a>
+                    				</li>
+                    			</ol>
+                    		</nav>
+                    		<div class="slds-col slds-has-flexi-truncate">
+                    			<h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_AddTacticLabel}">{!$Label.CRM_AddTacticLabel}</h1>
+                    		</div>
+                    	</div>
+                    	
+                       <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                    	    <div class="slds-form-element" ng-hide="appConfig.isActivated" style="margin-right:0px !important;">
+                    			<div class="slds-form-element__control">     
+                    				<div class="slds-button-group" role="group">
+                    					<button class="slds-button slds-button--neutral" ng-click="backToCreditNote()">{!$Label.CRM_Button_Back}</button>
+                    					<button class="slds-button slds-button--neutral" ng-click="createCreditNoteItems(true)" ng-disabled="isReadOnly">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                    				</div>
+                    			</div>
+                    		</div>
+                    	</div>
+                    </div>
+                    <div  id="filterDiv" class="slds-grid slds-wrap" style="padding-top: 10px;">
+                    	<div class="slds-col slds-size_11-of-12">
+                    		<div class="slds-grid slds-wrap">
+                    			<div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                    		        <!-- Defect : 4661 : common Search Filter Start-->
+                            		<div class="slds-form-element">
+                            			<div class="slds-form-element__control">
+                            				<div class="slds-input-has-icon slds-input-has-icon--right">
+                            					 <input id="quickSearch" class="slds-input slds-input--small"  ng-model="searchtext" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-change="filterRecords()"/>
+                            				 </div>
+                            			</div>
+                            		</div>
+                            		<!-- Defect : 4661 : common Search Filter End-->
+                    			</div>
+                    			<div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                    				<div class="slds-form-element">
+                    					<div class="slds-form-element__control">
+                    						<div class="slds-input-has-icon slds-input-has-icon--right">
+                    							 <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                    								  <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                    							 </svg>
+                    							 <input type="text" id="FromDate" name="DateFrom" placeholder="{!$Label.CRM_From_Label}" crm-datepicker="true" dp-model="filter.startDateFrom" dp-options="datepickerOptions" class="slds-input slds-input--small"  ng-Locale="shortDate"/>                                              
+                    						 </div>
+                    					</div>
+                    				</div>
+                    			</div>   
+                    			<div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                    				<div class="slds-form-element">
+                    					<div class="slds-form-element__control">
+                    						<div class="slds-input-has-icon slds-input-has-icon--right">
+                    							 <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                    								  <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                    							 </svg>
+                    							 <input type="text" id="ToDate" placeholder="{!$Label.CRM_To_Label}"  dp-model="filter.endDateTo" crm-datepicker="true" dp-options="datepickerOptions" class="slds-input slds-input--small"  ng-Locale="shortDate" />                                                                                         
+                    						 </div>
+                    					</div>
+                    				</div>
+                    			</div>
+                    			<div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                    				<div class="slds-button-group" role="group" style="margin-right: 16px;">
+                    					 <button class="slds-button slds-button--small slds-button--neutral" ng-click="loadTactics(false)">
+                    						<svg aria-hidden="true" class="slds-button__icon slds-button__icon--left">
+                    							<use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+                    						</svg>
+                    						{!$Label.CRM_UploadExtractTactic_Search_btn}
+                    					</button>
+                    					<button class="slds-button slds-button--small slds-button--neutral" ng-click="loadTactics(true)">
+                    						<svg aria-hidden="true" class="slds-button__icon slds-button__icon--left">
+                    							<use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#clear')}"></use>
+                    						</svg>
+                    						{!$Label.CRM_Reset_Button_On_Add_Product_Page}
+                    					</button>
+                    				 </div>
+                    			</div>
+                    		</div>
+                    	</div>
+                    	<div class="slds-col slds-size_1-of-12">
+                    		<div class="slds-grid slds-grid_align-end">
+                        		<!-- New Pagination Code -->
+                        		<div class="slds-col">
+                        			<div id="paginationDiv" class="slds-form-element" role="group">
+                        				<c:CRM_EditAllProductPagination />
+                        			</div>  
+                        		</div>
+                        		<!-- End of New Pagination Code -->
+                    	    </div>
+                    	</div>
+                    </div>
+                </div>
+                <!-- / MASTHEAD -->
+                
+                <!-- PRIMARY CONTENT WRAPPER -->
+                <div class="slds-grid">
+                    
+                    <!-- ===========================Spinner================================= -->   
+                    <div class="spinnerModel" ng-show="showSpinner">
+                        <div class="spinnerContent slds-spinner--medium">
+                            <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                            <div Id="spinnerText" class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+                        </div>
+                    </div>
+                    
+                    <!-- SUCCESS/ERROR MESSAGE -->
+                    <div id="msgDiv" ng-show="msgText" class="slds-col slds-notify slds-notify--toast slds-box--x-small slds-theme--{{msgSeverity}}" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock();">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        
+                        <div class="notify__content slds-grid">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <h2 class="slds-text-heading--small" ng-show="msgText">{{msgText}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CONFIG PRODUCTS TABLE -->
+                <div class="slds-col slds-col--padded" style="height:{{height}}px;overflow:auto;padding: 0;">
+                    <table class="slds-table slds-table--bordered slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                        <thead>
+                            <tr class="slds-text-heading--label">
+                                <th class="slds-cell-shrink">
+                                    <label class="slds-checkbox">
+                                        <input type="checkbox" name="options" ng-click="checkUncheckAll(checkAll)" ng-model="checkAll" ng-disabled="isReadOnly"/>
+                                        <span class="slds-checkbox--faux"></span>
+                                        <span class="slds-assistive-text">Select All</span>
+                                    </label>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.Product2.fields.ProductCode.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.Product2.fields.Name.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Co_op_Actual_Amount__c.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Customer_Reference__c.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Start_Date__c.Label}</div>
+                                </th>
+                                <th class="slds-is-sortable" scope="col">
+                                    <div class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.End_Date__c.Label}</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="slds-hint-parent" ng-repeat="oppLin in filteredDealProducts = (listDealProducts| filter:searchtext) | startFrom: pagination.page * pagination.perPage | limitTo: pagination.perPage track by oppLin.dealPorduct.Id">
+                                <td class="slds-cell-shrink" data-label="Select Row">
+                                    <label class="slds-checkbox">
+                                        <input type="checkbox" name="options" ng-model="oppLin.isSelected" ng-disabled="isReadOnly"/>
+                                        <span class="slds-checkbox--faux"></span>
+                                        <span class="slds-assistive-text">Select Row</span>
+                                    </label>
+                                </td>
+                                <th class="slds-truncate" scope="row" data-label="{!$ObjectType.Product2.fields.ProductCode.Label}">{{oppLin.dealPorduct.Product_Code__c}}</th>
+                                <td class="slds-truncate" data-label="{!$ObjectType.Product2.fields.Name.Label}" role="row">
+                                    <a href="/{{oppLin.dealPorduct.Id}}" target="_blank" ng-bind-html="{{oppLin.dealPorduct.Product2.Name}}" title="{{oppLin.dealPorduct.Product2.Name}}">{{oppLin.dealPorduct.Product2.Name}}</a>
+                                </td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.OpportunityLineItem.fields.Co_op_Actual_Amount__c.Label}">{{oppLin.dealPorduct.Co_op_Actual_Amount__c}}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}">{{oppLin.dealPorduct.Reason__c}}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.OpportunityLineItem.fields.Customer_Reference__c.Label}">{{oppLin.dealPorduct.Customer_Reference__c}}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.OpportunityLineItem.fields.Start_Date__c.Label}">{{oppLin.startDate | date: appConfig.userDateFormat}}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.OpportunityLineItem.fields.End_Date__c.Label}">{{oppLin.endDate | date: appConfig.userDateFormat}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- / PRIMARY CONTENT WRAPPER -->
+                <c:CRM_SLDSPicklist />
+            </div>
+            <!-- / REQUIRED SLDS WRAPPER -->
+        </body>
+    </html>
+</apex:page>

@@ -1,0 +1,419 @@
+<apex:page controller="Inventory_CC" sidebar="false" showHeader="true">
+    <style>
+        .head-title{
+            font-size:37px;
+            font-weight:bold;
+            font-family:Arial,Helvetica,sans-serif;
+            margin-left:3px;
+            height:500px;
+        }
+        .table-month{
+            border: solid 1px black;
+            border-collapse: collapse;
+            border-spacing: initial;
+        }
+        .table-title{
+            font-size:14px;
+            font-weight:bold;
+            font-family:Arial,Helvetica,sans-serif;
+        }
+        .product-confirmed, .full{
+            background:#008000;
+            border-color:black;
+        }
+        .verbal-insertion, .tot{
+            background:#95B3D7;
+            border-color:black;
+        }
+        .open, .oot{
+            background:#DBE5F1;
+            border-color:black;
+        }
+        .na{
+            background:#D8D8D8;
+            border-color:black;
+        }
+        .openr{
+            background:#989898;
+            border-color:black;
+        }
+        .exceededi{
+            background:#D91111;
+            border-color:black;
+        }
+    </style>
+    
+    <apex:form id="form">
+        <apex:pagemessages id="Messages"/>
+        <table width="100%" cellspacing="0" cellspadding="0">
+            <tr>
+                <td style="text-align: right;">
+                    <apex:commandButton value="<" action="{!restMonth}" rerender="form"/>
+                </td>
+                <td width="23%" style="text-align: center;">
+                    <apex:outputText value="{!monthName} {!yearName}" styleClass="head-title"/>
+                </td>
+                <td style="text-align: left;">
+                    <apex:commandButton value=">" action="{!sumMonth}" rerender="form"/>
+                </td>
+            </tr>
+        </table>
+        <br/>
+        <center>
+            <table width="90%" class="table-month" cellspacing="0" cellspadding="0" border="1">
+                <tr>
+                    <td colspan="2" width="12%">
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="C2"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="C3"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="C4"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="1st RHP"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="2nd RHP"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="First Spread"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="Center Spread"/></center>
+                    </td>
+                    <td class="table-title" width="11%">
+                        <center><apex:outputText value="Interior Page"/></center>
+                    </td>
+                </tr>
+                <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory}" var="w" id="weeks">
+                    <tr>
+                        <td rowspan="5" class="table-title">
+                            <center><apex:outputText value="W{!w}"/></center><br/>
+                            <center><apex:outputText value="{0,date,MM/dd/yyyy}">
+                                <apex:param value="{!mapWeekNumberDate[w]}" /> 
+                            </apex:outputText></center>
+                        </td>
+                        <td class="table-title">
+                            <center><apex:outputText value="E"/></center>
+                        </td>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['C2']}" var="i">               
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['C3']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['C4']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['First RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['Second RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['First Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['Center Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['E']['Interior Page']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>                  
+                    </tr>
+                    <tr>
+                        <td class="table-title">
+                            <center><apex:outputText value="T"/></center>
+                        </td>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['C2']}" var="i">               
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['C3']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['C4']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['First RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['Second RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['First Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['Center Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T']['Interior Page']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>                  
+                    </tr>
+                    <tr>
+                        <td class="table-title">
+                            <center><apex:outputText value="T+"/></center>
+                        </td>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['C2']}" var="i">               
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['C3']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['C4']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['First RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['Second RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['First Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['Center Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>  
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['T+']['Interior Page']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>              
+                    </tr>
+                    <tr>
+                        <td class="table-title">
+                            <center><apex:outputText value="M"/></center>
+                        </td>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['C2']}" var="i">               
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['C3']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['C4']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['First RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['Second RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['First Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['Center Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>  
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['M']['Interior Page']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>              
+                    </tr>
+                    <tr>
+                        <td class="table-title">
+                            <center><apex:outputText value="MM"/></center>
+                        </td>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['C2']}" var="i">               
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['C3']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['C4']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['First RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['Second RHP']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['First Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['Center Spread']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>  
+                        <apex:repeat value="{!mapWeekMapTargetMapProductlstInventory[w]['MM']['Interior Page']}" var="i">
+                            <td class="{!i.types}">
+                                <center><apex:outputText value="{!i.name}"/></center>
+                            </td>
+                        </apex:repeat>              
+                    </tr>
+                </apex:repeat> 
+            </table>
+        </center>
+        <center>
+            <table width="23%" cellspacing="0" cellspadding="0" style="margin-top: 20px">
+                <tr>
+                    <td width="45%">
+                    </td>
+                    <td width="55%">
+                    </td>
+                    <!-- <td width="30%">
+                        <center><apex:outputText value="For Interior Page"/></center>
+                    </td>
+                    <td width="10%">
+                    </td> -->
+                </tr>
+                <tr>
+                    <td class="product-confirmed">
+                        <center><apex:outputText value="X"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="Product Confirmed / Sold"/>
+                    </td>
+                    <!--<td class="na">
+                        <center><apex:outputText value="0 of 0"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="N/A"/>
+                    </td>-->
+                </tr>
+                <tr>
+                    <td class="verbal-insertion">
+                        <center><apex:outputText value="VIO"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="Verbal Insertion Order"/>
+                    </td>
+                    <!--<td class="oot">
+                        <center><apex:outputText value="1 of 9"/></center>
+                    </td>
+                    <td>
+                    </td>-->
+                </tr>
+                <tr>
+                    <td class="open">
+                        <center><apex:outputText value="O"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="Open"/>
+                    </td>
+                    <!--<td class="full">
+                        <center><apex:outputText value="9 of 9"/></center>
+                    </td>
+                    <td>
+                    </td>-->
+                </tr>
+                <tr>
+                    <td class="na">
+                        <center><apex:outputText value="N/A"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="N/A"/>
+                    </td>
+                    <!--<td>
+                    </td>
+                    <td>
+                    </td>-->
+                </tr>
+                <tr>
+                    <td class="openr">
+                        <center><apex:outputText value="O"/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="Maximum Sold"/>
+                    </td>
+                    <!--<td>
+                    </td>
+                    <td>
+                    </td>-->
+                </tr>
+                <tr>
+                    <td class="exceededi">
+                        <center><apex:outputText value=""/></center>
+                    </td>
+                    <td>
+                        <apex:outputText value="Exceeded Inventory"/>
+                    </td>
+                    <!--<td>
+                    </td>
+                    <td>
+                    </td>-->
+                </tr>
+            </table>
+        </center>
+    </apex:form>
+</apex:page>

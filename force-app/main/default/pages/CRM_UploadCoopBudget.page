@@ -1,0 +1,564 @@
+<apex:page controller="CRM_UploadCoopBudgetController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <!--  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" /> -->
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+            
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+            
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'moment/moment.js')}"/>
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" /> 
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+            <!-- <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" /> -->
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+        </head>
+        <body style="padding:0px" ng-app="CRM_UploadCoopBudget">
+            <div class="slds" id="ng-app"  ng-controller="CRM_UploadCoopBudgetController">
+                
+                <!-- ===========================Spinner================================= -->   
+                <div class="spinnerModel" ng-show="showSpinner">
+                    <div class="spinnerContent slds-spinner--large">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                        <div id="spinnerText">{{spinnerText}}</div>
+                    </div>
+                </div>
+                <!-- ===========================Spinner================================= -->  
+                
+                <!-- =========================== HEADER BANNER ========================= -->     
+                <div id="haderDiv" class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col">
+                            <nav class="slds-m-bottom--xx-small" role="navigation">
+                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$label.CRM_Mass_Update_NR_Page_Back_Button}</a></li>
+                                </ol>
+                            </nav>
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <h1 class="slds-float--left slds-text-heading--medium slds-truncate" title="{!$Label.CRM_MultiOrder_Header_Label}">{!$Label.CRM_UploadBudget_Page_Header}</h1>
+                            </div>
+                        </div>
+                          <!----------------------------US : 994------------------------->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                            <div class="slds-form-element" style="Width:80%">
+                                <div class="slds-form-element__control picklistClass">
+                                    <crm-multiselect-picklist options="resultFilterValues" selectedOpts="resultFilter" multiple="false" placeholder="{!$Label.CRM_Result_Filter_PlaceHolder}" ng-click="filterRecords(true)"/>
+                                </div>
+                            </div>
+                        </div>
+                        <c:CRM_SLDSPicklist />
+                        <!----------------------------US : 994------------------------->
+                        <div class="slds-col slds-no-flex slds-align--absolute-center slds-m-top--small slds-form--inline">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control"> 
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <!-- US 994 ------->
+                                        <button class="slds-button slds-button--neutral" ng-click="refreshPage()">{!$Label.CRM_Reset_button_label}</button>
+                                        <!-- US 994 ------->
+                                        <!-- US 989 ------->
+                                        <button class="slds-button slds-button--neutral" ng-click="exportCSVFile()">{!$Label.CRM_Export_File_Button_Label}</button>
+                                        <!-- US 989 ------->
+                                        <button ng-click="saveBudgets()" class="slds-button slds-button--neutral">{!$Label.CRM_UploadBudgetSaveButton}</button>
+                                    </div>
+                                </div> 
+                            </div> 
+                            <div class="slds-button-group" role="group"></div> 
+                        </div> 
+                    </div>
+                </div>
+                 <!-- =========================== HEADER BANNER ======================== -->     
+                 
+                <!-- ===========================Exception=============================== -->
+                <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+                    <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="msgText = ''">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid" ng-show="msgText">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===========================Exception=============================== -->
+                
+                <!-- ===========================Dynamic Div============================= -->
+                <div id="dynDiv" class="slds-m-top--x-small slds-m-left--x-small">
+                    <div id="tableDiv"></div>
+                </div>
+                <!-- ===========================Dynamic Div============================= -->
+                
+            </div>
+            <!--US#989 start -->
+            <style>
+                .wordWrapClass{
+                    text-overflow: ellipsis;
+                    white-space: nowrap !important;
+                    max-width: 20px;
+                }
+                <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+                .handsontable thead th {
+                    background-color: #4F6A92 !important;
+                    color: white !important;
+                }
+                .handsontableInputHolder .handsontableInput{
+                    background-color: white !important;
+                }
+                #hot-display-license-info{
+                    display: none;
+                }
+               .slds .slds-picklist__label {
+                    padding-right: 32px;
+                    width: 160px;
+                    color: #16325c;
+                    text-align: left; 
+                }
+                <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            </style>
+            <!--US#989 end -->
+            <script>
+            	//US#989 start
+				/* Pass a few dynamic parameters */
+				angular.module("appConfig", [])
+					.service("appConfig", function() {
+					    return {
+					    	resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+							apexController: CRM_UploadCoopBudgetController,
+						 	handsontableProLicenseKey: '{!HandsonTable_Pro_Licencekey}' //Added for US 989 
+                        };
+				});
+				//US#989 end	 
+                angular.module("CRM_UploadCoopBudget", ['ngHandsontable', 'appConfig','ngLocale','crm-components'])//Added "ngLocale" for US 989
+                    .controller("CRM_UploadCoopBudgetController", ['$scope', 'appConfig','$locale', function($scope,appConfig,$locale) {//Added "$locale" for US 989
+                        $scope.Budgets = [];
+                        	//Start - US : 994
+                        $scope.appConfig = appConfig;
+                        $scope.resultFilterValues = [{label:'{!$Label.CRM_All_Value_For_Content_Type}', value:"all"},{label:'{!$Label.CRM_Clone_Deal_Error}',value:"error"},{label:'{!$Label.CRM_Success_Message}',value:"success"}];
+                        $scope.resultFilter = [];
+                        $scope.nonProcessedRecrods = [];
+                        $scope.sucessRecords = [];
+                        $scope.errorRecords = [];
+                        $scope.previouslySelectedFilterValue;
+                        $scope.sortObj = {column:0,order:"none"};
+                        $scope.filterdColIndex = [];
+                      
+                        //End - US : 994
+                        var container = document.getElementById('tableDiv');    
+                        var hot = new Handsontable(container,{
+                            data: $scope.Budgets,
+                            minSpareRows: 1, 
+                            colHeaders: true,
+                            copyRowsLimit:20000,
+                            startRows: 1, 
+                            renderAllRows: true,//Added for US : 994
+                            comments: true,
+                            colHeaders: [
+                                '{!$ObjectType.Account.fields.Sales_Organization__c.Label}',
+                                '{!$ObjectType.Account.fields.AccountNumber.Label}', 
+                                '{!$ObjectType.Product2.fields.ProductCode.Label}', 
+                                '{!$ObjectType.Coop_Budget__c.fields.Calendar_Month__c.Label}',
+                                '{!$ObjectType.Coop_Budget__c.fields.Event_Name__c.Label}',
+                                '{!$ObjectType.Coop_Budget__c.fields.Amount__c.Label}',
+                                '{!$Label.CRM_Upload_Field_Validation}'
+                            ],
+                            columns: [
+                                {data: 'salesOrg'},
+                                {data: 'accountNumber'},
+                                {data: 'productCode'},
+                                {data: 'calendarMonth'},
+                                {data: 'eventName'},
+                                {data: 'budgetAmount',type: 'numeric',format: '0.00'},
+                                {data: 'validation', readOnly: true}
+                            ],
+                            contextMenu: {
+                                items: {
+                                    "remove_row": {
+                                        name: '{!$Label.CRM_Upload_Message_RemoveRow}'
+                                    }
+                                }
+                            },
+                            beforeRemoveRow: function(index, amount) {
+                                if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                                    return false;
+                                }
+                                return true;
+                            },
+                            cells: function(row, col, prop) {
+                                var cellProperties = {};
+                                cellProperties.renderer = $scope.myRenderer;
+                                return cellProperties;
+                            },
+                            afterChange: function(changes, source) {   ////Defect : 4576 : update modified records only
+								var ele = this;
+								if (changes && changes.length > 0) {
+									$.each(changes, function(index, element) {
+										if (element) { //Added For US : 820
+										    var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+										    var sortedRowIndex = changes[index][0];
+										    var oldValue = changes[index][2];
+                                            var newValue = changes[index][3];
+										    //DEF#4729 : Make quantity Field mandatory on grid
+										    if ($scope.Budgets && (oldValue != newValue || (elem.prop == 'budgetAmount')) && elem.prop != 'validation') {
+										        var item = $scope.Budgets[ele.toPhysicalRow(changes[index][0])]; 
+        										//DEF#4729 : Make quantity Field mandatory on grid
+        										if(!(!oldValue && newValue == "") && oldValue != newValue){
+        										    item.isRowModified = true;
+        										}else if(elem.prop == 'budgetAmount' && 
+        										    ((oldValue === 0 && newValue == "") || (oldValue == undefined && newValue === 0))){
+                                                    item.isRowModified = true;
+        										}
+										    }
+										}
+									});
+								}
+                            },
+                             //Start - US : 994
+	                            dropdownMenu: ['clear_column','alignment','filter_by_condition','filter_operators','filter_by_condition2','filter_by_value','filter_action_bar'],
+                                filters: true,
+                                licenseKey: appConfig.handsontableProLicenseKey,
+                                afterColumnSort: function(column,order){
+                                    $scope.sortObj.column = column;
+                                    $scope.sortObj.order = order;
+                                },
+                                afterLoadData: function(firstTime){
+                                    if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                        hot.updateSettings({minSpareRows: 0});
+                                        if(hot.countEmptyRows(true)){
+                                            hot.getPlugin('trimRows').trimRows([( $scope.Budgets.length - 1)]);
+                                            hot.render();
+                                        }
+                                    }else if(hot){
+                                        hot.updateSettings({minSpareRows: 1});
+                                    }
+                                },
+                                afterFilter: function(conditionsStack){
+                                    $scope.filterdColIndex = [];
+                                    if(conditionsStack.length > 0){
+                                        $.each(conditionsStack, function(rowKey, object) {
+                                            if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                                $.each(object.conditions, function(rowKey,conditions) {
+                                                    if(conditions.name == 'by_value'){
+                                                        $.each(conditions.args[0], function(rowKey,arg) {
+                                                            if(arg == "" && hot.countEmptyRows(true) === 0){
+                                                                hot.alter('insert_row',( $scope.Budgets.length));
+                            }
+                        });
+                                                    }
+                                                });
+                                            }
+                                            $scope.filterdColIndex.push(object.column);
+                                        });
+                                    }else{
+                                        if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                            if(hot.countEmptyRows(true) === 0){
+                                                hot.alter('insert_row',($scope.Budgets.length));
+                                            }
+                                        }
+                                    }
+                                },
+                                afterCreateRow: function(index, amount, source){
+                                    if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                        if(hot && hot.isEmptyRow($scope.Budgets.length - 1)){
+                                            hot.getPlugin('trimRows').trimRows([($scope.Budgets.length - 1)]);
+                                            hot.render();
+                                        }
+                                    }
+                                }
+                                //End - US : 994
+                        });
+                        
+                       
+                        
+                        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+                            Handsontable.renderers.TextRenderer.apply(this, arguments);
+                            var item = $scope.Budgets[cellProperties.row];
+							var cell = instance.getCell(cellProperties.row, col);
+                             //Start - US : 994
+                            if(cellProperties.type == 'text'){
+                            	Handsontable.renderers.TextRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'numeric'){
+                                Handsontable.renderers.NumericRenderer.apply(this, arguments);
+                            }
+                            //End - US : 994
+                            
+                            if(item && item.validation && item.validation != '{!$Label.CRM_Upload_Message_Updated}' && item.validation != '{!$Label.CRM_Upload_Message_Created}' && item.validation != ''){
+                                td.style.backgroundColor = 'red';
+                	            td.style.color = 'white';
+                            }
+                        };
+                        //-------- Us 989 start------------>
+                        $scope.refreshPage = function(){
+                            window.location.reload(); 
+                        }
+                        //-------- Us 989 end------------>
+                        
+                        //-------- Us 994 Result filter function------------
+                        $scope.filterRecords = function(flag){
+                            $scope.currentFilterValue = $scope.resultFilter[0] ? $scope.resultFilter[0].value : $scope.resultFilter[0];
+                            if(($scope.previouslySelectedFilterValue != $scope.currentFilterValue && 
+                               !((!$scope.previouslySelectedFilterValue && $scope.currentFilterValue == 'all') || 
+                               (!$scope.currentFilterValue && $scope.previouslySelectedFilterValue == 'all'))) || !flag
+                              ){
+                                hot.getPlugin('trimRows').untrimAll();
+                                if(flag){
+                                    if($scope.previouslySelectedFilterValue == 'error'){
+                                        $scope.errorRecords = [];
+                                        $.each($scope.Budgets, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey)){
+                                                  $scope.errorRecords.push(dealProd);
+                                             }
+                                        });
+                                    }else if($scope.previouslySelectedFilterValue == 'success'){
+                                        $scope.sucessRecords = [];
+                                        $.each($scope.Budgets, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey)){
+                                                  $scope.sucessRecords.push(dealProd);
+                                             }
+                                        });
+                                    }else{
+                                         $scope.nonProcessedRecrods = [];
+                                         $.each($scope.Budgets, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey) && dealProd.recrodStatus != 'error' && dealProd.recrodStatus != 'success'){
+                                                  $scope.nonProcessedRecrods.push(dealProd);
+                                             }
+                                         });
+                                    }
+                                }
+                                $scope.Budgets = [];
+                                if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                    if($scope.currentFilterValue == 'error'){
+                                        $scope.Budgets =  $scope.errorRecords;
+                                        hot.updateSettings({minSpareRows: 0});
+                                    }else if($scope.currentFilterValue == 'success'){
+                                        console.log(' $scope.sucessRecords=============', $scope.sucessRecords);
+                                        $scope.Budgets =  $scope.sucessRecords;
+                                        hot.updateSettings({minSpareRows: 0});
+                                    }
+                                }else{
+                                    if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                        $scope.concatArray($scope.errorRecords);
+                                    if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                        $scope.concatArray($scope.sucessRecords);
+                                    if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                        $scope.concatArray($scope.nonProcessedRecrods);
+                                }
+                                hot.loadData($scope.Budgets);
+                                hot.getPlugin('columnSorting').sort($scope.sortObj.column,$scope.sortObj.order);
+                                if($scope.filterdColIndex.length > 0 && flag){
+                                    hot.getPlugin('filters').removeConditions($scope.filterdColIndex);
+                                }
+                                hot.getPlugin('filters').filter();  
+                            }
+                            $scope.previouslySelectedFilterValue = $scope.currentFilterValue;
+                        };
+                        
+                        $scope.concatArray = function(items){
+                            var lastIndex = $scope.Budgets.length > 0 ? ($scope.Budgets.length) : 0;
+                            $scope.tempArray = $scope.Budgets.slice();
+                            [].splice.apply($scope.tempArray, [lastIndex, 0].concat(items));
+                            $scope.Budgets = $scope.tempArray;
+                        };
+                        
+                        //-------- Us 994 Result filter function---end---------
+                        //Start For US : 989
+                        $scope.exportCSVFile = function(){
+                            hot.getPlugin('exportFile').downloadFile('csv', {
+                                filename: '{!$Label.CRM_CoopBudget_CSV}' ,
+                                columnDelimiter: '{!UserLocaleForCSV}' === 'true' ? ';' :',',      //  ";" for DE Locale and "," for all other territories 
+                                columnHeaders: true       // default false, exports the column headers
+                            });
+                        };
+                        //End For US : 989
+                        
+                        $scope.saveBudgets = function(){
+                            $scope.showSpinner = true;
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            //US#994 start
+                            $scope.sucessRecords = [];
+                            $scope.failedRecords = [];
+                            //US#994 end
+                            var saveStartTime = new Date();
+                            var timeDiff = 0;
+                            
+                            var nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+                            if(nonEmptyRowCount === 0){ nonEmptyRowCount = -1; }
+                            var cleanedGridData = [];
+                            
+                            // Start ---------US : 994--------------------
+                            if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'error'){
+                                $scope.errorRecords = $scope.Budgets;
+                            }else if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'success'){
+                                $scope.sucessRecords = $scope.Budgets;
+                            }else{
+                                $scope.errorRecords = [];
+                                $scope.sucessRecords = [];
+                                $scope.nonProcessedRecrods = [];
+                                $scope.nonProcessedRecrods = $scope.Budgets;//.slice(0,nonEmptyRowCount); 
+                            }
+                        
+                            if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.errorRecords);
+                            if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.sucessRecords);
+                            if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.nonProcessedRecrods);
+                                
+                            // End ---------US : 994--------------------    
+                            /**
+                             * rowsToProcess - Array of records to save back to salesforce
+                             * returnedResults - Rows already saved to Salesforce
+                             */
+                            (function runSaveToSalesforce(rowsToProcess, returnedSucessResults,returnedFailedResults, failedRecCount) {
+                                console.log(rowsToProcess.length, returnedSucessResults.length , returnedFailedResults.length);
+
+                                if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                    $scope.showSpinner = false;
+                                    return;
+                                }
+                
+                                var chunkSize = {!ChunkSizeForSaveCoopBudgets}; // Recursive batch size
+                                var chunkedData = {};
+                                chunkedData = rowsToProcess.splice(0, chunkSize);
+                                
+                                $.each(chunkedData, function(rowKey, object) {
+                                    if(typeof object.budgetAmount == 'string'){
+                                        object.budgetAmount = null;//DEF#4729 : Make quantity Field mandatory on grid
+                                    }
+                                    
+                                    //Defect : 4581 : remove space
+                                    if(object.salesOrg){
+                                        object.salesOrg = object.salesOrg.trim();
+                                    }
+                                    if(object.accountNumber){
+                                        object.accountNumber = object.accountNumber.trim();
+                                    }
+                                    if(object.productCode){
+                                        object.productCode = object.productCode.trim();
+                                    }
+                                    if(object.eventName){
+                                        object.eventName = object.eventName.trim();
+                                    }
+                                    
+                                });
+                                
+                                var chunkTime = new Date();
+                                console.log('Time Elapsed for chunk is', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                timeDiff = (chunkTime - saveStartTime);
+                                        
+                                // Save data back
+                                CRM_UploadCoopBudgetController.upsertCoopBudgets(chunkedData, function(result, event) {
+                                    
+                                    if (!event.status) {
+                                        $scope.$apply(function() {
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                    } else if (cleanedGridData.length > 0) {
+                                        // If successful add results to the main array
+                                        returnedSucessResults = returnedSucessResults.concat(result.successBudgetWrapList);
+                                        returnedFailedResults = returnedFailedResults.concat(result.failedBudgetWrapList);
+                                        
+                                        // Update progress text for user
+                                        $scope.$apply(function() {
+                                            $scope.spinnerText = (returnedSucessResults.length + returnedFailedResults.length) + ' / ' + (rowsToProcess.length + returnedSucessResults.length + returnedFailedResults.length);
+                                        });
+                                        
+                                        // Call salesforce again with remaining rows
+                                        runSaveToSalesforce(rowsToProcess, returnedSucessResults , returnedFailedResults , failedRecCount);
+                                    }else{
+                                        $scope.sucessRecords = returnedSucessResults.concat(result.successBudgetWrapList);
+                                        $scope.failedRecords = returnedFailedResults.concat(result.failedBudgetWrapList);
+                                          
+                                        $scope.Budgets=[]; //US#994
+                                        if($scope.failedRecords.length > 0){
+                                            $scope.Budgets = $scope.failedRecords;
+                                            $scope.msgText = $scope.failedRecords.length.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                            $scope.msgSeverity = 'error';
+                                        }else{
+                                           $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                           $scope.msgSeverity = 'success';
+                                        }
+                                        $scope.Budgets = $scope.Budgets.concat($scope.sucessRecords);
+                                        //US#994 start
+                                        $scope.errorRecords = [];
+                                        $scope.sucessRecords = [];
+                                        $scope.nonProcessedRecrods = [];
+                                     
+										$.each($scope.Budgets, function(rowKey, object) {
+                                            if(object.recrodStatus == 'error'){
+                                                $scope.errorRecords.push(object);
+                                             }else if(object.recrodStatus == 'success'){
+                                                $scope.sucessRecords.push(object);
+                                            }else{
+                                                $scope.nonProcessedRecrods.push(object);
+                                            } 
+                                        });
+                                        
+                                        if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                            $scope.filterRecords(false);
+                                        }else{
+                                        hot.loadData($scope.Budgets); 
+                                            hot.getPlugin('filters').filter();
+                                        } 
+                                        // US : 994 end
+                                        
+                                        $scope.spinnerText = '';
+                                        $scope.showSpinner = false;
+                                        // Update UI
+                                        $scope.$apply();
+                                        var endTime = new Date();
+                                        console.log('SaveRecords Time22: ',endTime - saveStartTime);
+                                    }
+                                },{
+                                    escape: false,
+                                    timeout: 120000,
+                                    buffer: false  
+                                })
+                            })(cleanedGridData,[],[],0);
+                        };
+                        
+                    }]);
+            </script>
+        </body>
+    </html>
+</apex:page>

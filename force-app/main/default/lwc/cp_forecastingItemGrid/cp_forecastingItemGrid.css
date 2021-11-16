@@ -1,0 +1,17 @@
+.tableFixHead {
+    overflow: auto;
+    border: grey;
+}
+
+.tableFixHead table {
+    border-collapse:separate ;
+    width: 100%;
+}
+
+.tableFixHead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: white;
+    text-align: center;
+ }

@@ -1,0 +1,492 @@
+<!--
+    Author   : Cognizant
+    Date Created : 25 Nov 2015
+    Description : This will be used as a popup for deal, bundel and order page
+-->
+<apex:page controller="CRM_ProductMoreInfoController" applyHtmlTag="true" applyBodyTag="true"  showHeader="false" sidebar="false" standardStylesheets="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+        
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />  
+        <apex:stylesheet value="{!URLFOR($Resource.CRM_Product_Popup, 'Popup.css')}" />         
+        
+        <script>
+            window.$Label = window.$Label || {}; 
+            window.$Label.actualsLabel = "{!$Label.CRM_Actuals_Revenue}";
+            window.$Label.orderYAxis = "{!$ObjectType.Opportunity.fields.Actual_Revenue__c.Label}";
+            window.$Label.posActualsLabel = "{!$Label.CRM_POS_Actuals_Reveue}";
+        </script>
+    </head>
+    <body >
+		<apex:variable var="isProductSearchScreen" value="{!IF($CurrentPage.parameters.dealOrOrderID == 'null' , true, false)}"/>
+        <apex:variable value="{!IF((productInformation.product.Type__c == '{!$Label.CRM_Video_Physical}' ||  productInformation.product.Type__c == '{!$Label.CRM_Games_Physical}'), 'slds-form-element ', 'slds-hide')}" var="physicalProduct"/>
+        <apex:variable value="{!IF((productInformation.product.Type__c == '{!$Label.CRM_Video_Digital}' ||  productInformation.product.Type__c == '{!$Label.CRM_Games_Digital}' || productInformation.product.Type__c == ''), 'slds-form-element ', 'slds-hide')}" var="digitalProduct"/>
+        <apex:variable value="slds-large-size--1-of-3 slds-medium-size--1-of-2 slds-m-bottom--small slds-col-rule--bottom" var="pageColumnCSSClass"/>
+        <!--  US #445: Customer Exclusive flag on the Product Detail pop-up wb-pop-exclusiveProductFlag-->
+        <apex:variable value="{!IF(isGerman == true, 'slds-form-element ', 'slds-hide')}" var="germanyFlag"/>
+                    
+        <div Id="mainDiv" class="slds" ng-app="productMoreInfoPopup" ng-controller="popupController">
+            <!-- Tab Div-->
+            <div Id="tabDiv" class="slds-tabs--default">
+                <ul class="slds-tabs--default__nav">
+                    <li id="wb-tab-overview" ng-class="{'slds-active': activeTab=='overview'}" class="wb-tab slds-tabs__item slds-text-heading--label"><a ng-click="setActiveTab('overview')" aria-controls="wb-panel-overview" href="#" role="tab">{!$Label.CRM_Overview_Tab}</a></li>
+                    
+                    <!-- Added For US 264 --->
+                    <li id="wb-tab-talent" ng-class="{'slds-active': activeTab=='talent'}" class="wb-tab slds-tabs__item slds-text-heading--label"><a ng-click="setActiveTab('talent')" aria-controls="wb-panel-talent" href="#" role="tab">{!$Label.CRM_Talent_Tab}</a></li>
+                    <!-- Added For US 264 --->
+                    
+                    <li id="wb-tab-chatter" ng-class="{'slds-active': activeTab=='chatter'}" class="wb-tab slds-tabs__item slds-text-heading--label"><a ng-click="setActiveTab('chatter')" aria-controls="wb-panel-chatter" href="#" role="tab">{!$Label.CRM_Chatter_Tab}</a></li>
+                    <li id="wb-tab-orders" ng-class="{'slds-active': activeTab=='orders'}" class="wb-tab slds-tabs__item slds-text-heading--label"><a ng-click="setActiveTab('orders')" aria-controls="wb-panel-orders" href="#" role="tab">{!$Label.CRM_Order_History_Tab}</a></li>
+                </ul>
+            </div>
+            
+            <!-- Loadin Spinner -->
+            <div class="spinnerModel" ng-show="showSpinner">
+                <div class="spinnerContent slds-spinner--large">
+                    <img src="{!URLFOR($Resource.SLDS0120, 'assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                </div>
+            </div>
+            
+            <!-- Overview Tab Div -->
+            <div id="wb-panel-overview" ng-show="activeTab=='overview'" class="wb-listview slds-tabs__content" role="tabpanel" aria-labelledby="wb-tab-overview" aria-hidden="false">
+                <!-- Overview tab content Tab Div -->
+                <div class="slds-media__body">
+                    <div class="slds-form--stacked slds-grid slds-wrap">
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.OpportunityLineItem.fields.Account_Price__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.currencyIsoCode} {!productInformation.accountPrice}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-listPrice">{!$ObjectType.OpportunityLineItem.fields.ListPrice__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-listPrice">{!productInformation.currencyIsoCode} {!productInformation.listPrice}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-listPrice">{!$ObjectType.PriceBook_Entry_Period__c.fields.Retail_Price__c.label}</label>
+                                <div class="slds-form-element__control">
+                                    <p id="wb-pop-listPrice" class="{!IF(productInformation.retailPrice == null, 'slds-hide', '')}">{!productInformation.retailPrice}</p>
+                                    <p id="wb-pop-listPrice" class="{!IF(productInformation.retailPrice == null, '', 'slds-hide')}">&nbsp;</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.ProductCode.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.ProductCode}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.SAP_Dist_chain_product_Status__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.SAP_Dist_chain_product_Status__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <!-- US#232 start -->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Plant_Specific_Material_Status__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Plant_Specific_Material_Status__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <!-- US#232 End-->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Long_Description__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Long_Description__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Release_Category__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.releaseCategory}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Format__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Format__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Genre__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Genre__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Media_Quantity__c    .label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Media_Quantity__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Owner__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Owner__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Language_Code__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Language_Code__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Type__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Type__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Street_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputText value=" {!productInformation.releaseDate}"/>&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Universal_Picture_Code__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Universal_Picture_Code__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Weight__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Weight__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Height__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Height__c}&nbsp;</p></div>
+                            </div>                
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">            
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Depth__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Depth__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Product_Width__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Width__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Case_Type__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Case_Type__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">            
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.External_Material_Group__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.External_Material_Group__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <!--US#289 Defect 4046 starts  -->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}" ng-show="{!$ObjectType.Product2.fields.Franchise_Type__c.Accessible}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Franchise_Type__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Franchise_Type__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <!--US#289 ends -->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_BD_Release_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.Local_BD_Release_Date__c}"/>&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">            
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Box_Office__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Box_Office__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_DVD_Release_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.Local_DVD_Release_Date__c}"/>&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Label__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Label__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">            
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Pay_TV_Start_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.Local_Pay_TV_Start_Date__c}"/>&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Rating__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Rating__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Rating_System__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Rating_System__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Run_Time__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Run_Time__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Season__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Local_Season__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!digitalProduct}">            
+                            <div class="{!digitalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_TV_Air_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.Local_TV_Air_Date__c}"/>&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Local_Theatrical_Release_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.Local_Theatrical_Release_Date__c}"/>&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Num_Local_Episodes__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Num_Local_Episodes__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Title_Content_Type__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Title_Content_Type__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Items_in_Stock__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Items_in_Stock__c}&nbsp;</p></div>
+                            </div> 
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Date_of_Stock_Level__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Date_of_Stock_Level__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Delivery_Lead_Days__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Delivery_Lead_Days__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$Label.CRM_More_Info_Popup_Cut_Off_Date}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.cutOffDate}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$Label.CRM_MPM_on_MoreInfoPopUp}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Title_MPM_F__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Title_VV_F__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Title_VV_F__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                        
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Region__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Region__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.UV_Published_Date__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice"><apex:outputField value=" {!productInformation.product.Local_Title__r.UV_Published_Date__c}"/>&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <!-- <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Talent__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Talent__c}&nbsp;</p></div>
+                            </div>            
+                        </div> -->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product_Group__c.fields.Name.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Product_Group__r.Name}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Local_Title__c.fields.Topics__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Local_Title__r.Topics__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!physicalProduct}">
+                            <div class="{!physicalProduct}">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">{!$ObjectType.Product2.fields.Cut_Off_Period_Weeks__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">{!productInformation.product.Cut_Off_Period_Weeks__c}&nbsp;</p></div>
+                            </div>            
+                        </div>
+                        <!-- <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">            
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">Amazon Pre Order Volume</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">TODO&nbsp;</p></div>
+                            </div>
+                        </div> -->
+                        <!-- <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-acctPrice">SVOD</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-acctPrice">TODO&nbsp;</p></div>
+                            </div>
+                        </div> -->
+                        <!-- <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-director">Director</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-director">TODO</p></div>
+                            </div>
+                        </div> -->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element ">
+                                <label class="slds-form-element__label" for="wb-pop-talent">{!$ObjectType.Account_Product__c.fields.Stock_Level__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-talent">{!productInformation.stockLevel}&nbsp;</p></div>
+                            </div>
+                        </div>
+                                  
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-synopsis">{!$ObjectType.Local_Title__c.fields.Local_Synopsis__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-synopsis">{!productInformation.product.Local_Title__r.Local_Synopsis__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                        
+                        <!--  US #445: Customer Exclusive flag on the Product Detail pop-up wb-pop-exclusiveProductFlag-->
+                        <div class="slds-col--padded slds-size--1-of-1 {!pageColumnCSSClass} {!germanyFlag}">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="wb-pop-listPrice">{!$ObjectType.Product2.fields.Exclusive_Product_Flag__c.label}</label>
+                                <div class="slds-form-element__control"><p id="wb-pop-listPrice">{!productInformation.product.Exclusive_Product_Flag__c}&nbsp;</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Added For US 264 --->
+            <div id="wb-panel-talent" ng-show="activeTab=='talent'" class="wb-listview slds-tabs__content" role="tabpanel" aria-labelledby="wb-tab-talent" aria-hidden="false">
+                <table id="wb-listtable" class="slds-table slds-table--bordered slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                    <thead>
+                        <tr class="slds-text-heading--label">
+                            <th class="slds-is-sortable" scope="col" style="width:20%;">
+                                <div class="slds-truncate">{!$ObjectType.MPM_Talent__c.fields.Credit_Sequence__c.Label}</div>
+                            </th>
+                            <th class="slds-is-sortable" scope="col">
+                                <div class="slds-truncate">{!$ObjectType.MPM_Talent__c.fields.Role__c.Label}</div>
+                            </th>
+                            <th class="slds-is-sortable" scope="col">
+                                <div class="slds-truncate">{!$ObjectType.MPM_Talent__c.fields.Talent__c.Label}</div>
+                            </th>
+                            <th class="slds-is-sortable" scope="col">
+                                <div id="charDiv" class="slds-truncate">{!$ObjectType.MPM_Talent__c.fields.Character__c.Label}</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!MPMTalentInfo}" var="mpmTalent" id="theRepeat">
+                            <tr class="slds-hint-parent">
+                                <td class="slds-truncate" data-label="{!$ObjectType.MPM_Talent__c.fields.Credit_Sequence__c.Label}">{!mpmTalent.Credit_Sequence__c}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.MPM_Talent__c.fields.Role__c.Label}">{!mpmTalent.Role__c}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.MPM_Talent__c.fields.Talent__c.Label}">{!mpmTalent.Talent__r.Name}</td>
+                                <td class="slds-truncate" data-label="{!$ObjectType.MPM_Talent__c.fields.Character__c.Label}">{!mpmTalent.Character__c}</td>
+                        	</tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Added For US 264 --->
+            
+            <div id="wb-panel-chatter" ng-show="activeTab=='chatter'" style="margin:0px" class="slds-tabs__content" role="tabpanel" aria-labelledby="wb-tab-chatter" aria-hidden="true">
+                <iframe class="wb-chatterPost" ng-src="/apex/CRM_TitleChatter?id={!productInformation.product.Id}" allowfullscreen="allowfullscreen"/>
+            </div>            
+            
+            <!-- Order History Tab Div -->
+            <div id="wb-panel-orders" ng-show="activeTab=='orders'" ng-init="accountID='{!accountID}'; productId='{!productInformation.product.Id}'" class="wb-listview slds-tabs__content" role="tabpanel" aria-labelledby="wb-tab-orders" aria-hidden="true">
+                
+                <div class="slds-media__body slds-grid slds-wrap">
+                    <div style="padding-top:11px;" class="slds-form--inline slds-col--padded slds-small-size--1-of-1 slds-medium-size--2-of-3 slds-large-size--2-of-3">
+                        <div ng-show="showOrderError"><label>{{orderErrorMessage}}</label></div>
+                        
+                        <!-- Picklist Div -->
+                        <apex:outputPanel > <!-- {!IF(len(years) > 2, true, false) rendered="{!IF(years.size > 0, true, false)}"-->
+                            <div class="slds-form-element slds-m-bottom--small">
+                              <label class="slds-form-element__label" for="customer">{!$Label.CRM_Order_History_Customer_Label}</label>
+                              <div class="slds-form-element__control" >
+                                    <div class="slds-select_container">
+                                        <select class="slds-select" ng-model="selectedAllOrCurrent" ng-init="selectedAllOrCurrent= ({!isProductSearchScreen} ? 'allCustomer' : 'selectedCustomer')" ng-change="createChartAsPerCustomer(selectedAllOrCurrent)">
+                                            <option value="allCustomer">{!$Label.CRM_Order_History_All_Customers}</option>
+                                            <!-- hide the 'Selected Customer' option when used from 'Product Search' screen -->
+                                            <option value="selectedCustomer" ng-hide="{!isProductSearchScreen}">{!$Label.CRM_Order_History_Selected_Customers}</option>
+                                        </select>
+                                    </div>
+                              </div>
+                              <div class="slds-form-element slds-p-left--small" ng-init="getYearValues()" >
+                                    <label class="slds-form-element__label" for="selectSample1">{!$Label.CRM_Select_Year}</label>
+                                    <div class="slds-form-element__control" >
+                                        <div class="slds-select_container">
+                                            <select id="selectSample1" class="slds-select slds-col" ng-options="year for year in yearList" ng-model="selectedValue" ng-change="createChartInAngula1(selectedValue)">
+                                            </select>
+                                        </div>
+                                    </div>
+                              </div>
+                              
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Chart Div -->
+                        <div style="width: 90%;">
+                            <canvas id="barchart" height="35%"  width="100%"></canvas>                            
+                        </div>    
+                        
+                        <div class="slds-col--padded slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-p-around--small">
+                            <div id="order-legend" class="chart-legend"></div>
+                        </div>                    
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/Chart.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Product_Popup, 'Popup.js')}" />
+        
+    </body>
+    
+</html>
+
+</apex:page>

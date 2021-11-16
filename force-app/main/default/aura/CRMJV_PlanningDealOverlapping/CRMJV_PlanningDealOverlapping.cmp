@@ -1,0 +1,209 @@
+<aura:component implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="CRM_DealApprovalPOSandDFI">
+    <aura:attribute name="raiseAlert" type="Boolean" default="false"/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="lineItemsOverlapping" type="sObject" />
+    <aura:attribute name="existingDealOverlap" type="sObject" />
+    <aura:attribute name="existingDealProductOverlap" type="map" />
+    <aura:attribute name="msgSeverity" type="String"/>
+    <aura:attribute name="msgText" type="String" />
+    <aura:attribute name="validationCheck" type="String" />
+    <aura:attribute name="isChecked" type="Boolean" default="false"/>
+    <aura:attribute name="isMoreThan10k" type="Boolean" default="false"/>
+    <aura:attribute name="recordCount" type="integer"/>
+    <aura:attribute name="opportunity" type="sObject" />
+    <aura:attribute name="objectId" type="String"/>
+    <aura:attribute name="filterData" type ="sObject"/>
+    <aura:attribute name="slNo" type="Integer" default="1"/>
+    <aura:attribute name="filteredArray" type="list" />
+    <aura:attribute name="length" type="integer"/>
+    <aura:attribute name="noOverlap" type="Boolean" default="false"/>
+    
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.reInit}" />
+    <aura:if isTrue="{!v.spinner}">
+        <div class="spinner spinner-style">
+            <lightning:spinner alternativeText="Loading" size="large" variant="brand"/>
+        </div>
+    </aura:if>
+    <!-- =========================== HEADER BANNER ================================--> 
+    <div class="slds-page-header" role="banner">
+        <div class="slds-grid">
+            <div class="slds-col slds-has-flexi-truncate">
+                <nav class="slds-m-bottom--xx-small" role="navigation">
+                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                        <li class="slds-list__item slds-text-heading--label"><a href="">Deals</a></li>
+                        <li class="slds-list__item slds-text-heading--label"><a href="{!'/one/one.app#/alohaRedirect/'+v.opportunity.Id}">{!v.opportunity.Name}</a></li>
+                    </ol>
+                </nav>
+                <div class="slds-col slds-has-flexi-truncate">
+                    <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.c.CRMJV_Overlapping_Page_Heading}">{!$Label.c.CRMJV_Overlapping_Page_Heading}</h1>
+                </div>    
+            </div>
+            
+            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                <div class="slds-form-element">
+                    <div class="slds-form-element__control"> 
+                        <div class="slds-button-group slds-button-space-left" role="group">
+                            <lightning:button onclick="{!c.backToDeal}">{!$Label.c.CRM_Approval_Button_Back_To_Deal}</lightning:button>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-button-group" role="group">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- =========================== HEADER BANNER ================================-->
+    <br></br>
+    <!-- ===========================Exception================================= -->
+    <aura:if isTrue="{!v.msgText.length > 0}" >                     
+        <div class="slds-grid">
+            <div class="{!'slds-col slds-notify slds-theme--'+v.msgSeverity+' slds-notify--toast slds-box--x-small'}" role="alert">
+                <div class="notify__content slds-grid">
+                    <lightning:icon iconName="{!v.msgSeverity == 'warning' || v.msgSeverity == 'error' ? 'utility:warning' : ''}" size="small" variant="inverse"></lightning:icon>
+                    <div class="slds-col">
+                        <h2 class="slds-text-heading--medium">{!v.msgText}</h2>                           
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    
+    <!-- ===========================Entry Criteria Passed================================--> 
+    <aura:if isTrue="{!and(v.raiseAlert,not(v.isChecked))}" >
+        <div class="slds-grid">
+            <div class="{!'slds-col slds-notify slds-theme--'+v.msgSeverity+' slds-notify--toast slds-box--x-small'}" role="alert">
+                <div class="notify__content slds-grid">
+                    <lightning:icon iconName="utility:warning" size="small" variant="inverse"></lightning:icon> 
+                    <div class="slds-col">
+                        <aura:if isTrue="{!v.raiseAlert}">
+                            <h2 class="slds-text-heading--small">{!$Label.c.CRMJV_Other_Overlapping_Deal_Message}</h2>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    <!-- ===========================Current Deal Details================================-->
+    
+    <aura:if isTrue="{!and(v.raiseAlert,not(v.isChecked))}">
+        <div class="slds-grid">
+            <div class="{!'slds-col slds-notify slds-theme--warning slds-notify--toast slds-box--xx-small'}" role="alert">
+                <div class="notify__content slds-grid">
+                    <lightning:icon iconName="utility:warning" size="xx-small" variant="inverse"></lightning:icon> 
+                    <div class="slds-col">
+                        <aura:if isTrue="{!(v.recordCount >= 50000)}">
+                            <h2 class="slds-text-heading--xx-small">{!$Label.c.CRM_Overlap_Record_Count_moreThan_50k}</h2>
+                            <aura:set attribute="else">
+                                <h2 class="slds-text-heading--xx-small">{!format($Label.c.CRM_Overlap_Record_Count_lessThan_50k,v.recordCount)}</h2>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <aura:if isTrue="{!v.isMoreThan10k}">
+            <div class="slds-grid">
+                <div class="{!'slds-col slds-notify slds-theme--warning slds-notify--toast slds-box--x-small'}" role="alert">
+                    <div class="notify__content slds-grid">
+                        <lightning:icon iconName="utility:warning" size="xx-small" variant="inverse"></lightning:icon> 
+                        <div class="slds-col">
+                            <h2 class="slds-text-heading--x-small">{!$Label.c.CRM_More_Than_10k_Overlap_Msg}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        <div class="c-container">
+            <br></br>
+            <div class="slds-m-around--medium">
+                <div class="slds-grid slds-section-title--divider">
+                    <div class="slds-text-heading--small" title="{!$Label.c.CRM_Approval_Section_Heading_Current_Deal}">{!$Label.c.CRM_Approval_Section_Heading_Current_Deal}</div>
+                </div>
+                <br></br>
+                <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal table-style">
+                    <thead>
+                        <tr class="slds-text-heading--label  header-style">
+                            <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Name</span></th>
+                            <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Code</span></th>
+                            <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Stage Name</span></th>
+                            <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Promo Start Date</span></th>
+                            <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Promo End Date</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr> 
+                            <th role="row" ><span class="slds-truncate"> <a href="{!'/one/one.app#/alohaRedirect/'+v.opportunity.Id}" tabindex="-1" role="presentation">{!v.opportunity.Name}</a></span></th>
+                            <td><span class="slds-truncate">{!v.opportunity.Deal_Code__c}</span></td>
+                            <td><span class="slds-truncate">{!v.opportunity.StageName}</span></td>
+                            <td><span class="slds-truncate">{!v.opportunity.Promo_Start_Date__c}</span></td>
+                            <td><span class="slds-truncate">{!v.opportunity.Promo_End_Date__c}</span></td> 
+                        </tr> 
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </aura:if>
+    <br></br>
+    <div class="c-container">
+        <br></br>
+        <aura:if isTrue="{!and(v.lineItemsOverlapping,v.lineItemsOverlapping.length > 0)}">
+            <c:Pagination aura:id="ser" PaginationData = "{!v.lineItemsOverlapping}" slNo="{!v.slNo}"  filterData="{!v.filterData}" len="{!v.lineItemsOverlapping.length}" spinner="{!v.spinner}" />
+        </aura:if>
+        <br></br>
+        <aura:if isTrue="{!and(v.raiseAlert,not(v.isChecked))}">
+            <div class="slds-m-around_large ">  
+                <div class="slds-scrollable_Y scroll-height">  
+                    <table class="slds-table slds-table--bordered slds-table--stacked-horizontal table-style" >
+                        <thead>
+                            <tr class="slds-text-heading--label  header-style">
+                                <th class="slds-cell-shrink" scope="col">Sl No</th>
+                                <th class="slds-cell-shrink" scope="col">Product Name</th>
+                                <th class="slds-cell-shrink" scope="col">Product Code</th> 
+                                <th class="slds-cell-shrink" scope="col">Start Date</th>
+                                <th class="slds-cell-shrink" scope="col">End Date</th>
+                                <th class="slds-cell-shrink" scope="col">Overlapping Deals</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <aura:iteration items="{!v.filterData}" var="proRow" indexVar="sNo">        
+                                <tr class="slds-hint-parent">
+                                    <td class="slds-cell-shrink"><ui:outputText value="{!sNo + v.slNo}"/> </td>
+                                    <td class="slds-cell-wrap"><a href="{!'/one/one.app#/alohaRedirect/'+proRow.productId}" tabindex="-1" role="presentation">{!proRow.productName}</a></td>
+                                    <td class="slds-cell-shrink">{!proRow.productCode}</td>
+                                    <td class="slds-cell-shrink">{!proRow.startDate}</td>
+                                    <td class="slds-cell-shrink">{!proRow.endDate}</td>
+                                    <td>
+                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal table-style2" >
+                                            <thead>
+                                                <tr class="slds-text-heading--label  header-style">
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Name</span></th>
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Code</span></th>
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Stage Name</span></th>
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Product Start Date</span></th>
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Product End Date</span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <aura:iteration items="{!proRow.dealOverlapWrap}" var="exDeal">
+                                                    <tr>
+                                                        <td> <span class="slds-truncate"><a href="{!'/one/one.app#/alohaRedirect/'+exDeal.overLapId}" tabindex="-1" role="presentation">{!exDeal.dealName}</a></span></td>
+                                                        <td><span class="slds-truncate">{!exDeal.dealCode}</span> </td>
+                                                        <td><span class="slds-truncate">{!exDeal.stageName}</span> </td>
+                                                        <td><span class="slds-truncate">{!exDeal.startDate}</span></td>
+                                                        <td><span class="slds-truncate">{!exDeal.endDate}</span></td>
+                                                    </tr>
+                                                </aura:iteration>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </aura:if>
+        
+    </div>
+</aura:component>

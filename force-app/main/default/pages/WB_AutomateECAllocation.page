@@ -1,0 +1,43 @@
+<apex:page controller="WB_AutomateDigitalAllocation" action="{!automateAllocation}">
+<script  type="text/javascript">  
+
+  function redirectToRecord(){
+      var mpmID = "{!mpmId}";
+      var ecPieceId = "{!ecpieceId}";
+      if(!ecPieceId) {
+          var URLrn = '/lightning/r/MPM__c/'+mpmID+'/view?fr=1';                            
+          window.open('{!$Label.WB_BaseURL}'+URLrn,'_parent');   
+      }else{
+          var URLrn = '/lightning/r/EC_Piece__c/'+ecPieceId+'/view?fr=1';   
+          window.open('{!$Label.WB_BaseURL}'+URLrn,'_parent');
+      } 
+  }
+</script>      
+    <apex:form id="theForm">
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageBlock id="theBlock">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Return" title="Return" action="{!returnToMpm}" rendered="{!$User.UIThemeDisplayed == 'Theme3'}"/>
+                <apex:commandButton value="Return" title="Return" onclick="redirectToRecord();" rendered="{!$User.UIThemeDisplayed == 'Theme4d'}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection id="theSection1" title="EC Account Allocations Successfully Created" columns="1" rendered="{!IF(InsertedAllocations != NULL,true,false)}">
+                <apex:pageBlockTable value="{!InsertedAllocations}" var="allocation">
+                    <apex:column value="{!allocation.name}"/>
+                    <apex:column value="{!allocation.EC_Name__c}"/>
+                    <apex:column value="{!allocation.Account__c}"/>
+                    <apex:column value="{!allocation.Format__c}"/>
+                    <apex:column value="{!allocation.EC_Piece__c}"/>
+                    <apex:column value="{!allocation.MPM__c}"/>
+                    <apex:column value="{!allocation.Title__c}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection id="theSection2" title="Failed Records" rendered="{!IF(ErrCount > 0,true,false)}">
+                <b>
+                    <apex:outputLabel value="{!ErrCount} EC Allocations Failed"/>
+                </b>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    
+
+</apex:page>

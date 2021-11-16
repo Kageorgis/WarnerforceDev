@@ -1,0 +1,9 @@
+<apex:page StandardController="Client_Avail__c" recordSetVar="Commercial_Avail__c" extensions="WB_CreateClientAvail_Controller">
+    <apex:form >
+        <h1>
+        <apex:outputText >{!msgA}</apex:outputText>
+        <apex:outputText >{!msgB}</apex:outputText>
+        </h1>
+        <apex:commandButton value="OK" style="margin:1em; margin-left:35em; " id="create_button2" action="{!batchProcessEmailNotificationOkBtn}"  /> 
+    </apex:form>
+</apex:page>

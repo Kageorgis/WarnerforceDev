@@ -1,0 +1,74 @@
+<apex:page standardController="Release_Plan_Exceptions__c" tabStyle="Commercial_Avail__c" extensions="WB_SplitRP_Redirect_Controller">
+<html>
+<body>
+<apex:sectionHeader title="Split Release Plan Wizard" subtitle="Release Plan records"/>
+    <apex:form >     
+        <apex:pageBlock >
+            <apex:pageBlockSection title="Selected Release Plans" columns="1" collapsible="false" > 
+                <apex:pageBlockTable value="{!RPException_listold }" var="cavl_lst1">
+                    <apex:column value="{!cavl_lst1.Release_Plan_Id__c}"/>
+                    <apex:column value="{!cavl_lst1.Title__c}" />
+                    <apex:column value="{!cavl_lst1.Country__c}" />
+                    <apex:column value="{!cavl_lst1.Language__c}"/>
+                    <apex:column value="{!cavl_lst1.Language_Type__c}"/>                                                
+                    <apex:column value="{!cavl_lst1.Channel__c}"/>
+                    <apex:column value="{!cavl_lst1.Format__c}"/>
+                    <apex:column value="{!cavl_lst1.Avails_Start__c}"/>
+                    <apex:column value="{!cavl_lst1.Avails_End__c}"/>
+                    <apex:column value="{!cavl_lst1.Release_Start_Date__c}" headerValue="Release Start"/>
+                    <apex:column value="{!cavl_lst1.Release_End_Date__c}" headerValue="Release End"/>
+                    <apex:column value="{!cavl_lst1.Status__c}"/>
+                    <apex:column value="{!cavl_lst1.Reason__c}"/>
+                </apex:pageBlockTable>                            
+            </apex:pageBlockSection>           
+        </apex:pageBlock>
+        <apex:pageBlock >
+          
+        
+        
+            <apex:outputPanel rendered="{!!newRPDisplay}">
+                <apex:outputText value="No new Release Plan created" /> <br/>
+            </apex:outputPanel>
+            <apex:pageBlockSection title="Newly Created Release Plans" columns="1" collapsible="false" rendered="{!newRPDisplay}" >            
+                <apex:pageBlockTable value="{!RPException_listnew }" var="cavl_lst2">
+                    <apex:column value="{!cavl_lst2.Release_Plan_Id__c}"/>
+                    <apex:column value="{!cavl_lst2.Title__c}" />
+                    <apex:column value="{!cavl_lst2.Country__c}" />
+                    <apex:column value="{!cavl_lst2.Language__c}"/>
+                    <apex:column value="{!cavl_lst2.Language_Type__c}"/>                                                
+                    <apex:column value="{!cavl_lst2.Channel__c}"/>
+                    <apex:column value="{!cavl_lst2.Format__c}"/>
+                    <apex:column value="{!cavl_lst2.Avails_Start__c}"/>
+                    <apex:column value="{!cavl_lst2.Avails_End__c}"/>
+                    <apex:column value="{!cavl_lst2.Release_Start_Date__c}" headerValue="Release Start"/>
+                    <apex:column value="{!cavl_lst2.Release_End_Date__c}" headerValue="Release End" />
+                    <apex:column value="{!cavl_lst2.Status__c}"/>
+                    
+                </apex:pageBlockTable>                            
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Exceptions on creation of Release Plans" columns="1" collapsible="false" rendered="{!newExcepRPDisplay}" >
+              <apex:pageBlockTable value="{!RPException_listnew2}" var="cavl_lst3">
+                    <!--<apex:column value="{!cavl_lst3.Release_Plan_Id__c}"/>
+                    <apex:column value="{!cavl_lst3.Title__c}" />
+                    <apex:column value="{!cavl_lst3.Country__c}" />
+                    <apex:column value="{!cavl_lst3.Language__c}"/>
+                    <apex:column value="{!cavl_lst3.Language_Type__c}"/>                                                
+                    <apex:column value="{!cavl_lst3.Channel__c}"/>
+                    <apex:column value="{!cavl_lst3.Format__c}"/>
+                    <apex:column value="{!cavl_lst3.Avails_Start__c}"/>
+                    <apex:column value="{!cavl_lst3.Avails_End__c}"/>
+                    <apex:column value="{!cavl_lst3.Release_Start_Date__c}" headerValue="Release Start"/>
+                    <apex:column value="{!cavl_lst3.Release_End_Date__c}" headerValue="Release End" />
+                    <apex:column value="{!cavl_lst3.Status__c}"/>-->
+                    <apex:column value="{!cavl_lst3.Reason__c}"/>
+                </apex:pageBlockTable>    
+          </apex:pageBlockSection> 
+            <div align="center"> 
+                <apex:commandButton value="OK"  id="create_button2" action="{!okbutton}"  />  
+            </div>          
+        </apex:pageBlock>
+    </apex:form>  
+
+</body>
+</html>
+</apex:page>

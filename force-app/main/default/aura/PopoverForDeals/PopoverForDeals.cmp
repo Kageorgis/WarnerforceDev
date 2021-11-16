@@ -1,0 +1,165 @@
+<aura:component extensible="true">
+	<aura:attribute name="isActive" type="Boolean" default="false" required="true" />
+    <aura:attribute name="availableFields" type="DealsWrapper.Column[]" default="[]" required="true" />
+    <aura:attribute name="operators" type="object" required="true" />
+    <aura:attribute name="fieldName" type="String" required="true" default="" />
+    
+    <aura:attribute name="action" type="String" default="add" />
+    <aura:attribute name="tableId" type="Integer" default="-1" />
+    <aura:attribute name="apiFieldTypes" type="object" />
+    <aura:attribute name="fieldType" type="String" default="" />
+    <aura:attribute name="dealFields" type="List" default="[{'label': 'Temp Field 1', 'value': 'field1'}]"/>
+    <aura:attribute name="label" type="String" default="" />
+    <aura:attribute name="apiName" type="String" default="" />
+    <aura:attribute name="operatorSelected" type="String" default="" />
+    <aura:attribute name="operatorsForField" type="List" default="[{'label': 'Temp operator 1', 'value': 'op1'}]"/>
+    <aura:attribute name="operatorsForBoolean" type="List" default="[{'label': 'True', 'value': 'true'},{'label': 'False', 'value': 'false'}]" />
+    <aura:attribute name="value" type="String" default="" />
+    <aura:attribute name="valueBoolean" type="String" default="true" />
+    <aura:attribute name="showDualListBoxSelector" type="Boolean" default="false" />
+    <aura:attribute name="picklistValues" type="List" />
+    <aura:attribute name="dualListBoxLabel" type="String" default="0 options selected" />
+    <aura:attribute name="dualListBoxOptions" type="List" default="[{'label': 'Temp value 1', 'value': 'value1'}]"/>
+    <aura:attribute name="dualListBoxValues" type="List" />
+    <aura:attribute name="studioUsers" type="DealsWrapper.StudioUser[]"/>
+    <aura:registerEvent name="loadPicklist" type="c:LoadPicklist" />
+    <aura:registerEvent name="loadEditFilter" type="c:LoadEditFilterPopover" />
+    <aura:handler event="c:LoadEditFilterPopover" action="{! c.handleLoadFilter}" />
+    <aura:if isTrue="{! v.isActive}">
+        <section aria-label="Filter dialog" 
+                 class="slds-popover slds-popover_medium" 
+                 style="position: absolute; right: 20.3rem; top: 7rem; z-index: 9000;"
+                 role="dialog">
+            <lightning:buttonIcon alternativeText="Close dialog"
+                                  title="Close dialog"
+                                  iconName="utility:close"
+                                  variant="container"
+                                  size="small"
+                                  class="slds-float_right slds-popover__close"
+                                  onclick="{! c.handleCancel}"/>
+            <header class="slds-popover__header">
+                <h2 class="slds-text-heading_small">{! v.action} filter</h2>
+            </header>
+            <div class="slds-popover__body">
+                <aura:if isTrue="{! v.apiName != 'Opportunity.CreatedBy.Name'}">
+                    <div class="slds-form-element slds-p-bottom_small">
+                        <lightning:combobox aura:id="fieldForFilter"
+                                            name="filter"
+                                            label="Field of Deal"
+                                            dropdownAlignment="auto"
+                                            value="{! v.apiName}"
+                                            options="{! v.dealFields}"
+                                            required="true"
+                                            onchange="{! c.handleChangeField}" />
+                    </div>
+                    <div class="slds-form-element slds-p-bottom_small">
+                        <lightning:combobox aura:id="operatorForFilter"
+                                            name="operator"
+                                            label="Operator"
+                                            dropdownAlignment="auto"
+                                            value="{! v.operatorSelected}"
+                                            required="true"
+                                            options="{! v.operatorsForField}"/>
+                    </div>
+                    <div class="slds-form-element slds-p-bottom_small">
+                        <aura:if isTrue="{! and(v.fieldType != 'boolean', and(v.fieldType != 'picklist', v.fieldType != 'multipicklist'))}">
+                            <lightning:input aura:id="valueForFilter"
+                                             name="value"
+                                             label="Value"
+                                             type="{! if(and(v.fieldType != 'double', and(v.fieldType != 'percent', v.fieldType != 'currency')),'text','number')}"
+                                             value="{! v.value}"
+                                             step="0.01"
+                                             maxlength="{! if(v.fieldType == 'id', 15, 255)}"
+                                             minlength="{! if(v.fieldType == 'id', 15, 1)}"
+                                             pattern="{! if(v.fieldType == 'id','[a-zA-Z0-9]+',if(or(v.fieldType == 'date',v.fieldType == 'datetime'),'[a-zA-Z0-9/ ]+','[a-zA-Z0-9-_. ]+'))}"
+                                             onchange="{! c.handleOnChangeInput}"
+                                             required="true"/>
+                        </aura:if>
+                        <aura:if isTrue="{! v.fieldType == 'boolean'}">
+                            <lightning:radioGroup aura:id="valueForFilterBoolean"
+                                                  name="valueBoolean"
+                                                  label="Value"
+                                                  options="{! v.operatorsForBoolean }"
+                                                  value="{! v.valueBoolean }"
+                                                  onchange="{! c.handleBooleanChange }"
+                                                  required="true"
+                                                  type="button"/>
+                        </aura:if>
+                        <aura:if isTrue="{! or(v.fieldType == 'picklist', v.fieldType == 'multipicklist')}">
+                            <div class="slds-grid slds-grid_vertical">
+                                <div class="slds-col">
+                                    <label for="dualboxValue" class="slds-form-element__label">
+                                        <abbr title="required" class="slds-required">*</abbr>Value
+                                    </label>
+                                </div>
+                                <div class="slds-col">
+                                    <lightning:button aura:id="openDualListBoxSelector"
+                                                      name="dualListBoxSelectorValue"
+                                                      label="{! v.dualListBoxLabel}"
+                                                      class="openDualListBoxButton"
+                                                      onclick="{! c.handleModalSelectValuesOpen}" />
+                                </div>
+                            </div>
+                        </aura:if>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{! v.apiName == 'Opportunity.CreatedBy.Name'}">
+                    <div class="slds-form-element slds-p-bottom_small">
+                        <div class="slds-grid slds-grid_vertical">
+                            <div class="slds-col">
+                                <label for="dualboxValue" class="slds-form-element__label">
+                                    <abbr title="required" class="slds-required">*</abbr>Studio Users
+                                </label>
+                            </div>
+                            <div class="slds-col">
+                                <lightning:button aura:id="openDualListBoxSelector"
+                                                  name="dualListBoxSelectorValue"
+                                                  label="{! v.dualListBoxLabel}"
+                                                  class="openDualListBoxButton"
+                                                  onclick="{! c.handleModalSelectValuesOpen}" />
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>
+            </div>
+            <footer class="slds-popover__footer">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <lightning:button aura:id="saveFilter"
+                                      label="Save changes"
+                                      type="submit"
+                                      onclick="{! c.saveFilter}"
+                                      class="slds-col_bump-left" />
+                </div>
+            </footer>
+            <div class="pointer" 
+                 style="box-shadow: 1px -1px 0px 0px rgba(0, 0, 0, 0.16);
+                        z-index: -1;
+                        width: 1rem;
+                        height: 1rem;
+                        position: absolute;
+                        transform: rotate(45deg);
+                        content: '';
+                        background-color: inherit;
+                        top: 0.8rem;
+                        right: -.5rem;
+                        margin-top: -.5rem;
+                        box-sizing: border-box;" />
+        </section>
+        <c:ModalForDeals title="Select values" isActive="{! v.showDualListBoxSelector}">
+            <lightning:dualListbox aura:id="multipleOptionsSelected"
+                                   name="multipleOptionsSelected"
+                                   label="If you do not select values, it will be considered as ALL"
+                                   sourceLabel="Available values"
+                                   selectedLabel="Selected values"
+                                   size="5"
+                                   disableReordering="true"
+                                   max="{! v.dualListBoxOptions.length-1}"
+                                   options="{! v.dualListBoxOptions}"
+                                   value="{! v.dualListBoxValues}"/>
+            <aura:set attribute="footer">
+                <lightning:button variant="neutral" label="Cancel" onclick="{! c.handleModalSelectValuesCancel}" />
+                <lightning:button variant="brand" label="Select this options" onclick="{! c.handleModalSelectValuesSave}" />
+            </aura:set>
+        </c:ModalForDeals>
+    </aura:if>
+</aura:component>

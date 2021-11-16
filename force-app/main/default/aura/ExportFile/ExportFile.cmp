@@ -1,0 +1,7 @@
+<aura:component >
+    <aura:attribute name="fullData" type="sObject"/>
+    <aura:attribute name="columnName" type="sObject"/>
+    <aura:attribute name="opptName" type="String"/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <lightning:button onclick="{!c.downloadExportFile}" disabled="{!v.fullData.length > 0 ? false : true}">{!$Label.c.CRM_Export_File_Button_Label}</lightning:button>
+</aura:component>

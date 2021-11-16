@@ -1,0 +1,24 @@
+<apex:page sidebar="false" >
+    <script type = "text/javascript">
+        function pageLoad(){
+            var Id = '{!$CurrentPage.parameters.ID}';  
+            var detectUserUI = "{!$User.UIThemeDisplayed}";
+            if(detectUserUI == 'Theme3'){
+                window.open('apex/WB_Announcement_Confirmation?ID='+Id,'_self'); 
+                
+            }
+            else if(detectUserUI == 'Theme4d'){
+                window.location.href='apex/WB_Announcement_Confirmation?ID='+Id
+              /*  var newWin = window.open('apex/WB_Announcement_Confirmation?ID='+Id);
+                
+               if(!newWin || newWin.closed || typeof newWin.closed=='undefined'){ 
+                    alert('Please allow the pop-up and Refresh the Page.');
+                }else{
+                    history.back();
+                }*/
+            }  
+        }
+        window.onload = pageLoad;
+    </script>
+   
+</apex:page>

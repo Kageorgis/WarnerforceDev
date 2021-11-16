@@ -1,0 +1,572 @@
+<!--  
+==========================================================================================================
+* @author: Kalash Rastogi
+* @date: 10/07/2021
+* @description: HTML File for LWC.
+========================================================================================================== 
+-->
+<template>
+    <template if:true={modalOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={modalClose}>
+                        <h1>X</h1>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Import Forecast Items</h2>
+                    <p class="slds-m-top_x-small slds-text-color_destructive">
+                        only CSV file format permitted.
+                    </p>
+                </header>
+                <lightning-card>
+                    <div class="slds-p-around_medium slds-align_absolute-center">
+                        <lightning-input type="file" label="Import Forecast Template" multiple="false" accept=".csv"
+                                         message-when-value-missing="Please upload a CSV file"
+                                         onchange={uploadedFileHandler}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-p-around_small slds-align_absolute-center slds-text-color_success">
+                        <template if:true={fileUploaded}>File uploaded: {fileName}</template>
+                    </div>
+                    <template if:true={fileNotSupported}>
+                        <div class="slds-align_absolute-center slds-p-around_medium">
+                            <div class="slds-box" style="width:600px">
+                                <div class="slds-text-color_error">
+
+                                    <p class="slds-text-heading_medium slds-m-around_small">
+                                        <lightning-icon class="slds-p-around_medium" size="small"
+                                                        icon-name="utility:error" title="Unsupported File Type">
+                                        </lightning-icon>Unsupported File Type
+                                    </p>
+                                    Sorry, this file type is not supported. Only files in csv format is allowed.
+                                </div>
+                                <div class="slds-p-around_medium slds-text-align_left">
+                                    <b>How to convert the forecasting template xlsx into csv:</b><br>
+                                    1. Open the file in Microsoft Excel <br>
+                                    2. Click the File tab and then click Save As. <br>
+                                    3. The Save As dialogue box appears. <br>
+                                    4. In the Save as type box, choose CSV (comma separated) file format for the
+                                    worksheet.<br>
+                                    5. Browse to the location where you want to save the new file and then click Save.
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:true={errorUploadingFiles}>
+                        <div class="slds-align_absolute-center slds-p-around_medium">
+                            <div class="slds-box" style="width:600px">
+                                <div class="slds-text-color_error">
+                                    <p class="slds-text-heading_small slds-m-around_small">
+                                        <lightning-icon class="slds-p-around_medium" size="small"
+                                                        icon-name="utility:error" title="Error Uploading File">
+                                        </lightning-icon>Error while uploading file, please check file and try again.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={errorUploadingFiles}>
+                        <template if:true={fileUploaded}>
+                            <template if:true={tableData.length}>
+                                <div class="slds-align_absolute-center slds-p-around_medium">
+                                    <div class="slds-box" style="width:600px">
+                                        <div class="slds-text-heading_medium slds-m-around_small">
+                                            <p style="text-align: center;">Importing...</p>
+                                        </div>
+                                        <div class="slds-align_absolute-center">
+                                            <div class="slds-text-heading_small slds-m-around_small">
+                                                <h1 style="text-align: center;">There is already data in the forecast.
+                                                    Please
+                                                    select
+                                                    how
+                                                    you would like to import.</h1>
+                                            </div>
+                                        </div>
+                                        <div class="slds-align_absolute-center">
+                                            <div class="slds-grid slds-wrap">
+                                                <div class="slds-col">
+                                                    <span>
+                                                        <lightning-button class="slds-m-around_large" variant="brand"
+                                                                          label="Delete and replace existing data"
+                                                                          title="Overwrite"
+                                                                          onclick={overwriteExistingClicked}>
+                                                        </lightning-button>
+                                                    </span>
+                                                </div>
+                                                <div class="slds-col">
+                                                    <span>
+                                                        <lightning-button class="slds-m-around_large" variant="brand"
+                                                                          label="Add to existing data"
+                                                                          title="Add to Existing"
+                                                                          onclick={addToExistingClicked}>
+                                                        </lightning-button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:false={tableData.length}>
+                                <div class="slds-align_absolute-center">
+                                    <div class="slds-align_absolute-center">
+                                        <lightning-button class="slds-m-around_small" variant="brand"
+                                                          label="Upload Data" title="Upload Data"
+                                                          onclick={addToExistingClicked}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:true={spinnerInModal}>
+                                <lightning-spinner variant="brand" alternative-text="Loading Cases" size="medium">
+                                </lightning-spinner>
+                            </template>
+                        </template>
+                    </template>
+                    <footer class="slds-modal__footer slds-align_absolute-center">
+                        <button class="slds-button slds-button_neutral" onclick={modalClose}>Cancel</button>
+                    </footer>
+                </lightning-card>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <template if:true={showOptionalNote}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={modalClose}>
+                        <h1>X</h1>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">Optional Note</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-record-edit-form object-api-name="CP_Forecast__c" record-id={recordId}
+                                                onsuccess={modalClose}>
+                        <lightning-input-field field-name="Note__c">
+                        </lightning-input-field>
+                        <div class="slds-var-m-top_medium slds-align_absolute-center">
+                            <lightning-button class="slds-p-around_medium" variant="brand" type="submit" label="Submit">
+                            </lightning-button>
+                            <lightning-button class="slds-p-around_medium" variant="neutral" label="Close"
+                                              onclick={modalClose}>
+                            </lightning-button>
+                        </div>
+                    </lightning-record-edit-form>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <lightning-card>
+        <article class="slds-card slds-border_bottom">
+            <div class="slds-card__header slds-grid slds-border_bottom slds-p-bottom_medium">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title slds-text-heading_small">
+                            <lightning-icon size="small" class="slds-p-right_medium" icon-name="utility:table"
+                                            title="View and Edit Forecasting Items "></lightning-icon>
+                            View/Edit Forecast
+                        </h2>
+                    </div>
+                    <div class="slds-no-flex">
+                        <template if:false={cycleClosed}>
+                            <template if:false={submitted}>
+                                <template if:false={pendingApproval}>
+                                    <lightning-button variant="brand" label="Submit" title="Submit"
+                                                      onclick={submitClicked} class="slds-m-left_x-small">
+                                    </lightning-button>
+                                </template>
+                            </template>
+                        </template>
+                    </div>
+                </header>
+            </div>
+            <div class="slds-card__body"></div>
+            <footer class="slds-card__footer"></footer>
+        </article>
+        <div class="slds-grid">
+            <div class="slds-size_7-of-8 slds-p-around_small">
+                <template if:false={cycleClosed}>
+                    <template if:false={internalUser}>
+                        <template if:false={submitted}>
+                            <template if:true={errorReported}>
+                                <lightning-button variant="destructive" label="Hide Validations" title="Hide Validations"
+                                                onclick={hideValidations} class="slds-p-around_small">
+                                </lightning-button>
+                            </template>
+                            <lightning-button variant="neutral" label="Import" title="Import" onclick={importClicked}
+                                            class="slds-m-left_x-small">
+                            </lightning-button>
+                            <lightning-button variant="neutral" label="Add Rows" title="Add Rows" onclick={addRowClicked}
+                                            class="slds-m-left_x-small">
+                            </lightning-button>
+                            <!-- <lightning-button label="Previous" onclick={previousHandler}></lightning-button>
+                            <lightning-button label="Next" onclick={nextHandler}></lightning-button> -->
+                            <template if:true={deleteButton}>
+                                <lightning-button variant="destructive" label="Delete" title="Delete"
+                                                onclick={deleteClicked} class="slds-m-left_x-small">
+                                </lightning-button>
+                                <template if:false={underValidation}>
+                                    <lightning-button variant="brand" label="Merge" title="Merge" onclick={mergeClicked}
+                                                    class="slds-m-left_x-small">
+                                    </lightning-button>
+                                </template>
+                            </template>
+                            <template if:true={inlineEditing}>
+                                <lightning-button-group class="slds-m-left_x-small">
+                                    <lightning-button label="Save" variant="brand" icon-name="utility:save"
+                                                    onclick={handleSave}>
+                                    </lightning-button>
+                                    <lightning-button label="Cancel" variant="destructive" icon-name="utility:undo"
+                                                    onclick={handleCancel}></lightning-button>
+                                </lightning-button-group>
+                            </template>
+                            <template if:false={errorReported}>
+                                <lightning-button variant="brand-outline" label="Validate & Edit" title="Validate"
+                                                icon-name="utility:jump_to_right" icon-position="left"
+                                                onclick={validateClicked} class="slds-m-left_x-small">
+                                </lightning-button>
+                            </template>
+                        </template>
+                    </template>
+                    <template if:true={internalUser}>
+                        <template if:false={submitted}>
+                            <template if:true={errorReported}>
+                                <lightning-button variant="destructive" label="Hide Validations" title="Hide Validations"
+                                                onclick={hideValidations} class="slds-p-around_small">
+                                </lightning-button>
+                            </template>
+                            <lightning-button variant="neutral" label="Import" title="Import" onclick={importClicked}
+                                            class="slds-m-left_x-small">
+                            </lightning-button>
+                            <lightning-button variant="neutral" label="Add Rows" title="Add Rows" onclick={addRowClicked}
+                                            class="slds-m-left_x-small">
+                            </lightning-button>
+                            <!-- <lightning-button label="Previous" onclick={previousHandler}></lightning-button>
+                            <lightning-button label="Next" onclick={nextHandler}></lightning-button> -->
+                            <template if:true={deleteButton}>
+                                <lightning-button variant="destructive" label="Delete" title="Delete"
+                                                onclick={deleteClicked} class="slds-m-left_x-small">
+                                </lightning-button>
+                                <template if:false={underValidation}>
+                                    <lightning-button variant="brand" label="Merge" title="Merge" onclick={mergeClicked}
+                                                    class="slds-m-left_x-small">
+                                    </lightning-button>
+                                </template>
+                            </template>
+                            <template if:true={inlineEditing}>
+                                <lightning-button-group class="slds-m-left_x-small">
+                                    <lightning-button label="Save" variant="brand" icon-name="utility:save"
+                                                    onclick={handleSave}>
+                                    </lightning-button>
+                                    <lightning-button label="Cancel" variant="destructive" icon-name="utility:undo"
+                                                    onclick={handleCancel}></lightning-button>
+                                </lightning-button-group>
+                            </template>
+                            <template if:false={errorReported}>
+                                <lightning-button variant="brand-outline" label="Validate & Edit" title="Validate"
+                                                icon-name="utility:jump_to_right" icon-position="left"
+                                                onclick={validateClicked} class="slds-m-left_x-small">
+                                </lightning-button>
+                            </template>
+                        </template>
+                    </template>
+                </template>
+                <template if:true={errorReported}>
+                    <div class="slds-p-around_medium">
+                        <template if:true={errorCount}>
+                            <div class="slds-text-color_destructive slds-text-align_center slds-box slds-m-left_x-small"
+                                 style="font-size: larger; font-family: Arial, Helvetica, sans-serif; width: 100px; height:70px;">
+                                <b class="slds-p-around_medium">{errorCount}</b>
+                                <br>
+                                <b>Errors</b>
+                            </div>
+                        </template>
+                        <template if:false={errorCount}>
+                            <div class="slds-text-color_success slds-text-align_center slds-box slds-m-left_x-small "
+                                 style="font-size: larger; font-family: Arial, Helvetica, sans-serif; width: 100px; height:70px;">
+                                <b class="slds-p-around_medium">No</b>
+                                <br>
+                                <b>Errors</b>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+            <div class="slds-size_1-of-8 slds-p-around_small slds-text-align_right ">
+                <lightning-button-icon icon-name="utility:expand" size="medium" alternative-text="Maximize"
+                                       class="slds-m-left_x-small" onclick={maximizeDatatable}></lightning-button-icon>
+                <lightning-button-icon icon-name="utility:contract" size="medium" alternative-text="Minimize"
+                                       class="slds-m-left_x-small" onclick={minimizeDatatable}></lightning-button-icon>
+            </div>
+        </div>
+        <template if:true={rowShow}>
+            <lightning-card>
+                <h3 slot="title">
+                    <lightning-icon icon-name="standard:timesheet" alternative-text="Event" size="small">
+                    </lightning-icon>
+                    &nbsp;Add Records
+                </h3>
+                <div class="slds-box slds-theme--default">
+                    <div style="height:38px;">
+                        <div class="tableFixHead">
+                            <table class="slds-table slds-table_cell-buffer slds-table_striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width:48px; height:35px;">
+                                            Add <br>Row
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Contract
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Forecast <br> Currency
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Property <br> Description
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Product Type <br> Description
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Territory
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Retailer <br> Description
+                                        </th>
+                                        <th scope="col" style="width:128.17px; height:35px;">
+                                            Revenue <br> Type
+                                        </th>
+                                        <th scope="col" style="width:117.55px; height:35px;">
+                                            Royalty <br> Rate
+                                        </th>
+                                        <th scope="col" style="width:117.55px; height:35px;">
+                                            Q1
+                                        </th>
+                                        <th scope="col" style="width:117.55px; height:35px;">
+                                            Q2
+                                        </th>
+                                        <th scope="col" style="width:117.55px; height:35px;">
+                                            Q3
+                                        </th>
+                                        <th scope="col" style="width:117.55px; height:35px;">
+                                            Q4
+                                        </th>
+                                        <th scope="col" style="width:144.11px; height:35px;">
+                                            Forecast
+                                        </th>
+                                        <th scope="col" style="width:48px; height:35px;">
+                                            Delete <br> Row
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <template for:each={itemList} for:item="item" for:index="index">
+                    <lightning-record-edit-form key={item.id} object-api-name={forecastingItemObject}>
+                        <lightning-messages> </lightning-messages>
+                        <div
+                             class="slds-border_bottom slds-p-around_none slds-m-top_x-small slds-m-bottom_small slds-m-horizontal_none">
+                            <lightning-layout horizontal-align="spread">
+                                <lightning-layout-item flexibility="auto" padding="around-small">
+
+                                    <lightning-icon class="slds-p-around_small" icon-name="utility:add"
+                                                    access-key={item.id} id={index} alternative-text="Add Row"
+                                                    size="small" title="Add Row" onclick={addRow}>
+                                    </lightning-icon>
+                                </lightning-layout-item>
+                                <template for:each={forecastingItemFields} for:item="field">
+                                    <div key={field.Id} class="slds-p-around_xx-small">
+                                        <lightning-layout-item flexibility="auto" padding="around-small">
+                                            <span>
+                                                <lightning-input-field class="labelFormatting"
+                                                                       field-name={field.fieldAPIName}
+                                                                       variant="label-hidden">
+                                                </lightning-input-field>
+                                            </span>
+                                        </lightning-layout-item>
+                                    </div>
+                                </template>
+                                <div class="slds-p-around_xx-small">
+                                    <lightning-layout-item flexibility="auto" padding="around-small">
+                                        <span>
+                                            <lightning-input-field field-name={forecastObject} value={recordId} disabled
+                                                                   variant="label-hidden">
+                                            </lightning-input-field>
+                                        </span>
+                                    </lightning-layout-item>
+                                </div>
+                                <lightning-layout-item flexibility="auto" padding="around-small">
+                                    <lightning-icon class="slds-p-around_small" icon-name="utility:delete"
+                                                    access-key={item.id} id={index} alternative-text="Delete Row"
+                                                    size="small" title="Delete Row" onclick={removeRow}>
+                                    </lightning-icon>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </div>
+                    </lightning-record-edit-form>
+                </template>
+                </br>
+                <lightning-layout>
+                    <div class="slds-align_absolute-center">
+                        <lightning-button class="slds-p-around_medium" variant="brand" onclick={addData} name="submit"
+                                          label="Add">
+                        </lightning-button>
+                        <lightning-button class="slds-p-around_medium" variant="neutral" onclick={cancelAddRow}
+                                          name="cancel" label="Cancel">
+                        </lightning-button>
+                    </div>
+                </lightning-layout>
+            </lightning-card>
+        </template>
+        <div if:true={loadingSpinner}>
+            <lightning-spinner variant="brand" alternative-text="Loading" size="medium">
+            </lightning-spinner>
+        </div>
+        <template if:false={submitted}>
+            <template if:true={tableData.length}>
+                <lightning-layout horizontal-align="spread">
+                    <lightning-layout-item class="slds-text-align_left">
+                        <template if:true={prevDisable}>
+                            <lightning-button disabled class="slds-m-around_medium" label="Previous" variant="neutral"
+                                              icon-name="utility:chevronleft" onclick={previousHandler}>
+                            </lightning-button>
+                        </template>
+                        <template if:false={prevDisable}>
+                            <lightning-button class="slds-m-around_medium" label="Previous" variant="neutral"
+                                              icon-name="utility:chevronleft" onclick={previousHandler}>
+                            </lightning-button>
+                        </template>
+                    </lightning-layout-item>
+                    <lightning-layout-item class="slds-text-align_center">
+                        <lightning-combobox label="Go to Page:" style="color:grey;width:100px"
+                                            options={pageNumbersOptions} placeholder={page} value={pageValue}
+                                            onchange={pageChangeHandler} class="slds-m-around_small">
+                        </lightning-combobox>
+                        <p>Page <b>{page}</b> of <b>{totalPage}</b> </p>
+                    </lightning-layout-item>
+                    <lightning-layout-item class="slds-text-align_right">
+                        <template if:true={nextDisable}>
+                            <lightning-button disabled label="Next" variant="neutral" class="slds-m-around_medium"
+                                              icon-name="utility:chevronright" icon-position="right"
+                                              onclick={nextHandler}></lightning-button>
+                        </template>
+                        <template if:false={nextDisable}>
+                            <lightning-button label="Next" variant="neutral" class="slds-m-around_medium"
+                                              icon-name="utility:chevronright" icon-position="right"
+                                              onclick={nextHandler}></lightning-button>
+                        </template>
+                    </lightning-layout-item>
+                </lightning-layout>
+                <template if:true={underValidation}>
+                    <template if:true={internalUser}>
+                        <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                            <lightning-datatable key-field="Id" data={tableData} columns={columnsStd}
+                                                 draft-values={editedValues} onsave={saveChangesDatatable}
+                                                 onrowselection={showDelete} sorted-by={sortBy}
+                                                 sorted-direction={sortDirection} onsort={doSorting}>
+                            </lightning-datatable>
+                        </div>
+                    </template>
+                    <template if:false={internalUser}>
+                        <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                            <lightning-datatable key-field="Id" data={tableData} columns={columnsStdPortal}
+                                                 draft-values={editedValues} onsave={saveChangesDatatable}
+                                                 onrowselection={showDelete} sorted-by={sortBy}
+                                                 sorted-direction={sortDirection} onsort={doSorting}>
+                            </lightning-datatable>
+                        </div>
+                    </template>
+                </template>
+                <template if:false={underValidation}>
+                    <template if:true={internalUser}>
+                        <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                            <c-cp_custom-data-table key-field="Id" data={tableData} columns={columnsErrorCustom}
+                                                    oncontractpicklistchanged={contractPicklistChanged}
+                                                    oncurrencypicklistchanged={currencyPicklistChanged}
+                                                    onproductpicklistchanged={productPicklistChanged}
+                                                    onterritorypicklistchanged={territoryPicklistChanged}
+                                                    onrevenuetypepicklistchanged={revenueTypePicklistChanged}
+                                                    onretailerpicklistchanged={retailerPicklistChanged}
+                                                    onpropertypicklistchanged={propertyPicklistChanged}
+                                                    onvalueselect={handleSelection} draft-values={draftValues}
+                                                    oncellchange={handleCellChange} onsave={handleSave}
+                                                    oncancel={handleCancel} suppress-bottom-bar
+                                                    onrowselection={showDelete} sorted-by={sortBy}
+                                                    sorted-direction={sortDirection} onsort={doSorting}>
+                            </c-cp_custom-data-table>
+                        </div>
+                    </template>
+                    <template if:false={internalUser}>
+                        <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                            <c-cp_custom-data-table key-field="Id" data={tableData} columns={columnsErrorCustomPortal}
+                                                    oncontractpicklistchanged={contractPicklistChanged}
+                                                    oncurrencypicklistchanged={currencyPicklistChanged}
+                                                    onproductpicklistchanged={productPicklistChanged}
+                                                    onterritorypicklistchanged={territoryPicklistChanged}
+                                                    onrevenuetypepicklistchanged={revenueTypePicklistChanged}
+                                                    onretailerpicklistchanged={retailerPicklistChanged}
+                                                    onpropertypicklistchanged={propertyPicklistChanged}
+                                                    onvalueselect={handleSelection} draft-values={draftValues}
+                                                    oncellchange={handleCellChange} onsave={handleSave}
+                                                    oncancel={handleCancel} suppress-bottom-bar
+                                                    onrowselection={showDelete} sorted-by={sortBy}
+                                                    sorted-direction={sortDirection} onsort={doSorting}>
+                            </c-cp_custom-data-table>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </template>
+        <template if:true={submitted}>
+            <template if:true={tableData.length}>
+                <lightning-layout horizontal-align="spread">
+                    <lightning-layout-item class="slds-text-align_left">
+                        <lightning-button class="slds-m-around_medium" label="Previous" variant="neutral"
+                                          icon-name="utility:chevronleft" onclick={previousHandler}>
+                        </lightning-button>
+                    </lightning-layout-item>
+                    <lightning-layout-item class="slds-text-align_center">
+                        <lightning-combobox label="Go to Page:" style="color:grey;width:100px"
+                                            options={pageNumbersOptions} placeholder={page} value={pageValue}
+                                            onchange={pageChangeHandler} class="slds-m-around_small">
+                        </lightning-combobox>
+                        <p>Page <b>{page}</b> of <b>{totalPage}</b> </p>
+                    </lightning-layout-item>
+                    <lightning-layout-item class="slds-text-align_right">
+                        <lightning-button label="Next" variant="neutral" class="slds-m-around_medium"
+                                          icon-name="utility:chevronright" icon-position="right" onclick={nextHandler}>
+                        </lightning-button>
+                    </lightning-layout-item>
+                </lightning-layout>
+                <template if:true={internalUser}>
+                    <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                        <lightning-datatable key-field="Id" data={tableData} columns={columnsSubmitStd}
+                                             draft-values={editedValues} onsave={saveChangesDatatable}
+                                             onrowselection={showDelete} sorted-by={sortBy}
+                                             sorted-direction={sortDirection} onsort={doSorting}>
+                        </lightning-datatable>
+                    </div>
+                </template>
+                <template if:false={internalUser}>
+                    <div class="slds-p-around_medium errorStyling" style="height: 400px;">
+                        <lightning-datatable key-field="Id" data={tableData} columns={columnsSubmitStdPortal}
+                                             draft-values={editedValues} onsave={saveChangesDatatable}
+                                             onrowselection={showDelete} sorted-by={sortBy}
+                                             sorted-direction={sortDirection} onsort={doSorting}>
+                        </lightning-datatable>
+                    </div>
+                </template>
+            </template>
+        </template>
+    </lightning-card>
+</template>

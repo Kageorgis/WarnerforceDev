@@ -1,0 +1,1008 @@
+<apex:page standardController="Order" extensions="CRM_MultiUploadExtractOrderController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'moment/moment.js')}"/>
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_MultiOrderMainCss)}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_MulitOrder_Aljs,'js/moment.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_MulitOrder_Aljs,'js/jquery.aljs-all.js')}"/> 
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" /> 
+        </head>
+      
+        <body style="padding:0px" ng-app="MultiUploadOrders">
+            <div class="slds" id="ng-app"  ng-controller="MultiUploadOrdersController" ng-init="init()">
+                <!-- ===========================Spinner================================= -->   
+                <div class="spinnerModel" ng-show="showSpinner">
+                    <div class="spinnerContent slds-spinner--large">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                        <div id="spinnerText">{{spinnerText}}</div>
+                    </div>
+                </div>
+                
+                <!-- =========================== HEADER BANNER ================================-->     
+                <div id="haderDiv" class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col">
+                            <nav class="slds-m-bottom--xx-small" role="navigation">
+                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.Tab, $ObjectType.Order)}'">{!$ObjectType.Order.labelPlural}</a></li>
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.View,Id)}">{!Order.OrderNumber}</a></li>
+                                </ol>
+                            </nav>
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <h1 class="slds-float--left slds-text-heading--medium slds-truncate" title="{!$Label.CRM_MultiOrder_Header_Label}">{!$Label.CRM_MultiOrder_Header_Label}</h1>
+                                <div class="slds-float--left slds-m-left--small slds-media__body">
+                                    <div class="slds-float--left slds-form-element__icon slds-p-top--xx-small" style="display: inline-block;">
+                                        <a href="javascript:void(0);" data-aljs="popover" data-aljs-placement="right"  data-aljs-show="CRM_MulriOrderUpload_Notes">
+                                            <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-text-default">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                                            </svg>
+                                            <span class="slds-assistive-text">Help</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="CRM_MulriOrderUpload_Notes" class="slds-hide">
+                            <h1 style="padding:10px 0px 0px 5px;">{!$label.CRM_MultiOrder_Note_Label}:</h1>
+                            <ol style="padding:0px 0px 0px 10px;">
+                                <li ng-repeat="note in crmMultiOrderPageNotes">{{note}}</li>
+                            </ol>
+                        </div>  
+                        <div class="slds-col slds-no-flex slds-align--absolute-center slds-m-top--small slds-form--inline">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control"> 
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                    	<!-- US 994 -->
+                                    	<button class="slds-button slds-button--neutral" ng-click="refreshPage()">{!$Label.CRM_Reset_button_label}</button>
+                                    	<button class="slds-button slds-button--neutral" ng-click="exportCSVFile()">{!$Label.CRM_Export_File_Button_Label}</button>
+                                        <!-- US 994 -->
+                                        <a href="{!ResourceURL}" target="_blank" class="slds-button slds-button--neutral">{!$Label.CRM_MultiOrder_Download_Template}</a>
+                                        <button ng-click="validateRowsCols('{!Order.Id}')" class="slds-button slds-button--neutral" ng-disabled="orderActivateDate">{!$Label.CRM_Generate_Order}</button>
+                                        <button class="slds-button slds-button--neutral" ng-click="BackToOrder('{!URLFOR($Action.Order.View,Id)}')">{!$Label.CRM_UploadProducts_Button_Back_To_Order}</button>
+                                    </div>
+                                </div> 
+                            </div> 
+                            <div class="slds-button-group" role="group"></div> 
+                        </div> 
+                    </div>
+                </div>
+                
+                <!-- ===========================Exception================================= -->
+                <div Id="msgDiv" ng-show="msgText || errorMsgForDp"  class="slds-grid">
+                    <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid" ng-show="msgText">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                            </div>
+                        </div>
+                        <div class="notify__content slds-grid" ng-show="errorMsgForDp">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{errorMsgForDp}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ===========================Dynamic Div================================= -->
+                <div id="dynDiv" class="slds-m-top--x-small slds-m-left--x-small" style="overflow:auto; width:{{width}}px; height:{{height}}px;" >
+                    <div id="tableDiv"></div>
+                </div>
+            </div>
+        
+            <script>
+                angular.module("MultiUploadOrders", ['ngHandsontable'])
+                    .controller("MultiUploadOrdersController", ['$scope','$timeout', function($scope,$timeout) {
+                        var orderData = [[]];
+                        var accColumns = [];
+                        var custPoColumns = [];
+                        var modifiedColflag = false;
+                        var modifiedRowIndex = new Set();
+                        var SuccessOrderProd = new Set();
+                        var setForUIValidation = new Set();
+                        var setForOrderProValidation = new Set();
+                        var setForAccProValidation = new Set();
+                        var timeDiff = 0;
+                        var opportunityId = '{!Order.OpportunityId}';
+                        var initalHeight = ($(window).height() - $('#haderDiv').height() - 47);
+                        $scope.width = ($('#ng-app').width() - 10);
+                        $scope.height = initalHeight;
+                        $('[data-aljs="popover"]').popover(); 
+                        
+                        var invalidValueSet = new Set();
+                        invalidValueSet.add("");
+                        invalidValueSet.add(null);
+                        invalidValueSet.add(undefined);
+                        
+                        $scope.pageInfoNotes = '{!$label.CRM_MultiOrder_Notes}';
+                        $scope.crmMultiOrderPageNotes = $scope.pageInfoNotes.split(',');
+                        
+                        $scope.showSpinner = false;
+                        $scope.spinnerText;
+                        $scope.errorMsgForDp;
+                        
+                        $scope.isJapan = {!isJapan}; //Defect#4409 - Nilesh, code change for japan specific error message
+                        
+                        var saveStartTime;
+                        $scope.orderActivateDate = '{!Order.ActivatedDate}';
+                        var container = document.getElementById('tableDiv');
+                        var hot = new Handsontable(container,
+                        {
+                            data: orderData,
+                            minRows: 10,
+                            minCols: 10,
+                            minSpareRows: 1, 
+                            allowInsertColumn : true, 
+                            minSpareCols:1,
+                            startRows: 1, 
+                            comments: true,
+                            renderAllRows: true,//Added for US : 994
+                            licenseKey: '{!HandsonTable_Pro_Licencekey}', //Added for US 989
+                            afterRenderer:function(td,row,col,prop,value,cellProperties){
+                                if(cellProperties.errorMsg){
+                                    td.title = cellProperties.errorMsg;
+                                }else{
+                                    td.title = '';
+                                }
+                            },
+                            beforeRemoveRow: function(index, amount){
+                                var removedRowSet = new Set();
+                                if(index == 0 || index == 1){
+                                    return false;
+                                }
+                                if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')){
+                                    return false;
+                                }
+                                //console.log('Before SuccessOrderProd : '+Array.from(SuccessOrderProd));
+                                for(i=index;i<index+amount;i++) {
+                                    $.each(Array.from(setForUIValidation), function(rowIndex, elementP) {
+                                        var rowColIndex = elementP.split('-');
+                                        if(setForUIValidation.has(i+'-'+rowColIndex[1])){
+                                            //console.log('setForUIValidation removed inedx : '+i+'-'+rowColIndex[1]);
+                                            setForUIValidation.delete(i+'-'+rowColIndex[1]);
+                                            hot.setCellMeta(i,rowColIndex[1],'errorMsg',false);
+                                        }
+                                    });
+                                    $.each(Array.from(setForAccProValidation), function(rowIndex, elementP) {
+                                        var rowColIndex = elementP.split('-');
+                                        if(setForAccProValidation.has(i+'-'+0)){
+                                            //console.log('setForAccProValidation removed inedx : '+i+'-'+0);
+                                            setForAccProValidation.delete(i+'-'+0);
+                                            hot.setCellMeta(i,0,'errorMsg',false);
+                                        }
+                                    });
+                                    if(modifiedRowIndex.has(i)){
+                                       //console.log('modified Row Index : '+i);
+                                       modifiedRowIndex.delete(i);
+                                    }
+                                    if(hot.getDataAtCell(i,0) != null && hot.getDataAtCell(i,0) != "" && hot.getDataAtCell(i,0) != undefined){
+                                        var tempOrderProd = Array.from(SuccessOrderProd);
+                                        console.log('remove row SuccessOrderProd : '+tempOrderProd[i-2]);
+                                        console.log('hot.getDataAtCell(i,0) : '+hot.getDataAtCell(i,0));
+                                        if(tempOrderProd[i-2] == hot.getDataAtCell(i,0)){
+                                            if(!invalidValueSet.has(opportunityId)){
+                                                $scope.$apply(function(){
+                                                    $scope.msgText = '{!$label.CRM_MultiOrder_Restrict_To_Delete_Order_Product_Msg}';
+                                                    $scope.msgSeverity = 'error';
+                                                });
+                                                return false;
+                                            }
+                                            removedRowSet.add(hot.getDataAtCell(i,0)); 
+                                        }
+                                    }
+                                }
+                                if(modifiedRowIndex.size > 0){
+                                    $.each(Array.from(modifiedRowIndex), function(rowIndex, elementP) {
+                                        if(elementP >= (index+amount)){
+                                            modifiedRowIndex.delete(elementP);
+                                            var newRowInedx = elementP - amount;
+                                            //console.log('modifiedRowIndex Row new Index : '+elementP+'--'+newRowInedx);
+                                            modifiedRowIndex.add(newRowInedx);
+                                        }
+                                    });
+                                }
+                                //console.log('Remove Row modifiedRowIndex : '+modifiedRowIndex);
+                                if(setForUIValidation.size > 0){
+                                    $.each(Array.from(setForUIValidation), function(rowIndex, elementP) {
+                                        var rowColIndex = elementP.split('-');
+                                        if(rowColIndex[0] >= (index+amount)){
+                                            setForUIValidation.delete(elementP);
+                                            var newRowInedx = rowColIndex[0] - amount;
+                                            //console.log('setForUIValidation new Index : '+newRowInedx+'-'+rowColIndex[1]);
+                                            setForUIValidation.add(newRowInedx+'-'+rowColIndex[1]);
+                                        }
+                                    });
+                                }
+                                if(setForAccProValidation.size > 0){
+                                    $.each(Array.from(setForAccProValidation), function(rowIndex, elementP) {
+                                        var rowColIndex = elementP.split('-');
+                                        if(rowColIndex[0] >= (index+amount) && rowColIndex[1] == 0){
+                                            setForUIValidation.delete(elementP);
+                                            var newRowInedx = rowColIndex[0] - amount;
+                                            //console.log('setForAccProValidation new Index : '+newRowInedx+'-'+rowColIndex[1]);
+                                            setForAccProValidation.add(newRowInedx+'-'+0);
+                                        }
+                                    });
+                                }
+                                //console.debug('$scope.tableOptions.lstProdForOrders:::::',$scope.tableOptions.lstProdForOrders);
+                                //console.debug('removedRowSet',removedRowSet);
+                                if(removedRowSet.size > 0){
+                                    $scope.removedProduct(removedRowSet);
+                                }
+                            },
+                            beforeKeyDown: function (e) {
+                                if (e.keyCode == 191) {
+                                    e.stopImmediatePropagation();
+                                    e.preventDefault();
+                                    this.selectCell(this.countRows()-1,1);
+                                }
+                            },
+                            afterChange: function(changes, source) {
+                                if (changes && changes.length > 0) {
+                                    $scope.parser = Globalize.numberParser();
+                                    $.each(changes, function(indexOfChanges, element) {
+                                    
+                                        var rowValue = hot.getDataAtCell(changes[indexOfChanges][0],0);
+                                        var colValue = hot.getDataAtCell(0,changes[indexOfChanges][1]);
+                                        var row = changes[indexOfChanges][0];
+                                        var col = changes[indexOfChanges][1];
+                                        var value = changes[indexOfChanges][3];
+                                        var preVal = changes[indexOfChanges][2];
+                                        var td =  hot.getCell(row ,col );
+                                         
+                                        if (changes[indexOfChanges][0] > 1){
+                                            if(!invalidValueSet.has(colValue) || changes[indexOfChanges][1] == 0){
+                                                modifiedRowIndex.add(changes[indexOfChanges][0]);
+                                            }
+                                        }
+                                         
+                                        if(changes[indexOfChanges][0] == 0 && !invalidValueSet.has(changes[indexOfChanges][3])){
+                                            modifiedColflag = true;
+                                        }
+                                         
+                                        //Code for Quantity Cells 
+                                        if (row != 1 && row != 0 && col != 0) {
+                                            var rocColIndexVal = row+'-'+col;
+                                            value = value.trim();
+                                            if((parseInt(parseFloat(value), 10) < 0) || !(/^[0-9.,]+$/.test(value) || invalidValueSet.has(value))){
+                                                setForUIValidation.add(rocColIndexVal);
+                                                hot.setCellMeta(row, col, 'valid', false);
+                                                hot.setCellMeta(row, col, 'errorMsg','{!$label.CRM_Invalid_Quantity}');
+                                            }else{
+                                                if (typeof value != undefined && value != null && value != '') {
+                                                    value = $scope.parser((value).replace(/\s/g, ""));
+                                                    if (isNaN(value)) {
+                                                        setForUIValidation.add(rocColIndexVal);
+                                                        hot.setCellMeta(row, col, 'valid', false); 
+                                                        hot.setCellMeta(row, col, 'errorMsg','{!$Label.CRM_MultiOrder_Incorrect_Quantity_For_Locale}');
+                                                    } else {
+                                                        if(setForUIValidation.has(rocColIndexVal)){
+                                                            setForUIValidation.delete(rocColIndexVal);
+                                                            if(!setForOrderProValidation.has(rocColIndexVal)){
+                                                                hot.setCellMeta(row, col, 'valid', true);
+                                                                hot.setCellMeta(row, col, 'errorMsg',false);
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    if(setForUIValidation.has(rocColIndexVal)){
+                                                        setForUIValidation.delete(rocColIndexVal);
+                                                        if(!setForOrderProValidation.has(rocColIndexVal)){
+                                                            hot.setCellMeta(row, col, 'valid', true);
+                                                            hot.setCellMeta(row, col, 'errorMsg',false);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if(invalidValueSet.has(colValue) && !setForUIValidation.has(0+'-'+col)){
+                                                setForUIValidation.add(0+'-'+col);
+                                                hot.setCellMeta(0, col, 'valid', false);
+                                                hot.setCellMeta(0,col, 'errorMsg','{!$label.CRM_Multiorder_UI_Validation_For_Account}');
+                                            }
+                                            if(invalidValueSet.has(rowValue) && !setForUIValidation.has(row+'-'+0)){
+                                                setForUIValidation.add(row+'-'+0);
+                                                hot.setCellMeta(row,0,'valid',false);
+                                                hot.setCellMeta(row,0, 'errorMsg','{!$label.CRM_Multiorder_UI_Validation_For_Product}');
+                                            } 
+                                            if(hot.isEmptyCol(col) && setForUIValidation.has(0+'-'+col)){
+                                                setForUIValidation.delete(0+'-'+col);
+                                                hot.setCellMeta(0, col, 'valid', true);
+                                                hot.setCellMeta(0, col, 'errorMsg', false);
+                                            }
+                                            if(hot.isEmptyRow(row) && setForUIValidation.has(row+'-'+0)){
+                                                setForUIValidation.delete(row+'-'+0);
+                                                hot.setCellMeta(row, 0, 'valid', true);
+                                                hot.setCellMeta(row, 0, 'errorMsg', false);
+                                            }
+                                            var PONumCell = hot.getDataAtCell(1,col);
+                                            if(invalidValueSet.has(PONumCell) && !setForUIValidation.has(1+'-'+col)){
+                                                setForUIValidation.add(1+'-'+col);
+                                                hot.setCellMeta(1,col,'valid',false);
+                                                hot.setCellMeta(1,col, 'errorMsg', '{!$label.CRM_MultiOrder_Enter_CusPONum}');
+                                            } 
+                                            if(hot.isEmptyCol(col) && setForUIValidation.has(1+'-'+col)){
+                                                setForUIValidation.delete(1+'-'+col);
+                                                hot.setCellMeta(1, col, 'valid', true);
+                                                hot.setCellMeta(1,col, 'errorMsg', false);
+                                            }
+                                        }
+                                        
+                                        //Code for ProductCode Cells or Account Number Cells or Customer PO numbers cell
+                                        if((row == 0 && col != 0) || (col == 0 && row != 0 && row != 1)){
+                                            value = value.trim();
+                                            var rocColIndexVal = row+'-'+col;
+                                            if(!(/^[0-9a-zA-Z ]+$/.test(value))){
+                                                if((row == 0 && !hot.isEmptyCol(col)) || (col == 0 && !hot.isEmptyRow(row))){
+                                                    if(row == 0){
+                                                        if(invalidValueSet.has(value)){
+                                                            hot.setCellMeta(row, col, 'errorMsg', '{!$label.CRM_Multiorder_UI_Validation_For_Account}');
+                                                        }else{
+                                                            hot.setCellMeta(row, col, 'errorMsg', '{!$label.CRM_Invalid_Account_Number}');
+                                                        }
+                                                    }
+                                                    if (col == 0){
+                                                        if(invalidValueSet.has(value)){
+                                                            hot.setCellMeta(row, col, 'errorMsg', '{!$label.CRM_Multiorder_UI_Validation_For_Product}');
+                                                        }else{
+                                                            hot.setCellMeta(row, col, 'errorMsg', '{!$label.CRM_Invalid_Product_UPC_Code}');
+                                                        }
+                                                    }
+                                                    setForUIValidation.add(rocColIndexVal);
+                                                    hot.setCellMeta(row, col, 'valid', false);
+                                                }else if(setForUIValidation.has(rocColIndexVal)){
+                                                    setForUIValidation.delete(rocColIndexVal);
+                                                    hot.setCellMeta(row, col, 'valid', true);
+                                                    hot.setCellMeta(row, col, 'errorMsg', false);
+                                                }
+                                            }else{
+                                                if(setForUIValidation.has(rocColIndexVal)){
+                                                    setForUIValidation.delete(rocColIndexVal);
+                                                    if(!setForAccProValidation.has(row+'-'+col)){
+                                                        hot.setCellMeta(row, col, 'valid', true);
+                                                        hot.setCellMeta(row, col, 'errorMsg', false);
+                                                    }
+                                                }
+                                            }
+                                            var PONumCell = hot.getDataAtCell(1,col);
+                                            if(row == 0 && invalidValueSet.has(PONumCell) && !setForUIValidation.has(1+'-'+col)){
+                                                setForUIValidation.add(1+'-'+col);
+                                                hot.setCellMeta(1,col,'valid',false);
+                                                hot.setCellMeta(1,col, 'errorMsg','{!$label.CRM_MultiOrder_Enter_CusPONum}');
+                                            } 
+                                            if(row == 0 && hot.isEmptyCol(col) && setForUIValidation.has(1+'-'+col)){
+                                                setForUIValidation.delete(1+'-'+col);
+                                                hot.setCellMeta(1, col, 'valid', true);
+                                                hot.setCellMeta(1, col, 'errorMsg', false);
+                                            }
+                                        }
+                                         
+                                        //Code for Customer PONumber Cells 
+                                        if(row == 1 && col > 0){
+                                            var rocColIndexVal = row+'-'+col; 
+                                            if(invalidValueSet.has(changes[indexOfChanges][3])){
+                                                setForUIValidation.add(rocColIndexVal);
+                                                hot.setCellMeta(row, col, 'valid', false); 
+                                                hot.setCellMeta(row, col, 'errorMsg','{!$label.CRM_MultiOrder_Enter_CusPONum}');
+                                            }else{ 
+                                                if(setForUIValidation.has(rocColIndexVal)){
+                                                    setForUIValidation.delete(rocColIndexVal);
+                                                    hot.setCellMeta(row, col, 'valid', true);
+                                                    hot.setCellMeta(row, col, 'errorMsg', false);
+                                                } 
+                                            }
+                                            if(invalidValueSet.has(colValue) && !setForUIValidation.has(0+'-'+col)){
+                                                setForUIValidation.add(0+'-'+col);
+                                                hot.setCellMeta(0,col,'valid',false);
+                                                hot.setCellMeta(0, col, 'errorMsg','{!$label.CRM_Multiorder_UI_Validation_For_Account}');
+                                            } 
+                                            if(hot.isEmptyCol(col) && setForUIValidation.has(0+'-'+col)){
+                                                setForUIValidation.delete(0+'-'+col);
+                                                hot.setCellMeta(0, col, 'valid', true);
+                                                hot.setCellMeta(0, col, 'errorMsg',false);
+                                            }
+                                            if(hot.isEmptyCol(col) && setForUIValidation.has(1+'-'+col)){
+                                                setForUIValidation.delete(1+'-'+col);
+                                                hot.setCellMeta(1, col, 'valid', true);
+                                                hot.setCellMeta(1, col, 'errorMsg',false);
+                                            }
+                                        }
+                                    });
+                                    ////console.log('setForUIValidation : '+setForUIValidation);
+                                    this.render();
+                                }
+                            },
+                            contextMenu: ['remove_row'],
+                            undo: false
+                        });
+                        
+                        $scope.BackToOrder= function(url) {
+                           $scope.navigateToURL(url); 
+                        }; 
+                        
+                        $scope.removeMsgBlock= function(){
+                            $scope.msgText = '';
+                            $scope.errorMsgForDp = '';
+                            $scope.height = initalHeight;
+                        };
+                        
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                        
+                            if ($scope.isLightningExperienceOrSf1)
+                                sforce.one.navigateToURL(url);
+                            else
+                                document.location.href = url;
+                        }; 
+                        
+                        $scope.tableOptions ;
+                        $scope.init = function() { 
+                            $scope.showSpinner = true;
+                            $.when(
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+                            ).then(function() {
+                                var locale = '{!UserLocale}'; //'de';
+                                console.log('--locale->',locale);
+                                var de = Globalize.locale(locale);
+                                console.log('--Globalize.locale->',de);
+                                $scope.GetLineItems('{!Order.Id}'); 
+                            });
+                        }
+                        
+                        $scope.mySettings = { 
+                            contextMenu: ['remove_row'],
+                            cells: function (row, col, prop) {
+                                var cellProperties = {};
+                                var activatedOrderDate = '{!Order.ActivatedDate}'; 
+                                if (activatedOrderDate !== '') {
+                                    cellProperties.readOnly = true;
+                                }
+                                if((row==0 && col==0) || (row==1 && col==0)) {cellProperties.readOnly=true;}
+                                return cellProperties;
+                            },
+                            allowInsertColumn: true,
+                            undo: false
+                        };
+                        
+                        $scope.GetLineItems = function(orderId) { 
+                            $scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Loading}';  
+                            CRM_MultiUploadExtractOrderController.getOrdersAndOrderLineItems(orderId,function(result, event) {
+                                if (event.status) {
+                                    
+                                    $scope.tableOptions = result;
+                                    //console.log('-$scope.tableOptions-->', $scope.tableOptions);
+                                    // Add Columns as headers  
+                                    var tableProductRows=[];
+                                    SuccessOrderProd  = new Set($scope.tableOptions.setProdForOrders);
+                                    accColumns.push('{!$label.CRM_MultiOrder_Template_Account_Label}');
+                                    custPoColumns.push('{!$label.CRM_MultiOrder_Template_PO_Label}\n{!$label.CRM_MultiOrder_Template_Product_Label}');
+                                    $.each($scope.tableOptions.setAccNumber, function( rowKey, accObject) {
+                                        accColumns.push(accObject);
+                                        if($scope.tableOptions.maoOfAccNumToCusPONum[accObject] != undefined){
+                                            var cusPONum = $scope.tableOptions.maoOfAccNumToCusPONum[accObject];
+                                            custPoColumns.push(cusPONum);
+                                        }else{
+                                            custPoColumns.push('');
+                                        }
+                                    });
+                                    tableProductRows.push(accColumns); 
+                                    tableProductRows.push(custPoColumns);
+                                    var prodRows;
+                                    $.each($scope.tableOptions.setProdForOrders, function( rowKey, prodObject) { 
+                                        prodRows=[];
+                                        prodRows.push(prodObject);
+                                        var mapOfAccountToQty;
+                                        if(!invalidValueSet.has(prodObject) && $scope.tableOptions.mapOfProdToMapOfAccQty[prodObject] != undefined){
+                                            mapOfAccountToQty = $scope.tableOptions.mapOfProdToMapOfAccQty[prodObject];
+                                        } 
+                                        $.each($scope.tableOptions.setAccNumber, function( rowKey, accObject) {
+                                            if(!invalidValueSet.has(mapOfAccountToQty)){
+                                                if(!invalidValueSet.has(mapOfAccountToQty[accObject])){  
+                                                    if(!invalidValueSet.has(accObject)){
+                                                        var mapQuantityValidation = mapOfAccountToQty[accObject];
+                                                        console.log('--mapQuantityValidation-->'+mapQuantityValidation);
+                                                        if (typeof mapQuantityValidation != undefined && mapQuantityValidation != null) {
+                                                            mapQuantityValidation = $scope.formatter(mapQuantityValidation);
+                                                        }
+                                                        prodRows.push(mapQuantityValidation);  
+                                                    }
+                                                }else{
+                                                    prodRows.push('0');
+                                                }   
+                                            }else{
+                                                prodRows.push('0');  
+                                            }
+                                        });
+                                        tableProductRows.push(prodRows);  
+                                    });
+                                }
+                                //console.log('tableProductRows : ',tableProductRows);
+                                orderData = tableProductRows;
+                                if(tableProductRows.length >= 1){
+                                    hot.updateSettings($scope.mySettings,false);
+                                    hot.loadData(tableProductRows); 
+                                }
+                                
+                                if('{!Order.ActivatedDate}' != ""){
+                                    $scope.msgText = '{!$label.CRM_Multiorder_Order_Activate_Msg}';
+                                    $scope.msgSeverity = 'Info';
+                                } 
+                                $scope.showSpinner = false;
+                                $scope.$apply();
+                                if($scope.msgText){
+                                    $scope.height = initalHeight - $("#msgDiv").height();
+                                }
+                                $scope.$apply();
+                            },{
+                                escape: false, timeout: 120000
+                            }); 
+                        };
+                        
+                        $scope.removedProduct = function(removedRowSet){
+                            ////console.log('removedRowSet IN : ',removedRowSet);
+                            $scope.$apply(function() {
+                                $scope.showSpinner = true;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                            });
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            var removedRows = Array.from(removedRowSet);
+                            var counter=0;
+                            var rowCount = removedRows.length;
+                            var chunkSize;
+                            
+                            var totalAccount = 0;
+                            $.each(hot.getData(0, 1, 0, (hot.countCols()-1))[0], function(rowIndex, object) {
+                                if(!invalidValueSet.has(object))
+                                    totalAccount++;
+                            });
+                            console.log('ChunkSizeForRemoveRow ',{!ChunkSizeForRemoveRow}); 
+                            var dynemicChunkSize = Math.floor({!ChunkSizeForRemoveRow}/(1+totalAccount));
+                            if(rowCount > dynemicChunkSize){
+                                chunkSize = dynemicChunkSize;
+                            }else if(Math.ceil(rowCount/2) > 1){
+                                chunkSize = Math.ceil(rowCount/2);
+                            }else{
+                                chunkSize = 1;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                            }
+                            console.log('Remove totalAccount',totalAccount);
+                            console.log('Remove chunkSize',chunkSize);
+                                
+                            (function runRemoveRowToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                                if (typeof rowsToProcess == undefined || rowsToProcess.length == 0) {
+                                    $scope.showSpinner = false;
+                                    return;
+                                }
+                                chunkedData = rowsToProcess.splice(0, chunkSize);
+                                var productString = '';
+                                $.each(chunkedData, function(rowKey, object){
+                                    if(object != undefined){
+                                        if(productString != ''){
+                                            productString = productString +','+ String(object).trim();
+                                        }else{
+                                            productString += String(object).trim();
+                                        }
+                                    }
+                                });
+                                CRM_MultiUploadExtractOrderController.removeOrderProducts(productString,'{!parentMultiOrderId}',function(result, event) {
+                                    if (!event.status) {
+                                        $scope.$apply(function() {
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                    }else if (removedRows.length >= 1) {
+                                        counter++;
+                                        $scope.$apply(function() {
+                                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_DeleteRow_Progress} '+(chunkSize*counter) + ' {!$label.CRM_MultiOrder_spinnerText_OUT_OF} ' + (rowCount) +'. '+'('+(Math.round(((chunkSize*counter)/rowCount)*100))+'%)';
+                                            $scope.showSpinner = true;
+                                        });
+                                        $.each(result, function(rowIndex, elementP) {
+                                            if(SuccessOrderProd.has(elementP))
+                                                SuccessOrderProd.delete(elementP);
+                                        });
+                                        runRemoveRowToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                    }else{
+                                        counter++;
+                                        console.log('result :: ',result);
+                                        accColumns=[];
+                                        $.each(result, function(rowIndex, elementP) {
+                                            if(SuccessOrderProd.has(elementP))
+                                                SuccessOrderProd.delete(elementP);
+                                        });
+                                        //console.log('SuccessOrderProd : '+SuccessOrderProd);
+                                        $scope.showSpinner = false;
+                                    }
+                                    $scope.$apply();
+                                }, {
+                                    escape: false,
+                                    timeout: 120000,
+                                    buffer: false
+                                });
+                            })(removedRows , [], 0);
+                        }
+                        
+                        function setHeight() {
+                            $scope.height = (initalHeight - $("#msgDiv").height());
+                        }
+                        
+                        $scope.validateRowsCols = function(orderId){
+                            console.log('modifiedRowIndex : ',modifiedRowIndex);
+                            $scope.errorMsgForDp = '';
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            var productString = '';
+                            var accountString = '';
+                            var customerPoNumberString = '';
+                            $scope.height = initalHeight;
+                            saveStartTime = new Date();
+                            if(setForUIValidation.size != 0){
+                                $scope.msgText = '{!$label.CRM_MultiOrder_Correct_Data}';
+                                $scope.msgSeverity = 'error';
+                                if($("#msgDiv").height() == 0)
+                                    $timeout(setHeight,1);
+                                else
+                                    $scope.height = (initalHeight - $("#msgDiv").height());
+                            }else{
+                                $scope.showSpinner = true;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                                $.each(hot.getData(2, 0, hot.countRows()-1, 0), function(rowKey, object) {
+                                    if(object != undefined){
+                                        if(productString != ''){
+                                            productString = productString +','+ String(object).trim();
+                                        }else{
+                                            productString += String(object).trim();
+                                        }
+                                    }
+                                });
+                                var accountArray = String(hot.getData(0, 1, 0, (hot.countCols()-1))[0]).trim().split(',');
+                                console.log('accountString : ',accountArray);
+                                $.each(accountArray, function(rowKey, object) {
+                                    if(object != undefined){
+                                        if(accountString != ''){
+                                            accountString = accountString +','+ String(object).trim();
+                                        }else{
+                                            accountString += String(object).trim();
+                                        }
+                                    }
+                                });
+                                console.log('accountString : ',accountString);
+                                customerPoNumberString = String(hot.getData(1, 1, 1, (hot.countCols()-1))[0]).trim();
+                                
+                                CRM_MultiUploadExtractOrderController.getInitialValidations(accountString,productString,customerPoNumberString,orderId,function(result, event) {
+                                    if (event.status) {
+                                        var previousErrors = new Set(setForAccProValidation);
+                                        setForAccProValidation = new Set();
+                                        console.log('result ',result);
+                                        if(result.errorMsgForEmptyFirstRowColAndSecondRow){
+                                            $scope.msgText = result.errorMsgForEmptyFirstRowColAndSecondRow;
+                                            $scope.msgSeverity = 'error';
+                                        }
+                                        if(result.errorMsgRelatedDp){
+                                            $scope.errorMsgForDp = result.errorMsgRelatedDp;
+                                            $scope.msgSeverity = 'error';
+                                        }
+                                        $scope.resultKeys = Object.keys(result.mapOfProAccValidatinosWrap);
+                                        if($scope.resultKeys.length > 0){
+                                             $scope.msgText = '{!$label.CRM_MultiOrder_Error_Message}';
+                                             $scope.msgSeverity = 'error';
+                                             for(var i=0;i<$scope.resultKeys.length;i++){
+                                                setForAccProValidation.add($scope.resultKeys[i]);
+                                                var rowColIndex = $scope.resultKeys[i].split('-');
+                                                hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'valid', false);
+                                                //Defect#4409 - Nilesh, code change for japan specific error message
+                                                $scope.errorMsg = '';
+                                                if($scope.isJapan){
+                                                    $scope.errorMsg = result.mapOfProAccValidatinosWrap[$scope.resultKeys[i]].join(" ");
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', $scope.errorMsg);
+                                                }else{
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', result.mapOfProAccValidatinosWrap[$scope.resultKeys[i]]);
+                                                }
+                                             }
+                                        }
+                                        
+                                        if(previousErrors.size > 0){
+                                            $.each(Array.from(previousErrors), function(rowIndex, elementP) {
+                                                if(!setForAccProValidation.has(elementP)){
+                                                    var rowColIndex = elementP.split('-');
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'valid', true);
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', false);
+                                                    previousErrors.delete(elementP);
+                                                }
+                                            });
+                                        }
+                                        if(result.validationflag && previousErrors.size == 0){
+                                            var endTime = new Date();
+                                            console.log('validate Time: ',endTime - saveStartTime);
+                                            $scope.SaveRecords(result,orderId,productString,accountString); 
+                                        }else{
+                                            hot.render();
+                                            $scope.showSpinner = false;
+                                        }
+                                        $scope.$apply();
+                                        if($scope.msgText || $scope.errorMsgForDp){
+                                            $scope.height = initalHeight - $("#msgDiv").height();
+                                        }
+                                        $scope.$apply();
+                                    }
+                                },{
+                                    escape: true,
+                                    timeout: 120000,
+                                    buffer: false
+                                });
+                            }
+                        }
+                        
+                        $scope.SaveRecords = function(initialWrapperInstance,orderId,productString,accountString){
+                            var endTime = new Date();
+                            console.log('SaveRecords Time: ',endTime - saveStartTime);
+                            $scope.parser = Globalize.numberParser();
+                            $scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            $scope.$apply(function() {
+                                $scope.showSpinner = true;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                            });
+                            var cleanedGridData = [];
+                            var rowCount = 0;
+                            var totalAccount = 0;
+                            orderData = [[]];
+                            $.each(accountString.split(','), function(rowKey, object) {
+                                if(!invalidValueSet.has(object))
+                                    totalAccount++;
+                            });
+                            if(modifiedColflag){
+                                for(i=2;i<hot.countRows()-1;i++){     
+                                    var rowProdData=hot.getDataAtRow(i); 
+                                    if(!invalidValueSet.has(rowProdData[0])){
+                                        var temp = rowProdData.splice(0,hot.countCols()-1);
+                                        //console.debug('rowProdData=>',temp );
+                                        orderData.push(temp); 
+                                        rowCount++;
+                                        ////console.debug('rowCount=>',rowCount);
+                                    }
+                                } 
+                            }else{
+                                $.each(Array.from(modifiedRowIndex), function(rowIndex, elementP) {
+                                     var rowProdData=hot.getDataAtRow(elementP); 
+                                     if(!invalidValueSet.has(rowProdData[0])){
+                                         var temp = rowProdData.splice(0,hot.countCols()-1);
+                                         orderData.push(temp); 
+                                         rowCount++;
+                                         //console.debug('rowCount=>',rowCount);
+                                     }
+                                });
+                            } 
+                            orderData.shift();
+                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_SaveRow_Progress} 0 {!$label.CRM_MultiOrder_spinnerText_OUT_OF} ' + (rowCount) +'. '+'(0%)';
+                            
+                            inputDataToSave = angular.copy(orderData);
+                            $.each(inputDataToSave, function(rowKey, object) {
+                                if (object!=null && object!='') {
+                                    var rowDetails = [];
+                                    var productCode = object.shift();
+                                    rowDetails.push(productCode.trim());
+
+                                    $.each(object, function( childRowKey, quantity) {
+                                        if (typeof quantity != undefined && quantity != null && quantity != '') {
+                                            quantity = $scope.parser((quantity).replace(/\s/g, ""));
+                                        }
+                                        rowDetails.push(quantity);
+                                    });
+                                    cleanedGridData.push(rowDetails); 
+                                }
+                            });
+                            //console.log('orderData',orderData);
+                            var counter = 0;    
+                            modifiedRowIndex = new Set();
+                            modifiedColflag = false;
+                            var previousErrors = new Set(setForOrderProValidation);
+                            setForOrderProValidation = new Set();
+                            
+                            //console.log('totalAccount',totalAccount);
+                            //console.log('ChunkSizeForSaveOrders',{!ChunkSizeForSaveOrders})
+                            var dynemicChunkSize = Math.floor({!ChunkSizeForSaveOrders}/(1+totalAccount));
+                            var chunkSize;
+                            if(rowCount > dynemicChunkSize){
+                                chunkSize = dynemicChunkSize;
+                            }else if(Math.ceil(rowCount/2) > 1){
+                                chunkSize = Math.ceil(rowCount/2);
+                            }else{
+                                chunkSize = 1;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                            }
+                            //console.log('dynemicChunkSize',dynemicChunkSize);
+                            //console.log('chunkSize',chunkSize);
+                            var secondLastChunkNumber;
+                            if((rowCount%chunkSize) == 0){
+                                secondLastChunkNumber = Math.floor(rowCount/chunkSize) - 1;
+                            }else{
+                                secondLastChunkNumber = Math.floor(rowCount/chunkSize);
+                            }
+                            var lastChunkFiag = false;
+                            
+                            (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                                if (typeof rowsToProcess == undefined || rowsToProcess.length == 0) {
+                                    $scope.showSpinner = false;
+                                    return;
+                                }
+                                chunkedData = rowsToProcess.splice(0, chunkSize);
+                                console.log('-before -chunkedData-->'+chunkedData);
+                                var chunkTime = new Date();
+                                console.log('Time Elapsed for chunk is', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                timeDiff = (chunkTime - saveStartTime);
+                                console.log('Number of Chunks : '+secondLastChunkNumber+'-----'+counter);
+                                if(counter == secondLastChunkNumber)
+                                    lastChunkFiag = true;
+                                CRM_MultiUploadExtractOrderController.createOrdersAndOrderProducts(initialWrapperInstance,chunkedData,orderId,lastChunkFiag,function(result, event) {
+                                    if (!event.status) {
+                                        $scope.$apply(function() {
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                    }else if (cleanedGridData.length >= 1) {
+                                        counter++;
+                                        $scope.$apply(function() {
+                                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_SaveRow_Progress} '+(chunkSize*counter) + ' {!$label.CRM_MultiOrder_spinnerText_OUT_OF} ' + (rowCount) +'. '+'('+(Math.round(((chunkSize*counter)/rowCount)*100))+'%)';
+                                            $scope.showSpinner = true;
+                                        });
+                                        $scope.resultKeys = Object.keys(result);
+                                        if($scope.resultKeys.length > 0){
+                                             $scope.msgText = '{!$label.CRM_MultiOrder_Error_Message}';
+                                             $scope.msgSeverity = 'error';
+                                             for(var i=0;i<$scope.resultKeys.length;i++){
+                                                setForOrderProValidation.add($scope.resultKeys[i]);
+                                                var rowColIndex = $scope.resultKeys[i].split('-');
+                                                if(rowColIndex[0] == 0){
+                                                    modifiedColflag = true;
+                                                }else{
+                                                    modifiedRowIndex.add(parseFloat(rowColIndex[0]));
+                                                }
+                                                hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'valid', false);
+                                                //Defect#4409 - Nilesh, code change for japan specific error message
+                                                $scope.saveErrorMsg = '';
+                                                if($scope.isJapan) {
+                                                    $scope.saveErrorMsg = result[$scope.resultKeys[i]].join(" ");
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', $scope.saveErrorMsg);
+                                                }else {
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', result[$scope.resultKeys[i]]);
+                                                }
+                                             }
+                                             hot.render();
+                                        }
+                                        runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                    }else{
+                                        $scope.resultKeys = Object.keys(result);
+                                        if($scope.resultKeys.length > 0){
+                                             $scope.msgText = '{!$label.CRM_MultiOrder_Error_Message}';
+                                             $scope.msgSeverity = 'error';
+                                             for(var i=0;i<$scope.resultKeys.length;i++){
+                                                setForOrderProValidation.add($scope.resultKeys[i]);
+                                                var rowColIndex = $scope.resultKeys[i].split('-');
+                                                if(rowColIndex[0] == 0){
+                                                    modifiedColflag = true;
+                                                }else{
+                                                    modifiedRowIndex.add(parseFloat(rowColIndex[0]));
+                                                }
+                                                hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'valid', false);
+                                                //Defect#4409 - Nilesh, code change for japan specific error message
+                                                $scope.saveErrorMsg = '';
+                                                if($scope.isJapan) {
+                                                    $scope.saveErrorMsg = result[$scope.resultKeys[i]].join(" ");
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', $scope.saveErrorMsg);
+                                                }else{
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', result[$scope.resultKeys[i]]);
+                                                }
+                                             }
+                                        }
+                                        if(previousErrors.size > 0){
+                                            $.each(Array.from(previousErrors), function(rowIndex, elementP) {
+                                                if(!setForOrderProValidation.has(elementP)){
+                                                    var rowColIndex = elementP.split('-');
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'valid', true);
+                                                    hot.setCellMeta(rowColIndex[0],rowColIndex[1], 'errorMsg', false);
+                                                    previousErrors.delete(elementP);
+                                                }
+                                            });
+                                        }
+                                        
+                                        if($scope.resultKeys.length == 0 && previousErrors.size == 0){
+                                            var saveEndTime = new Date();
+                                            SuccessOrderProd = new Set(productString.split(','));
+                                            $scope.msgText = '{!$label.CRM_MultiOrder_Success_Message}';
+                                            $scope.msgSeverity = 'success';
+                                            console.log('Total time ', (saveEndTime - saveStartTime));
+                                        }
+                                        hot.render();
+                                        $scope.showSpinner = false;
+                                    }
+                                    $scope.$apply();
+                                    if($scope.msgText){
+                                        $scope.height = initalHeight - $("#msgDiv").height();
+                                    }
+                                    $scope.$apply();
+                                }, {
+                                    escape: false,
+                                    timeout: 120000,
+                                    buffer: false
+                                });
+                            })(cleanedGridData, [], 0);// runSaveToSalesforce
+                        };//SaveRecords 
+                        
+                        //Added For US : 989
+                        $scope.exportCSVFile = function(){
+                            hot.getPlugin('exportFile').downloadFile('csv', {
+                                filename: '{!Order.OrderNumber}{!$Label.CRM_Export_File_Label}' ,
+                                columnDelimiter: '{!UserLocaleForCSV}' === 'true' ? ';' :','     //  ";" for DE Locale and "," for all other territories 
+                            });
+                        };
+                         //-------- Us 989 start------------>
+                        $scope.refreshPage = function(){
+                            window.location.reload(); 
+                        }
+                    }
+                ]);//end 
+             </script> 
+        </body> 
+    </html>
+</apex:page>

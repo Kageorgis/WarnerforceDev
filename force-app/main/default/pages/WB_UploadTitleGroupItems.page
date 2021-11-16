@@ -1,0 +1,545 @@
+<apex:page standardController="Title_Group__c" extensions="WB_UploadTitleGroupItemsController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head> 
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  <!--<apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/UploadDealProducts.js')}" /> -->
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+
+<script>
+
+angular.module("UploadTitleGroupItems", ['ngHandsontable'])
+    .controller("UploadTitleGroupItemsController", ['$scope', function($scope) {
+        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.duplicateIndex = [];
+        $scope.duplicateCountMsg;
+        
+        
+        $scope.init = function() {
+            $scope.showSpinner = true;
+            $.when(
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+            ).then(function() {
+                var locale = '{!UserLocale}'; //'de';
+                console.log('--locale->',locale);
+                var de = Globalize.locale(locale);
+                console.log('--Globalize.locale->',de);
+                $scope.GetTitleGroupItems('{!Title_Group__c.Id}');
+           });
+        }
+
+        // You can pass options by attributes..
+        $scope.tableOptions = {
+            colHeaders: false,
+            allowInsertColumn: false,
+            items: [],
+            removedItems: [],
+            itemsMinusRemoved: [],
+            cleanedData: [],
+            colHeadersLabels: {
+               
+				videoVersionOrMPM: '{!recordType}' == 'MPM'? 'MPM#': ('{!recordType}' == 'Edit_EIDR'? 'Edit EIDR#': 'Video Version#'),
+                title: '{!recordType}' == 'MPM'? 'Short Desc':('{!recordType}' == 'Edit_EIDR'? 'Local Title': 'Title'),
+                validation: 'Validation'
+            }
+        }
+       
+        $scope.GetTitleGroupItems = function(titleGroupId) {
+            console.log('-Title Group Id-->'+titleGroupId);
+            $scope.showSpinner = true;
+            var startTime = new Date();
+            $scope.integerFormatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+            $scope.decimalFormatter = Globalize.numberFormatter({ maximumFractionDigits: 2 });
+
+                WB_UploadTitleGroupItemsController.getTitleGroupItems(titleGroupId,
+                function(result, event) {
+                    var endTime = new Date();
+                    console.log('Time Elapsed (ms) in GetLineItem is', (endTime - startTime));
+                    if (event.status) {
+                        $scope.tableOptions.items = result;
+                        
+                        
+                        
+                        
+                        /*angular.forEach($scope.tableOptions.items, function(item, key) {
+                            if (item.lineItemRecord.Promoted_Price__c != undefined && item.lineItemRecord.Promoted_Price__c != null) {
+                                item.lineItemRecord.Promoted_Price__c = $scope.decimalFormatter(item.lineItemRecord.Promoted_Price__c);
+                            }
+                            if (item.lineItemRecord.Coop_Requested_Amount_NR__c != undefined && item.lineItemRecord.Coop_Requested_Amount_NR__c != null) {
+                                item.lineItemRecord.Coop_Requested_Amount_NR__c = $scope.decimalFormatter(item.lineItemRecord.Coop_Requested_Amount_NR__c);
+                            }
+                            if (item.lineItemRecord.Allocation_Override__c != undefined && item.lineItemRecord.Allocation_Override__c != null) {
+                                item.lineItemRecord.Allocation_Override__c = $scope.decimalFormatter(item.lineItemRecord.Allocation_Override__c);
+                            }
+                            if (item.lineItemRecord.Replen_Quantity__c != undefined && item.lineItemRecord.Replen_Quantity__c != null) {
+                                item.lineItemRecord.Replen_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Replen_Quantity__c);
+                            }
+                            if (item.lineItemRecord.Initial_Quantity__c != undefined && item.lineItemRecord.Initial_Quantity__c != null) {
+                                item.lineItemRecord.Initial_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Initial_Quantity__c);
+                            }
+                            if (item.lineItemRecord.Target_Quantity__c != undefined && item.lineItemRecord.Target_Quantity__c != null) {
+                                item.lineItemRecord.Target_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Target_Quantity__c);
+                            }
+                            if (item.lineItemRecord.P_L_Quantity__c != undefined && item.lineItemRecord.P_L_Quantity__c != null) {
+                                item.lineItemRecord.P_L_Quantity__c = $scope.integerFormatter(item.lineItemRecord.P_L_Quantity__c);
+                            }
+                        });*/
+                    } else {
+                        $scope.msgText = event.message;
+                        $scope.msgSeverity = 'error';
+                    }
+                    // add column headers in first row
+                    $scope.tableOptions.items.splice(0, 0, $scope.tableOptions.colHeadersLabels);
+                    $scope.showSpinner = false;
+                    $scope.$apply();
+                }, {
+                    escape: false,
+                    timeout: 120000
+                }
+            );
+        };
+        //['remove_row']
+        $scope.mySettings = {
+            contextMenu: {
+                items: {
+                    "remove_row": {
+                        name: '{!$Label.CRM_Upload_Message_RemoveRow}',
+                        disabled: function() {
+                            //disable this option
+                            if (this.getSelected()) {
+                                var start_row = this.getSelected()[0];
+                                var end_row = this.getSelected()[2];
+                                
+                                if (start_row === 0 || end_row === 0) return true; // if header is selected
+                                return false;
+                            }
+                        }
+                    }
+                }
+            },
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            copyRowsLimit:2500,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                if (row == 0) {
+                    cellProperties.readOnly = true;
+                } // first row should not be editable but user should able to copy
+                cellProperties.renderer = $scope.myRenderer;
+                var item = $scope.tableOptions.items[row];
+                /*if (typeof item != 'undefined')
+                    if (row > 0 && typeof item.existingId != 'undefined' && (prop == 'lineItemRecord.Product2.ProductCode' ||
+                            prop == 'lineItemRecord.Product2.Universal_Picture_Code__c' ||
+                            prop == 'digital.videoVersion' ||
+                            prop == 'digital.channel' ||
+                            prop == 'digital.format' ||
+                            prop == 'digital.language' ||
+                            prop == 'digital.retailerProductId')) {
+                        cellProperties.readOnly = true;
+                    }*/
+                return cellProperties;
+            },
+
+            beforeChange: function(changes, source) {
+                var ele = this;
+
+                $.each(changes, function(index, element) {
+                    //console.log(index, element);
+                    // changes is a 2d array like [[row, prop, oldVal, newVal], ...]
+                    if (changes[index][3] == "") {
+                        changes[index][3] = null;
+                    }
+                    if (changes[index][2] != changes[index][3]) {
+                        var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                        ele.getCellMeta(element[0], elem).change = true;
+                    }
+
+                });
+            },
+
+            afterChange: function(changes, source) {
+                var ele = this;
+                if (changes && changes.length > 0) {
+                    $.each(changes, function(index, element) {
+                        //element is object {
+                        // 0: rowIndex, 1: prop, 2: oldValue 3: New Value 
+                        //}
+                        var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+
+                        // check if previous and new value of the cell is difference and 
+                        // cell is not the last column i.e. validation error/message
+                        if (changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                            // update the row at the given index 
+                            var item = $scope.tableOptions.items[changes[index][0]];
+
+                            item.isRowModified = true;
+                            item.isRowRemoved = false;
+                            item.previouslySelectedForRemoval = false;
+                        }
+
+                    });
+                } 
+            },
+
+            beforeRemoveRow: function(index, amount) {
+                if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                    return false;
+                }
+                for (i = index; i < index + amount; i++) {
+                    $scope.tableOptions.items[i].isRowRemoved = true;
+                }
+                $scope.$apply();
+                return false;
+            }
+        };
+        
+        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            // Mark changed items with a different class
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            var item = $scope.tableOptions.items[row];
+            var cell = instance.getCell(row, col);
+           
+            if (item.isRowRemoved) {
+                td.style.backgroundColor = 'grey';
+                td.style.color = 'white';
+                item.isRowModified = false;
+                item.previouslySelectedForRemoval = true;
+            } else if (item.validation != '{!$Label.CRM_Upload_Message_Updated}' && item.validation != '{!$Label.CRM_Upload_Message_Created}' && item.validation != '' && item.validation != null) {
+                td.style.backgroundColor = 'red';
+                td.style.color = 'white';
+
+                if (typeof item.previouslySelectedForRemoval != 'undefined' && !item.previouslySelectedForRemoval) {
+                    item.isRowModified = true;
+                }
+            }
+            if (cellProperties.change && prop != 'validation') {
+                $(cell).addClass('has-changed');
+            }
+        };
+
+        $scope.RemoveDuplicate = function(arr){ 
+        	var newArr = [];
+        	angular.forEach(arr, function(value, key) {
+        		var exists = false;
+        		angular.forEach(newArr, function(val2, key) {
+        			if(angular.equals(value.videoVersionOrMPM, val2.videoVersionOrMPM)){ exists = true }; 
+        		});
+        		if(exists == true && value.videoVersionOrMPM != "") { $scope.duplicateIndex.push(value); }
+        		if(exists == false && value.videoVersionOrMPM != "") { newArr.push(value); }
+        	});
+          return newArr;
+        }
+        
+        $scope.BackToDeal = function(url) {
+            $scope.navigateToURL(url);
+        };
+
+
+        $scope.navigateToURL = function(url) {
+            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+            if ($scope.isLightningExperienceOrSf1)
+                sforce.one.navigateToURL(url);
+            else
+                document.location.href = url;
+        };
+
+        $scope.isEmpty = function(objectjson) {
+            var dataExists = true;
+            $.each(objectjson, function(i, d) {
+                if (d != null && d != '' && typeof d != 'object') {
+                    dataExists = false;
+                }
+            });
+            return dataExists;
+        };
+
+        $scope.SaveRecords = function(titleGroupId) {
+            $scope.showSpinner = true;
+            $scope.duplicateIndex = [];
+            $scope.duplicateCountMsg = '';
+            $scope.msgText = '';
+            $scope.tableOptions.items = $scope.RemoveDuplicate($scope.tableOptions.items);
+            if($scope.duplicateIndex.length != 0)
+            $scope.duplicateCountMsg = $scope.duplicateIndex.length +' duplicate records has been removed';
+            
+            
+            // Flatten out the data, skip the first and last empty row
+            var inputData = $scope.tableOptions.items.slice(1, -1);
+            $scope.msgText = '';
+            $scope.msgSeverity = '';
+            var cleanedGridData = [];
+            
+            $scope.parser = Globalize.numberParser();
+            $scope.integerFormatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+            $scope.decimalFormatter = Globalize.numberFormatter({ maximumFractionDigits: 2 });
+
+            inputDataToSave = angular.copy(inputData);
+            /*
+            $.each(inputDataToSave, function(rowKey, object) {
+                // Defect#3111 Changes Starts: convert currency to decimal so that salesforce can accept it.
+                if (typeof object.lineItemRecord.Promoted_Price__c != 'undefined' && object.lineItemRecord.Promoted_Price__c != null) {
+                    object.lineItemRecord.Promoted_Price__c = $scope.parser((object.lineItemRecord.Promoted_Price__c).replace(/\s/g, ""));//.replace(/[^\d.-]/g, ''));
+                }
+
+                if (object.lineItemRecord.Coop_Requested_Amount_NR__c != undefined && object.lineItemRecord.Coop_Requested_Amount_NR__c != null) {
+                    object.lineItemRecord.Coop_Requested_Amount_NR__c = $scope.parser((object.lineItemRecord.Coop_Requested_Amount_NR__c).replace(/\s/g, ""));
+                }
+
+                if (object.lineItemRecord.Allocation_Override__c != undefined && object.lineItemRecord.Allocation_Override__c != null) {
+                    object.lineItemRecord.Allocation_Override__c = $scope.parser((object.lineItemRecord.Allocation_Override__c).replace(/\s/g, ""));
+                }
+
+                if (object.lineItemRecord.Replen_Quantity__c != undefined && object.lineItemRecord.Replen_Quantity__c != null) {
+                    object.lineItemRecord.Replen_Quantity__c = $scope.parser((object.lineItemRecord.Replen_Quantity__c).replace(/\s/g, ""));
+                }
+
+                if (object.lineItemRecord.Initial_Quantity__c != undefined && object.lineItemRecord.Initial_Quantity__c != null) {
+                    object.lineItemRecord.Initial_Quantity__c = $scope.parser((object.lineItemRecord.Initial_Quantity__c).replace(/\s/g, ""));
+                }
+
+                if (object.lineItemRecord.Target_Quantity__c != undefined && object.lineItemRecord.Target_Quantity__c != null) {
+                    object.lineItemRecord.Target_Quantity__c = $scope.parser((object.lineItemRecord.Target_Quantity__c).replace(/\s/g, ""));
+                }
+
+                if (object.lineItemRecord.P_L_Quantity__c != undefined && object.lineItemRecord.P_L_Quantity__c != null) {
+                    object.lineItemRecord.P_L_Quantity__c = $scope.parser((object.lineItemRecord.P_L_Quantity__c).replace(/\s/g, ""));
+                }
+
+                // Defect#3111 Changes Ends
+
+                if (!isDigital && !($scope.isEmpty(object.lineItemRecord.Product2) && $scope.isEmpty(object.lineItemRecord))) {
+                    cleanedGridData.push(object);
+                }
+                if (isDigital && !($scope.isEmpty(object.digital) && $scope.isEmpty(object.lineItemRecord))) {
+                    cleanedGridData.push(object);
+                }
+
+                //console.log(object.lineItemRecord.Product2.ProductCode, object.isRowModified, object.lineItemRecord.Promoted_Price__c); 
+            });*/
+
+
+            /**
+             * rowsToProcess - Array of records to save back to salesforce
+             * returnedResults - Rows already saved to Salesforce
+             */
+            (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                console.log(rowsToProcess.length, returnedResults.length);
+
+                if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                    $scope.showSpinner = false;
+                    return;
+                }
+
+                var chunkSize = 10, // Recursive batch size
+                    chunkedData = rowsToProcess.splice(0, chunkSize);
+
+                var saveStartTime = new Date();
+
+                // Save data back
+                WB_UploadTitleGroupItemsController.saveTitleGroupItems(chunkedData, titleGroupId, function(result, event) {
+                    // Log time to complete
+                    var saveEndTime = new Date();
+                    console.log('Time Elapsed for chunk is', (saveEndTime - saveStartTime));
+
+                    if (!event.status) {
+                        console.log('In exception case ', event.status);
+                        $scope.$apply(function() {
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                        });
+                    } else if (inputDataToSave.length > 0) {
+                        console.log('After response returned from Save -  inputDataToSave.length=', inputDataToSave.length);
+                        // If successful add results to the main array
+                        returnedResults = returnedResults.concat(result);
+
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+
+                        failedRecCount += failedCount;
+
+                        // Update progress text for user
+                        $scope.$apply(function() {
+                            $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                        });
+
+                        // Call salesforce again with remaining rows
+                        runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                    } else {
+                        console.log('After response returned from Save - In Else inputDataToSave.length=', inputDataToSave.length);
+                        // Update UI
+                        
+                       
+                        $scope.$apply(function() {
+                            $scope.tableOptions.items = returnedResults.concat(result);
+
+                            /*angular.forEach($scope.tableOptions.items, function(item, key) {
+                                if (item.lineItemRecord.Promoted_Price__c != undefined && item.lineItemRecord.Promoted_Price__c != null) {
+                                    item.lineItemRecord.Promoted_Price__c = $scope.decimalFormatter(item.lineItemRecord.Promoted_Price__c);
+                                }
+
+                                if (item.lineItemRecord.Coop_Requested_Amount__c != undefined && item.lineItemRecord.Coop_Requested_Amount__c != null) {
+                                    item.lineItemRecord.Coop_Requested_Amount__c = $scope.decimalFormatter(item.lineItemRecord.Coop_Requested_Amount__c);
+                                }
+
+                                if (item.lineItemRecord.Co_op_Allocation_Override__c != undefined && item.lineItemRecord.Co_op_Allocation_Override__c != null) {
+                                    item.lineItemRecord.Co_op_Allocation_Override__c = $scope.decimalFormatter(item.lineItemRecord.Co_op_Allocation_Override__c);
+                                }
+                                if (item.lineItemRecord.Replen_Quantity__c != undefined && item.lineItemRecord.Replen_Quantity__c != null) {
+                                    item.lineItemRecord.Replen_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Replen_Quantity__c);
+                                }
+                                if (item.lineItemRecord.Initial_Quantity__c != undefined && item.lineItemRecord.Initial_Quantity__c != null) {
+                                    item.lineItemRecord.Initial_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Initial_Quantity__c);
+                                }
+                                if (item.lineItemRecord.Target_Quantity__c != undefined && item.lineItemRecord.Target_Quantity__c != null) {
+                                    item.lineItemRecord.Target_Quantity__c = $scope.integerFormatter(item.lineItemRecord.Target_Quantity__c);
+                                }
+                                if (item.lineItemRecord.P_L_Quantity__c != undefined && item.lineItemRecord.P_L_Quantity__c != null) {
+                                    item.lineItemRecord.P_L_Quantity__c = $scope.integerFormatter(item.lineItemRecord.P_L_Quantity__c);
+                                }
+                            });*/
+                            
+                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                            failedRecCount += failedCount;
+
+                            // add column headers in first row
+                            $scope.tableOptions.items.splice(0, 0, $scope.tableOptions.colHeadersLabels);
+
+                            if (failedRecCount > 0) {
+                                $scope.msgText = failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                $scope.msgSeverity = 'error';
+                            } else {
+                                $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                $scope.msgSeverity = 'success';
+                            }
+
+                            $scope.spinnerText = '';
+                            $scope.showSpinner = false;
+                        });
+                    }
+                }, {
+                    escape: false,
+                    timeout: 120000,
+                    buffer: false
+                });
+            })(inputDataToSave, [], 0);
+        };
+
+    }]);
+</script>
+</head>
+
+    <body  style="padding:0px">
+        <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="UploadTitleGroupItems" ng-controller="UploadTitleGroupItemsController" class="slds" ng-init="init()" ng-cloak="ngCloak">
+           <!-- ===========================Spinner================================= -->   
+           <div class="spinnerModel" ng-show="showSpinner">
+             <div class="spinnerContent slds-spinner--medium">
+               <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+               <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+             </div>
+           </div>
+
+            <!-- =========================== HEADER BANNER ================================-->     
+           <div class="slds-page-header" role="banner">
+             <div class="slds-grid">
+                   <div class="slds-col slds-has-flexi-truncate">
+                     <nav class="slds-m-bottom--xx-small" role="navigation">
+                       <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                       <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                         <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Title_Group__c.Tab, $ObjectType.Title_Group__c)}'">{!$ObjectType.Title_Group__c.labelPlural}</a></li>
+                         <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Title_Group__c.View,Id)}">{!Title_Group__c.Name}</a></li>
+                       </ol>
+                     </nav>
+                     <div class="slds-col slds-has-flexi-truncate">
+                       <h1 class="slds-text-heading--medium slds-truncate" title="Upload Title Group Items">Upload Title Group Items</h1>
+                     </div>
+                   </div>
+                   <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                          <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="SaveRecords('{!Title_Group__c.Id}')" class="slds-button slds-button--neutral">Save</button>
+                                 <button class="slds-button slds-button--neutral" ng-click="BackToDeal('{!URLFOR($Action.Title_Group__c.View,Id)}')">Back To TitleGroup</button>
+                             </div>
+                           </div>
+                         </div>
+                         <div class="slds-button-group" role="group">
+                         </div>
+                   </div>
+             </div>
+           </div>
+    
+            <!-- ===========================Exception================================= -->
+            
+            <div class="slds-grid" ng-show="duplicateCountMsg">
+             <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+               <span class="slds-assistive-text">Info</span>
+               <button class="slds-button slds-notify__close" ng-click="duplicateCountMsg=''">
+                 <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                   <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                 </svg>
+                 <span class="slds-assistive-text">Close</span>
+               </button>
+               <div class="notify__content slds-grid">
+                 <h2 class="slds-col slds-text-heading--small">{{duplicateCountMsg}}</h2>
+               </div>
+             </div>
+           </div>
+            
+           <div class="slds-grid" ng-show="msgText">
+             <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+               <span class="slds-assistive-text">Info</span>
+               <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                 <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                   <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                 </svg>
+                 <span class="slds-assistive-text">Close</span>
+               </button>
+               <div class="notify__content slds-grid">
+                 <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+               </div>
+             </div>
+           </div>
+   
+           <!-- =========================== Table ================================-->
+           <div class="slds-m-around--x-small" >
+               <hot-table 
+                 settings="mySettings"
+                 col-headers="tableOptions.colHeaders"
+                 datarows="tableOptions.items"
+                 afterRender="firstRowRenderer">
+                 
+                 <hot-column data="videoVersionOrMPM"></hot-column>
+                 <hot-column data="title"></hot-column>
+                 <hot-column data="validation" read-only="true"></hot-column>
+               </hot-table>
+           </div>
+        </div>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,498 @@
+<apex:component access="global">
+    <apex:attribute name="Order" type="Order" description="Related Order" />
+    <apex:stylesheet value="{!URLFOR($Resource.OrderConfirmationCSS)}" />
+
+    <html>
+<body>
+    <table class="mainContainer">
+        <tr>
+            <td style="width: 50%; vertical-align: top;">
+                <table>
+                    <tr>
+                        <td><img src='{!URLFOR($Resource.CRM_WB_LogoBlue)}'
+                            title="logo" height="100" width="100" /></td>
+                        <td style="font-size: 14px;">
+                            <p>
+                                <b>Warner Home Entertainment</b><br /> 115/123 avenue Charles
+                                de Gaulle<br /> 92525 Neuilly sur Seine Cedex
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 10%"></td>
+            <td style="width: 40%;">
+                <table class="customerDetail" style="font-size: 10px;">
+                    <tr>
+                        <td class="labelCol">Date:</td>
+                        <td class="dataCol">
+                            <apex:outputText value="{0, date, dd/MM/YYYY}">
+                                <apex:param value="{!TODAY()}" /> 
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Client:</td>
+                        <td class="dataCol">{!Order.Account.Name}</td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">N°Client:</td>
+                        <td class="dataCol">{!Order.Account.AccountNumber}</td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Adresse:</td>
+                        <td>
+                          <apex:outputText value="{!Order.Customer_Address__c}" escape="false" styleClass="dataCol"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Code Postal:</td>
+                        <td class="dataCol">{!Order.Code__c}</td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Ville:</td>
+                        <td class="dataCol">{!Order.Account.BillingCity}</td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Réf . client / PO#:</td>
+                        <td class="dataCol">{!Order.Customer_PO_Number__c}</td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">Début en magasin:</td>
+                        <td class="dataCol">
+                          <apex:outputText value="{0, date, dd/MM/YYYY}">
+                            <apex:param value="{!Order.Opportunity.Promo_Start_Date__c}" /> 
+                          </apex:outputText>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelCol">N° de conf iguration:</td>
+                        <td class="dataCol">{!Order.Config__r.Config_Number_Txt__c}</td>
+                    </tr>
+                    <!--<tr>
+                        <td class="labelCol">List de prix:</td>
+                        <td class="dataCol">Liste de Prix</td>
+                    </tr>-->
+
+                </table>
+            </td>
+        </tr>
+    </table>
+    <p class="comments-row">Commentaires:</p>
+
+    <table class="order-products">
+        <tr>
+            <td>Titre</td>
+            <td>Référence</td>
+            <td>Gencod</td>
+            <td>Format</td>
+            <td>Date de mise en vente</td>
+            <td>Prix HT</td>
+            <td>Qté</td>
+        </tr>
+        <apex:repeat var="lineItem" value="{!Order.OrderItems}">
+            <tr>
+                <td>{!lineItem.PricebookEntry.Product2.Name}</td>
+                <td>{!lineItem.Material_Number__c}</td>
+                <td>{!lineItem.PricebookEntry.Product2.Universal_Picture_Code__c}</td>
+                <td><apex:outputField value="{!lineItem.PricebookEntry.Product2.Product_Format__c}"/>
+                </td>
+                <td><apex:outputtext value="{0, date, dd'/'MM'/'yyyy}">
+                        <apex:param value="{!lineItem.PricebookEntry.Product2.Street_Date__c}"/>
+                    </apex:outputtext></td>
+                <td>
+                    <apex:outputField value="{!lineItem.ListPrice}"/>
+                </td>
+                <td>
+                    <apex:outputField value="{!lineItem.Quantity}" rendered="{!(Order.Config__r.Record_Type_Name__c != 'SBOM')}"/>
+                    <apex:outputField value="{!lineItem.Total_Quantity__c}" rendered="{!(Order.Config__r.Record_Type_Name__c == 'SBOM')}"/>
+                </td>
+            </tr>
+        </apex:repeat>
+    </table>
+
+    <table class="mainContainer" style="margin-top: 20px; padding: 0px;">
+        <tr>
+            <td class="para">Nous v ous rappelons que selon les termes de
+                l’article 89 de la loi du 29 Juillet 1982, « Aucune oeuv re
+                cinématographique exploitée dans les salles de spectacles
+                cinématographiques ne peut f aire l’objet d’une exploitation
+                simultanée sous f orme de supports destinés à la v ente ou à la
+                location pour l’usage priv é du public et notamment sous f orme de
+                DVD et BLU-RAY, av ant l’expiration d’un délai de 4 mois qui courra
+                à compter de la déliv rance du v isa d’exploitation. ».</td>
+        </tr>
+    </table>
+    <p style="margin-top: 20px; text-align: justify; font-size: 10px;">
+        Par contre, pour chaque programme dont le support DVD ou BLU-RAY v ous
+        est liv ré par Warner Bros. Entertainment France, v ous ne pouv ez
+        débuter la v ente qu’à compter de la date initiale indiquée sur ce bon
+        de commande (mise en v ente).</p>
+
+    <p style="margin-top: 10px; font-size: 10px;">A déf aut, toute mise
+        sur le marché av ant cette date expose v otre société aux sanctions
+        prév ues par la loi (art. 79 de la loi du 30 septembre 1986).</p>
+
+    <table class="mainContainer customerDetail"
+        style="margin-top: 20px; padding: 0px; font-size: 10px;">
+        <tr>
+            <td style="width: 60%;"><b>Date:</b></td>
+            <td style="width: 40%;"><b>Signature:</b></td>
+        </tr>
+        <tr>
+            <td>____________________________________________</td>
+            <td>__________________________________________________</td>
+        </tr>
+        <tr>
+            <td><b>Warner Home Entertainment</b></td>
+            <td></td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+    <p style="font-size: 10px">
+        <b>EXTRAIT DES CONDITIONS GENERALES DE VENTE DE WBEF</b>
+    </p>
+    <table class="font-9" style="padding: 0px;">
+        <tr>
+            <td><b>I - Champ d’application</b></td>
+        </tr>
+        <tr>
+            <td>Les présentes Conditions Générales de Vente s’appliquent aux
+                produits vendus en France métropolitaine (Corse et DOM TOM compris)
+                (ci-après le « Territoire ») par WARNER BROS ENTERTAINMENT FRANCE,
+                (ciaprès dénommée « WBEF »), à l’ensemble de sa clientèle sur le
+                Territoire (ci-après « le Client »).</td>
+        </tr>
+        <tr>
+            <td>Les présentes Conditions Générales de Vente et remplacent
+                toutes les conditions antérieures et prévalent sur tout autre
+                document précédemment émis par WBEF ou/et le Client. En conséquence,
+                le fait de passer commande d’un ou plusieurs produits WBEF implique
+                l’adhésion sans réserve du Client aux présentes Conditions Générales
+                de Vente.</td>
+        </tr>
+        <tr>
+            <td><b>II - Les Produits</b></td>
+        </tr>
+        <tr>
+            <td>L’ensemble des Produits diffusés par WBEF sont destinés au
+                seul usage privé et familial au sens de l’article L.122-5 du Code de
+                la Propriété Intellectuelle.Tous les autres droits sont réservés.</td>
+        </tr>
+        <tr>
+            <td>Le terme « usage privé » exclut notamment l’utilisation dans
+                les lieux tels que les clubs, discothèques, cars, hôpitaux, hôtels,
+                plates-formes pétrolières, prisons, écoles, casernes et autres lieux
+                publics.</td>
+        </tr>
+        <tr>
+            <td>Le Client accepte de se soumettre aux restrictions suivantes
+                dont le respect constitue une condition substantielle des présentes.
+                Le Client s’interdit :</td>
+        </tr>
+        <tr>
+            <td>- toute reproduction, même partielle, des Produits sur
+                quelque support que ce soit, ainsi que toute distribution de tout
+                support qui constituerait une reproduction des Produits, objet du
+                présent contrat,</td>
+        </tr>
+        <tr>
+            <td>- de procéder directement ou indirectement, en tout ou
+                partie, à la représentation publique, payante ou gratuite, des
+                OEuvres distribuées par WBEF reproduites sur des Vidéogrammes et des
+                Jeux Vidéo, par télédiffusion, télédistribution, par ondes
+                hertziennes, câbles, cristaux optiques ou magnétiques, hologrammes,
+                satellites de transmission, internet ou par tout autre moyen connu
+                ou inconnu à ce jour.</td>
+        </tr>
+        <tr>
+            <td>En cas de non respect des stipulations énoncées ci-dessus,
+                WBEF pourra cesser les livraisons au Client, sans mise en demeure
+                préalable et sans préjudice de tous dommages et intérêts.</td>
+        </tr>
+        <tr>
+            <td>WBEF met sur le marché dans le Territoire deux types de
+                produits sur support vidéographique : ceux destinés à la revente et
+                ceux destinés à la location.</td>
+        </tr>
+        <tr>
+            <td>Une mention expresse figure sur les Vidéogrammes destinés à
+                la location et précise le cas échéant que leur location est
+                autorisée (ci-après désignés « Vidéogrammes Destinés à la Location
+                »). A défaut de cette mention expresse, toute location est interdite
+                et les Vidéogrammes ne peuvent faire l’objet que d’une revente
+                (ci-après désignés « Vidéogrammes Destinés à la Revente »).</td>
+        </tr>
+        <tr>
+            <td>Les Jeux Vidéo sont uniquement destinés à la revente.</td>
+        </tr>
+        <tr>
+            <td>A l’achat de Jeux Vidéo et/ou de Vidéogrammes Destinés à la
+                Revente, le Client certifie qu’il ne les utilisera ni ne les
+                distribuera en vue de la location en aucune circonstance.</td>
+        </tr>
+        <tr>
+            <td>WBEF ne concède, aux termes des présentes, aucune licence en
+                vue de louer des Vidéogrammes Destinés à la Location ou de
+                distribuer au public des Vidéogrammes Destinés à la Revente et/ou
+                des Jeux Vidéo avant la Date de Sortie applicable.</td>
+        </tr>
+        <tr>
+            <td><b>III - Commandes</b></td>
+        </tr>
+        <tr>
+            <td>WBEF se réserve la faculté de refuser la commande ou de
+                faire porter son acceptation sur une partie de celle-ci sans que
+                cela ne puisse entraîner de pénalités.</td>
+        </tr>
+        <tr>
+            <td>Toute réserve ou protestation motivée du Client doit être
+                confirmée par lettre recommandée au transporteur, dans les trois
+                jours ouvrables qui suivent la réception. Au-delà de ce délai, les
+                marchandises sont réputées irréfragablement correspondre à la
+                commande.</td>
+        </tr>
+        <tr>
+            <td>Pour toute commande inférieure à 150,00€ HT, une somme
+                forfaitaire de 15,00€ HT correspondant aux frais de préparation,
+                d’expédition et de transport est à la charge du Client.</td>
+        </tr>
+        <tr>
+            <td><b>IV - Liv raisons</b></td>
+        </tr>
+        <tr>
+            <td>Les expéditions de WBEF s'entendent départ Entrepôt.</td>
+        </tr>
+        <tr>
+            <td>Les délais de livraison portés sur les bons de commande et
+                les délais de livraison précités ont un caractère purement indicatif
+                et peuvent être éventuellement décalés pour améliorer la mise à
+                disposition des Produits au consommateur. Les retards éventuels ne
+                donnent pas le droit au Client d'annuler la vente, d’en compenser le
+                montant avec toute autre créance qui serait due à WBEF, de refuser
+                la marchandise, de réclamer des dommages intérêts ou des pénalités,
+                ni même de proroger les délais de paiement. WBEF s’efforcera
+                d’informer le Client des causes de ce retard et proposera un nouveau
+                rendez-vous de livraison.</td>
+        </tr>
+        <tr>
+            <td>Aucun retour de marchandise pour quelque cause que se soit,
+                ne sera accepté sans l’accord préalable de WBEF.</td>
+        </tr>
+        <tr>
+            <td>Les Produits de WBEF voyagent aux risques et périls du
+                Client. En conséquence, le Client contractera toute assurance utile
+                de nature à couvrir les risques encourus par les Produits de WBEF au
+                cours et à l’issue du transport.</td>
+        </tr>
+        <tr>
+            <td>La force majeure ou le cas fortuit libère WBEF de tout
+                engagement.</td>
+        </tr>
+        <tr>
+            <td><b>V - Retour, rappel et retraits des Produits de WBEF</b></td>
+        </tr>
+        <tr>
+            <td>Tout retour, retrait ou rappel de Produits doit être
+                préalablement formellement accepté par WBEF et faire l’objet d’une
+                coordination avec WBEF. Seuls les Produits distribués par WBEF
+                comportant un Gencod WBEF peuvent faire l’objet d’un retour.</td>
+        </tr>
+        <tr>
+            <td>Sans expresse acceptation de WBEF, le Client ne pourra
+                prétendre à aucun crédit pour les marchandises retournées à ses
+                risques et périls, celles-ci pouvant être détruites par WBEF sans
+                avis préalable en raison des risques de manutention et de stockage.</td>
+        </tr>
+        <tr>
+            <td>Toute marchandise retournée sera réexpédiée en franco de
+                port.</td>
+        </tr>
+        <tr>
+            <td><b>VI - Conditions de Paiement</b></td>
+        </tr>
+        <tr>
+            <td><b>1. Modes et délai de paiement:</b></td>
+        </tr>
+        <tr>
+            <td>Toutes les marchandises de WBEF sont payables au siège
+                social.</td>
+        </tr>
+        <tr>
+            <td>Les paiements s'entendent à terme, à 45 jours fin de mois.</td>
+        </tr>
+        <tr>
+            <td>En cas de refus ou de retrait d’assurance crédit ou de tout
+                autre événement de nature à faire peser sur WBEF un risque de défaut
+                de paiement de quelque nature que ce soit, WBEF se réserve le droit
+                de demander le paiement immédiat des commandes à leur livraison.</td>
+        </tr>
+        <tr>
+            <td><b>2. Escompte:</b></td>
+        </tr>
+        <tr>
+            <td>WBEF ouvre le droit à un escompte pour tout paiement
+                comptant.</td>
+        </tr>
+        <tr>
+            <td>Celui-ci, pour être pris en compte, devra faire l’objet de
+                la mise en place d’une convention d’escompte. Le taux est fixé à
+                0,3%.</td>
+        </tr>
+        <tr>
+            <td><b>3. Pénalités de retard et indemnité forfaitaire pour
+                    frais de recouv rement:</b></td>
+        </tr>
+        <tr>
+            <td>Le défaut de paiement à l’échéance entraîne en outre:</td>
+        </tr>
+        <tr>
+            <td>- l’exigibilité immédiate de la totalité de créances en
+                cours,</td>
+        </tr>
+        <tr>
+            <td>- la possibilité pour le vendeur d’annuler sans mise en
+                demeure tout ou partie des ordres en cours,</td>
+        </tr>
+        <tr>
+            <td>- au titre de la clause pénale, une majoration de 15 % du
+                montant des créances avec un minimum de 61 euros.</td>
+        </tr>
+        <tr>
+            <td>De plus, le défaut de paiement fait courir de plein droit
+                des intérêts de retard fixés à 3 fois le taux d’intérêt légal,
+                plafonnés au taux de l’usure en vigueur. Ce taux d’intérêt légal est
+                égal au taux d’intérêt appliqué par la Banque Centrale Européenne à
+                son opération de refinancement la plus récente majorée de 10 points
+                de pourcentage (conformément à l’article L.441-6 du Code de
+                Commerce), les frais de retour, de remise en banque restant à la
+                charge du débiteur.</td>
+        </tr>
+        <tr>
+            <td>Par ailleurs, une indemnité forfaitaire pour frais de
+                recouvrement de 40 € minimum est due par les débiteurs
+                professionnels en cas de retard de paiement (décret n°2012-1115 du 2
+                octobre 2012).</td>
+        </tr>
+        <tr>
+            <td>Le non-respect d’un engagement d’ordre financier entraîne
+                immédiatement la suppression des avantages qui auraient pu être
+                antérieurement consentis ; cette suppression s’applique également
+                dans les cas de cessation d’activité, de faillite, de liquidation ou
+                de règlement judiciaire.</td>
+        </tr>
+        <tr>
+            <td><b>4. Déductions d’office:</b></td>
+        </tr>
+        <tr>
+            <td>Les déductions ou compensations d’office de pénalités ne
+                sont pas autorisées lorsque la dette n’est pas certaine, liquide et
+                exigible, sans même que WBEF n’ait été en mesure de contrôler la
+                réalité du grief correspondant.</td>
+        </tr>
+        <tr>
+            <td>N’est pas non plus autorisée la compensation des factures de
+                WBEF avec des créances litigieuses telles que des factures de
+                prestations de services faisant l’objet d’une contestation de la
+                part de WBEF.</td>
+        </tr>
+        <tr>
+            <td>Même si le fondement est réel, reconnu et accepté par WBEF,
+                la déduction ou compensation ne saurait intervenir sans l'accord
+                préalable exprès de WBEF.</td>
+        </tr>
+        <tr>
+            <td>Enfin, les déductions d’office de pénalités ou de rabais
+                sont également prohibées par l’article L.442-6 du Code de Commerce.</td>
+        </tr>
+        <tr>
+            <td><b>5. Encours:</b></td>
+        </tr>
+        <tr>
+            <td>Compte tenu notamment des évolutions du marché et des
+                exigences de ses partenaires d’assurance crédit, WBEF se réserve la
+                possibilité, avec un préavis de 15 jours, de pratiquer une
+                limitation ou une modification de l’encours autorisé par Client.</td>
+        </tr>
+        <tr>
+            <td><b>6. Aménagement conv entionnel de la prescription</b></td>
+        </tr>
+        <tr>
+            <td>Les réductions électroniques pratiquées en caisse, financées
+                par WBEF, et consenties au consommateur par le Client par rapport au
+                prix de vente consommateur TTC doivent faire l’objet de factures du
+                Client dans un délai d’un an à compter de la fin de l’opération
+                concernée. Au-delà de ce délai, WBEF ne sera plus tenue à aucun
+                paiement et toute action en paiement du Client sera prescrite.</td>
+        </tr>
+        <tr>
+            <td><b>VII - Loi applicable / Attribution de juridiction</b></td>
+        </tr>
+        <tr>
+            <td>Les présentes Conditions Générales de Vente sont soumises à
+                la loi française.</td>
+        </tr>
+        <tr>
+            <td>Tout litige, quelle qu’en soit la nature, de même que toute
+                contestation relative à la formation ou à l’exécution de la commande
+                ou des présentes Conditions Générales de Vente sera soumis au
+                Tribunal de Commerce de Nanterre. Cette attribution de compétence
+                s’applique même en cas de référé, de demande incidente, de pluralité
+                de défendeurs ou d’appel en garantie, et quelles que soient les
+                modalités de paiement.</td>
+        </tr>
+        <tr>
+            <td>WBEF se réserve cependant le droit de saisir la juridiction
+                compétente du lieu du siège social du Client ou du lieu de livraison
+                de la marchandise.</td>
+        </tr>
+    </table>
+    <table style="border: 1px solid; width: 100%;" class="font-9">
+        <tr>
+            <td><b>Réserv e de propriété</b></td>
+        </tr>
+        <tr>
+            <td>Le Client reconnaît sans réserve que WBEF conserve la
+                propriété des Produits livrés jusqu’à leur complet paiement,
+                c’est-à-dire jusqu’à l’encaissement effectif par WBEF des sommes
+                dues.</td>
+        </tr>
+        <tr>
+            <td>A défaut de paiement à l’échéance, WBEF se réserve la
+                possibilité de reprendre sans autre formalité les marchandises
+                livrées. Les marchandises devront alors être restituées
+                immédiatement à WBEF aux frais, risques et périls du Client qui s'y
+                oblige et ce, sur simple demande. Si les Produits livrés par WBEF
+                ont déjà été revendus par le Client alors qu’ils n’ont pas été
+                payés, WBEF acquiert automatiquement la créance correspondante du
+                Client sur le client successif. Toutes les marchandises en stock
+                dans les locaux du Client sont présumées être des marchandises
+                impayées à concurrence du montant dû.</td>
+        </tr>
+        <tr>
+            <td>En cas de redressement ou de liquidation judiciaire du
+                Client, la vente sera suspendue de plein droit si les Produits ne
+                sont pas encore livrés. WBEF se réserve le droit de revendiquer les
+                marchandises livrées conformément aux dispositions du Code de
+                Commerce.</td>
+        </tr>
+        <tr>
+            <td>Les stipulations qui précèdent sont sans préjudice de ce qui
+                est convenu ci-dessus en matière de transfert des risques. Le Client
+                sera ainsi tenu pour seul responsable de tous les risques de
+                détérioration, de perte, de destruction partielle ou totale, quelle
+                que soit la cause du dommage, même s’il s’agit d’un cas fortuit ou
+                de force majeure.</td>
+        </tr>
+        <tr>
+            <td>Le Client s’oblige à informer tout tiers, notamment en cas
+                de saisie, du fait que les Produits sous clause de réserve de
+                propriété appartiennent à WBEF, et à informer WBEF immédiatement de
+                toute saisie ou opération similaire.</td>
+        </tr>
+    </table>
+</body>
+    </html>
+
+</apex:component>

@@ -1,0 +1,25 @@
+<apex:page StandardController="Agreement__c" extensions="WB_MultiselectPage_Controller">
+    <apex:form >
+        <apex:pageBlock >
+            <c:WB_MultiselectPicklist leftLabel="Available Combination"
+                leftOption="{!availableCombinationList}"
+                rightLabel="Selected Combination"
+                rightOption="{!selectedCombinationList}"
+                size="14"
+                width="250px"/>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!updateStoreFrontRec}" rerender="outputpanelId" oncomplete="Refresh('{!storeFrontID}');return true;"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:outputPanel id="outputpanelId" layout="block"></apex:outputPanel>
+        <script type="text/javascript">
+
+        function Refresh(id){
+            window.top.location.href = '/' + id;
+        }
+
+
+    </script>
+    </apex:form>
+    
+</apex:page>

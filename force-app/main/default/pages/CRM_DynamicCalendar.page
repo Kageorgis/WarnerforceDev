@@ -1,0 +1,9 @@
+<apex:page showHeader="false" showChat="false" sidebar="false"> 
+    
+    <SLCA2:calendar namespace="SLCA2"
+                    calendar="{!$CurrentPage.parameters.caIds}"
+                    settings="['l_ds','c_t', 'r_d', 'r_w', 'r_c','r_a','r_s']" 
+                    urlparams="sb=2&v=g&g_v=week&g_p=03&pv1={!$CurrentPage.parameters.recKey}">
+    </SLCA2:calendar> 
+    
+</apex:page>

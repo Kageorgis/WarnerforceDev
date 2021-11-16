@@ -1,0 +1,746 @@
+<apex:page controller="WB_PlaylistContentCA_Controller" showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="true">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+<head>
+  <title>Client Avails Creation Status</title>	  
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" />
+  
+  <apex:stylesheet value="{!URLFOR($Resource.WBSLDSv1, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+  
+ <!-- <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />-->
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  <!--<apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/UploadDealProducts.js')}" /> -->
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.svg4everybody)}" /> 
+<style>
+    .wbslds .slds-dropdown--small {
+      min-width: 10rem; }
+    .wbslds .slds-dropdown {
+    min-width: 6rem;
+    max-width: 10rem; } 
+    .wbslds .slds-picklist__label {
+    width: 10rem; }
+    
+    .handsontable {
+      font-size:11px
+    }
+    
+    .handsontable .relative {
+        text-align: left
+    }
+    
+    .handsontable col.rowHeader {
+        width: 200px !important;
+    }
+    
+    .handsontable thead th {
+        background-color: #4F6A92;
+        color: white
+    }
+    
+    .handsontable tbody th {
+        background-color: #A7B8D1
+    }
+    
+    .handsontable td {
+        -webkit-transition: all 0.5s ease;
+        -moz-transition: all 0.5s ease;
+        -o-transition: all 0.5s ease;
+        transition: all 0.5s ease;
+    }
+    
+    .has-changed {
+    	color: red;
+    }
+    /*
+    .handsontable tr:first-child td {
+    	background-color: #4F6A92;
+        color: white;
+    }
+    */
+    .total-row {
+        font-weight: bold
+    }
+    
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+    
+    .sortClass a {
+    	color: white;
+    	text-decoration: underline;
+    	transition: color .1s linear;
+	}
+	
+	.sortClass a:focus, .sortClass a:hover {
+    	text-decoration: underline;
+    	color: white;
+	}
+    
+    .currentRow {
+      background-color: #FFE09F !important;
+      color: #222 !important;
+    }
+        
+      
+
+</style>
+
+<script>
+//$.noConflict();
+//Test
+svg4everybody(); //This is for SFDC LDS CSS to render preperly in IE.
+
+		     
+angular.module("PlayListCalculation", ['ngHandsontable'])
+    .controller("PlayListCalculationController", ['$scope', function($scope) {
+        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.sourceEvent;
+        $scope.tableWidth = (jQuery(document).width()-100);
+        $scope.inProgressHeight = (jQuery(document).height()/4);
+        $scope.errorHeight = (jQuery(document).height()/4);
+        $scope.successHeight = (jQuery(document).height()/4);
+        $scope.inProgressHotInstance = null;
+        $scope.errorHotInstance = null;
+        $scope.successHotInstance = null;
+        
+        $scope.errorHeaders = ['','CA ID','Video Version#','Title','Country','Account','Channel','Format','Language','Language Type','CA Category','Price Tier','WSP','Episode Price Tier','Episode WSP','Error Message'];
+        $scope.headers = ['CA ID','Video Version#','Title','Country','Account','Channel','Format','Language','Language Type','CA Category','Price Tier','WSP','Episode Price Tier','Episode WSP'];
+                
+        $scope.init = function() {
+            $scope.showSpinner = true;
+            $.when(
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} )
+            ).then(function() {
+                $scope.GetRecords("In Progress");
+                $scope.GetRecords("Error");
+                $scope.GetRecords("Success");
+                $scope.$apply();
+           });
+        };
+        
+        $scope.pageRefresh = function(){
+            window.location = '/apex/WB_PlayListContentCA';
+        }
+        
+        $scope.goToHomePage = function(){
+        	window.location = '/';
+        }
+        
+        $scope.GetRecords = function(statusValue){
+           $scope.showSpinner = true; 
+           WB_PlaylistContentCA_Controller.getRecords(statusValue,
+               function(result,event){
+                   if (!event.status) {
+                       console.log('In exception case ', event.status);
+                       $scope.$apply(function() {
+                           $scope.msgText = event.message;
+                           $scope.msgSeverity = 'error';
+                           $scope.showSpinner = false;
+                       });
+                   }else {
+                       $scope.$apply(function() {
+                       	   
+                       	   if(statusValue == "In Progress"){
+                       	   	$scope.inProgressData.inProgressItems = result;
+                       	   }else if(statusValue == "Error"){
+                       	   	$scope.errorData.errorItems = result;
+                       	   }else if(statusValue == "Success"){
+                       	   	$scope.successData.successItems = result;
+                       	   }
+                       	   	
+                           $scope.spinnerText = '';
+                           $scope.showSpinner = false;
+                       });
+                   }
+               },{
+                   escape: false,
+                   timeout: 120000,
+                   buffer: false
+               });
+        }
+        
+        $scope.inProgressData = {
+        	inProgressItems: []
+        }
+        
+        $scope.inProgressSettings = {
+            colHeaders: $scope.headers,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+            copyRowsLimit:2000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.inProgressRenderer;
+                return cellProperties;
+            },
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+            afterInit: function() {
+        		$scope.inProgressHotInstance = this;
+    		}
+        };
+		$scope.inProgressRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            var item = $scope.inProgressData.inProgressItems[row];
+            if(prop == 'caID'){
+            	Handsontable.Dom.empty(td);
+            	addLink(td,item.caRecordId,item.caName);
+            }else{
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+            }
+            return td;
+        };
+		
+		$scope.errorData = {
+        	errorItems: []
+        }
+        
+        $scope.errorSettings = {
+            colHeaders: $scope.errorHeaders,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+            copyRowsLimit:2000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.errorRenderer;
+                return cellProperties;
+            },
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+            afterInit: function() {
+        		$scope.errorHotInstance = this;
+    		}
+        };
+		$scope.errorRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            var item = $scope.errorData.errorItems[row];
+            if(prop == 'caID'){
+            	Handsontable.Dom.empty(td); 
+	            addLink(td,item.caRecordId,item.caName);
+            }else if(prop == 'action' && item.caName != null){
+            	Handsontable.Dom.empty(td); 
+	            addCheckBox(td,item.caRecordId,item.caName,row);
+            }else{
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+            }
+            return td;
+        };
+                
+        $scope.successData = {
+        	successItems: []
+        }
+        
+        $scope.successSettings = {
+            colHeaders: $scope.headers,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: true,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+            copyRowsLimit:2000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.successRenderer;
+                return cellProperties;
+            },
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+            afterInit: function() {
+        		$scope.successHotInstance = this;
+    		}
+        };
+                
+        $scope.successRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            var item = $scope.successData.successItems[row];
+            if(prop == 'caID'){
+            	Handsontable.Dom.empty(td);
+            	addLink(td,item.caRecordId,item.caName);
+            }else{
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+            }
+            return td;
+        };
+        $scope.isEmpty = function(objectjson) {
+            var dataExists = true;
+            $.each(objectjson, function(i, d) {
+                if (d != null && d != '' && typeof d != 'object') {
+                    dataExists = false;
+                }
+            });
+            return dataExists;
+        };
+        
+        $scope.reCalculateEpisodes = function(){
+        	$scope.showSpinner = true;
+            var inputData = $scope.errorData.errorItems.slice(0, -1);
+            $scope.msgText = '';
+            $scope.msgSeverity = '';
+            selectedSeasons = [];
+            for(index=0;index<inputData.length;index++){
+            	if(inputData[index].selected)
+            		selectedSeasons.push(inputData[index]);	
+            }
+            
+            if(selectedSeasons.length == 0){
+            	$scope.msgText = 'Please select Season(s) to proceed.';
+                $scope.msgSeverity = 'error';
+                $scope.showSpinner = false;
+                return;	
+            }
+            
+            WB_PlaylistContentCA_Controller.reCalculateEpisodes(selectedSeasons,function(result, event) {
+            	if (!event.status) {
+                    console.log('In exception case ', event.status);
+                    $scope.$apply(function() {
+                        $scope.msgText = event.message;
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                    });
+                }else{
+                	$scope.pageRefresh();
+                }
+            },{
+                escape: false,
+                timeout: 120000,
+                buffer: false
+            });
+            
+        };
+        
+        
+      	$scope.getSeasonsWithMissingEpisodes = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getSeasonsWithMissingEpisodes(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+    	
+    	$scope.getDraftEpisodesWithBroadcastDate = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getDraftEpisodesWithBroadcastDate(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+        
+        
+        $scope.getSeasonsWithNonTVCategory = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getSeasonsWithNonTVCategory(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+    	
+    	
+    	$scope.getSeasonsWithoutPlaylist = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getSeasonsWithoutPlaylist(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+    	
+    	$scope.getDayAfterEpisodesWithInvalidStartDate = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getDayAfterEpisodesWithInvalidStartDate(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+    	
+    	$scope.getNonDayAfterEpisodesWithInvalidStartDate = function(){
+      		$scope.showSpinner = true; 
+      		WB_PlaylistContentCA_Controller.getNonDayAfterEpisodesWithInvalidStartDate(
+	          function(result,event){
+	              if (!event.status) {
+	                  console.log('In exception case ', event.status);
+	                  $scope.$apply(function() {
+	                      $scope.msgText = event.message;
+	                      $scope.msgSeverity = 'error';
+	                      $scope.showSpinner = false;
+	                  });
+	              }else {
+	                  $scope.$apply(function() {
+	                  	  $scope.errorData.errorItems = result;
+	                  	   	
+	                      $scope.spinnerText = '';
+	                      $scope.showSpinner = false;
+	                  });
+	              }
+	          },{
+	              escape: false,
+	              timeout: 120000,
+	              buffer: false
+	          });
+    	}
+    	
+    	
+    	
+    }]);
+       
+	
+	function openRecord(recordId){
+        //console.log('In openRecord','Test');
+        window.open('/'+recordId,'_blank');
+    }
+    
+    function addLink(tdElem,recordId,recordName){
+    	if(typeof recordId != 'undefined'){
+	        var anchElem = document.createElement('a');
+	        anchElem.setAttribute("href", "javascript:void(0)");
+	        anchElem.setAttribute("onClick", "openRecord('"+recordId+"')");
+	        anchElem.innerHTML = recordName;
+	        tdElem.appendChild(anchElem);
+        }
+    }
+       
+    function setSelectFlag(recordId,row){
+        angScope = angular.element(jQuery('#ng-app')).scope();
+		var inputData = angScope.errorData.errorItems.slice(0, -1);
+		inputData[row].selected = !inputData[row].selected;
+		console.log(row,inputData[row]);
+    }
+    
+    function addCheckBox(tdElem,recordId,recordName,row){
+    	if(typeof recordId != 'undefined'){
+	        var inputElem = document.createElement('input');
+	        inputElem.setAttribute("type", "checkbox");
+	        inputElem.setAttribute("onClick", "setSelectFlag('"+recordId+"',"+row+")");
+	        tdElem.style['text-align'] = 'center';
+	        tdElem.appendChild(inputElem);
+        }
+    }
+    
+    
+    
+</script>
+
+
+
+</head>
+
+    <body  style="padding:0px">
+        <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="PlayListCalculation" ng-controller="PlayListCalculationController" class="wbslds" ng-init="init()" ng-cloak="ngCloak">
+           <!-- ===========================Spinner================================= -->   
+           <div class="spinnerModel" ng-show="showSpinner">
+             <div class="spinnerContent slds-spinner--medium">
+               <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+               <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+             </div>
+           </div>
+
+            <!-- =========================== HEADER BANNER ================================-->    
+           <div class="slds-page-header" role="banner">
+             <div class="slds-grid">
+                   <div class="slds-col slds-has-flexi-truncate">
+                     <div class="slds-col slds-has-flexi-truncate">
+                       <h1 class="slds-text-heading--medium slds-truncate" title="Client Avails Creation Status">Client Avails Creation Status</h1>
+                     </div>
+                   </div>
+                   
+                   <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="goToHomePage()" onclick="return false;" class="slds-button slds-button--neutral">Home Page</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="pageRefresh()" onclick="return false;" class="slds-button slds-button--neutral">Refresh</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="reCalculateEpisodes()" onclick="return false;" class="slds-button slds-button--neutral">Recalculate</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                        <!-- <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getSeasonsWithMissingEpisodes()" onclick="return false;" class="slds-button slds-button--neutral">Seasons(Missing Episodes)</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getDraftEpisodesWithBroadcastDate()" onclick="return false;" class="slds-button slds-button--neutral">Draft Episodes(With Broadcast Date)</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getSeasonsWithNonTVCategory()" onclick="return false;" class="slds-button slds-button--neutral">Seasons(With Non-TV Category)</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getSeasonsWithoutPlaylist()" onclick="return false;" class="slds-button slds-button--neutral">Seasons(Without Playlist)</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getDayAfterEpisodesWithInvalidStartDate()" onclick="return false;" class="slds-button slds-button--neutral">Episodes - Startdate issue(Day After)</button>
+                             </div>
+                           </div>
+                         </div>
+                          
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="getNonDayAfterEpisodesWithInvalidStartDate()" onclick="return false;" class="slds-button slds-button--neutral">Episodes  - Start/End Date Issue(Non-Day After)</button>
+                             </div>
+                           </div>
+                         </div>-->
+                          
+                   </div>
+             </div> 
+           </div>
+			
+			<div class="slds-grid" ng-show="msgText">
+             <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+               <span class="slds-assistive-text">Info</span> 
+               <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                 <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                   <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                 </svg>
+                 <span class="slds-assistive-text">Close</span>
+               </button>
+               <div class="notify__content slds-grid">
+                 <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+               </div>
+             </div>
+           </div>
+           
+           	   <div class="slds-form-element">
+  				<label class="slds-form-element__label" for="text-input-01">Error:</label>
+  			   </div>
+               <div class="slds-m-around--x-small" id="priceUpdateTable">
+                   <hot-table settings="errorSettings" datarows="errorData.errorItems" afterRender="firstRowRenderer" height="errorHeight" width="tableWidth">
+                     <hot-column type = "checkbox" data="action" read-only="true"></hot-column>
+                     <hot-column data="caID" read-only="true"></hot-column>
+                     <hot-column data="videoVersion" read-only="true"></hot-column>
+                     <hot-column data="title" read-only="true"></hot-column>
+                     <hot-column data="country" read-only="true"></hot-column>
+                     <hot-column data="account" read-only="true"></hot-column>
+                     <hot-column data="channel" read-only="true"></hot-column>
+                     <hot-column data="format" read-only="true"></hot-column>
+                     <hot-column data="language" read-only="true"></hot-column>
+                     <hot-column data="languageType" read-only="true"></hot-column>
+                     <hot-column data="caCategory" read-only="true"></hot-column>
+                     <hot-column data="priceTier" read-only="true"></hot-column>
+                     <hot-column data="price" read-only="true"></hot-column>
+                     <hot-column data="episodePriceTier" read-only="true"></hot-column>
+                     <hot-column data="episodePrice" read-only="true"></hot-column>
+                     <hot-column data="errorMessage" read-only="true"></hot-column>
+                     
+                   </hot-table>
+               </div>
+
+				<div class="slds-form-element">
+  				<label class="slds-form-element__label" for="text-input-01">Success:</label>
+  			   </div>           
+               <div class="slds-m-around--x-small" id="priceUpdateTable">
+                   <hot-table settings="successSettings" datarows="successData.successItems" afterRender="firstRowRenderer" height="successHeight" width="tableWidth">
+                     <hot-column data="caID" read-only="true"></hot-column>
+                     <hot-column data="videoVersion" read-only="true"></hot-column>
+                     <hot-column data="title" read-only="true"></hot-column>
+                     <hot-column data="country" read-only="true"></hot-column>
+                     <hot-column data="account" read-only="true"></hot-column>
+                     <hot-column data="channel" read-only="true"></hot-column>
+                     <hot-column data="format" read-only="true"></hot-column>
+                     <hot-column data="language" read-only="true"></hot-column>
+                     <hot-column data="languageType" read-only="true"></hot-column>
+                     <hot-column data="caCategory" read-only="true"></hot-column>
+                     <hot-column data="priceTier" read-only="true"></hot-column>
+                     <hot-column data="price" read-only="true"></hot-column>
+                     <hot-column data="episodePriceTier" read-only="true"></hot-column>
+                     <hot-column data="episodePrice" read-only="true"></hot-column>
+                   </hot-table>
+               </div>
+
+  				<div class="slds-form-element">
+  				<label class="slds-form-element__label" for="text-input-01">In Progress:</label>
+  			   </div>	
+               <div class="slds-m-around--x-small" id="rePriceTable">
+                   <hot-table settings="inProgressSettings" datarows="inProgressData.inProgressItems" afterRender="firstRowRenderer" height="inProgressHeight" width="tableWidth">
+                     <hot-column data="caID" read-only="true"></hot-column>
+                     <hot-column data="videoVersion" read-only="true"></hot-column>
+                     <hot-column data="title" read-only="true"></hot-column>
+                     <hot-column data="country" read-only="true"></hot-column>
+                     <hot-column data="account" read-only="true"></hot-column>
+                     <hot-column data="channel" read-only="true"></hot-column>
+                     <hot-column data="format" read-only="true"></hot-column>
+                     <hot-column data="language" read-only="true"></hot-column>
+                     <hot-column data="languageType" read-only="true"></hot-column>
+                     <hot-column data="caCategory" read-only="true"></hot-column>
+                     <hot-column data="priceTier" read-only="true"></hot-column>
+                     <hot-column data="price" read-only="true"></hot-column>
+                     <hot-column data="episodePriceTier" read-only="true"></hot-column>
+                     <hot-column data="episodePrice" read-only="true"></hot-column>
+                   </hot-table>
+               </div>
+        </div>
+    </body>
+</html>
+</apex:page>

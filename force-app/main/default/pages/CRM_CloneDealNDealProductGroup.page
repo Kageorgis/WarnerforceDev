@@ -1,0 +1,8 @@
+<!--
+    Author   : Cognizant Technology Solutions
+    Date Created : Dec 04, 2015
+    Description : Using Standard Controller Opportunity and extension class to call Visual Flow to clone Deal and Deal Produc Groups
+-->
+<apex:page standardController="Opportunity" extensions="CRM_CloneDealNDealProductGrpController"  action="{!startFlow}">
+    <apex:pageMessages />
+</apex:page>

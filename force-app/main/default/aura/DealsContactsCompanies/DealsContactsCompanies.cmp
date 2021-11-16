@@ -1,0 +1,286 @@
+<aura:component implements="force:appHostable" controller="DealsAndRelatedObjectsController">
+    <aura:attribute name="objectApi" type="String" default="Opportunity" />
+    <aura:attribute name="pickListApi" type="String" default="WBSF_Project_Phase__c" />
+    <aura:attribute name="listViewSelected" type="DealsWrapper.View" />
+    <aura:attribute name="listViews" type="DealsWrapper.View[]" />
+    <aura:attribute name="viewportSize" type="Integer" default="0" />
+    <aura:attribute name="availableFields" type="DealsWrapper.Column[]" default="[]" />
+    <aura:attribute name="studioUsers" type="DealsWrapper.StudioUser[]" />
+    
+    <aura:attribute name="showPopoverEditFilter" type="Boolean" default="false" />
+    <aura:attribute name="showFilterPanel" type="Boolean" default="false" />
+    <aura:attribute name="filters" type="DealsWrapper.Filter[]" />
+    <aura:attribute name="operators" type="Object" />
+    <aura:attribute name="fieldName" type="String" default="" />
+    <aura:attribute name="picklistValues" type="List" default="[{'label': 'Picklist 1', 'value': 'picklist1'}]" />
+    
+    <aura:attribute name="categories" type="List" />
+    <aura:attribute name="columns" type="DealsWrapper.Column[]" />
+    <aura:attribute name="data" type="Object" />
+    <aura:attribute name="resume" type="String" default="Loading items" />
+    <aura:attribute name="tabsLoaded" type="Boolean" default="false" />
+    
+    <aura:attribute name="searchKey" type="String" default="" />
+    <aura:attribute name="timer" type="Integer" />
+    <aura:registerEvent name="searchEvent" type="c:SearchKeyChange" />
+    
+    <aura:attribute name="dealId" type="String" default="" />
+    <aura:attribute name="dealName" type="String" default="" />
+    
+    <aura:attribute name="contactsToFollow" type="String[]" default="" />
+    <aura:attribute name="showModalNewListView" type="Boolean" default="false" />
+    <aura:attribute name="optionJoins" type="List" default="[
+    {'label': 'Related Contacts', 'value': 'Related Contacts'},
+    {'label': 'Related Companies', 'value': 'Related Companies'}
+    ]"/>
+    <aura:attribute name="newViewFieldValues" type="String[]" default="[]"/>
+    <aura:attribute name="showModalCloneDeal" type="Boolean" default="false" />
+    <aura:attribute name="showModalDeleteListView" type="Boolean" default="false" />
+    <aura:attribute name="showModalEditFields" type="Boolean" default="false" />
+    <aura:attribute name="optionObjects" type="List" default="[]" />
+    <aura:attribute name="selectedObject" type="String" default="parent" />
+    <aura:attribute name="optionsFields" type="List" default="[]" />
+    <aura:attribute name="valueFields" type="List" default="[]" />
+    <aura:attribute name="requiredFields" type="List" default="[]" />
+    <aura:attribute name="optionsRetained" type="List" default="[]" />
+    <aura:attribute name="savedFields" type="DealsWrapper.Column[]" />
+    
+    <aura:handler event="c:LoadPicklist" action="{! c.handleLoadPicklist}" />
+    <aura:handler event="c:ContactsToFollow" action="{! c.handleSelectedContacts}" />
+    <aura:handler event="c:CloneHideDeal" action="{! c.handleCloneHideDeal}" />
+    <aura:handler event="c:UpdateFilters" action="{! c.handleUpdateFilters}" />
+    <aura:handler name="init" value="{! this}" action="{! c.init}" />
+    <div aura:id="container" class="slds-grid slds-grid--vertical" style="height: 100%; flex: 1; position: relative;">
+        <lightning:spinner aura:id="mainSpinner" variant="brand" alternativeText="loading views" size="large"/>
+        <div class="slds-col slds-page-header" style="padding: 1rem 1rem .75rem 1rem; border-radius: .25rem .25rem 0 0;">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <lightning:avatar src="{! $Resource.newlogo}" />
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <h1>
+                                        <span>WBSF Deals</span>
+                                        <div>
+                                            <lightning:buttonMenu aura:id="listViewMenu"
+                                                                  label="{! v.listViewSelected.label}"
+                                                                  menuAlignment="left"
+                                                                  variant="bare"
+                                                                  value="{! if(v.listViewSelected != null, v.listViewSelected.value, '')}"
+                                                                  class="slds-page-header__title header__title"
+                                                                  onselect="{! c.handleListViewSelect}">
+                                                <aura:if isTrue="{! v.listViews.length>0}">
+                                                    <lightning:menuSubHeader label="Default views" />
+                                                    <aura:iteration items="{! v.listViews}" var="view">
+                                                        <aura:if isTrue="{! view.isRestricted}" >
+                                                            <lightning:menuItem aura:id="menuItems"
+                                                                                checked="{! view.isSelected}"
+                                                                                class="header__title-menu-item"
+                                                                                label="{! view.label}"
+                                                                                value="{! view.value}"/>
+                                                        </aura:if>
+                                                    </aura:iteration>
+                                                    <aura:if isTrue="{! v.listViews.length>2}">
+                                                        <lightning:menuDivider variant="tighter"/>
+                                                        <lightning:menuSubHeader label="My views" />
+                                                        <aura:iteration items="{! v.listViews}" var="view">
+                                                            <aura:if isTrue="{! !view.isRestricted}" >
+                                                                <lightning:menuItem aura:id="menuItems"
+                                                                                    checked="{! view.isSelected}"
+                                                                                    class="header__title-menu-item"
+                                                                                    label="{! view.label}"
+                                                                                    value="{! view.value}"/>
+                                                            </aura:if>
+                                                        </aura:iteration>
+                                                    </aura:if>
+                                                </aura:if>
+                                            </lightning:buttonMenu>
+                                        </div>
+                                    </h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-page-header__col-actions slds-p-bottom--x-small">
+                    <div class="slds-page-header__controls">
+                        <div class="slds-page-header__control">
+                            <lightning:buttonGroup>
+                                <aura:if isTrue="{! v.listViewSelected.child == 'Related Contacts'}">
+                                    <lightning:button aura:id="followContacts"
+                                                      iconName="utility:add"
+                                                      label="Follow contacts"
+                                                      disabled="{! if(v.contactsToFollow.length>0,false,true)}"
+                                                      onclick="{! c.handleFollowContacts}"/>
+                                </aura:if>
+                                <lightning:buttonMenu aura:id="createNewRecordMenu"
+                                                      label="Create a new..."
+                                                      menuAlignment="right"
+                                                      class="slds-button_last"
+                                                      onselect="{! c.handleCreateNewRecordMenu}">
+                                    <lightning:menuItem label="Deal" value="Deal" />
+                                    <lightning:menuItem label="Related Contact" value="RelatedContact" />
+                                    <lightning:menuItem label="Related Company" value="RelatedCompany" />
+                                </lightning:buttonMenu>
+                            </lightning:buttonGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-meta" style="margin-top: auto;">
+                    <p class="slds-page-header__meta-text slds-text-body--small">
+                        <span>{! v.resume}</span>
+                        <span> • Showing only WBSF Deals • Showing up to 200 records (Demo)</span>
+                    </p>
+                </div>
+                <div class="slds-page-header__col-controls" style="flex: 2.5; max-width: 33rem;">
+                    <div class="slds-page-header__controls">
+                        <div class="slds-page-header__control" style="flex: 1;">
+                            <lightning:input aura:id="search"
+                                             name="inline-search-input"
+                                             label="Search on the table"
+                                             type="search"
+                                             variant="label-hidden"
+                                             maxlength="255"
+                                             value="{! v.searchKey}"
+                                             onchange="{! c.handleSearchKeyChange}"
+                                             placeholder="{! 'Search by Deal or '+v.listViewSelected.child+' name'}"/>
+                        </div>
+                        <div class="slds-page-header__control">
+                            <lightning:buttonMenu aura:id="viewSettingsMenu" 
+                                                  iconName="utility:settings" 
+                                                  alternativeText="Show menu"
+                                                  menuAlignment="right"
+                                                  onselect="{! c.handleViewSettingsMenu}">
+                                <lightning:menuSubHeader label="List View Controls" />
+                                <lightning:menuItem label="New" value="New" />
+                                <!--<lightning:menuItem label="Clone" value="Clone" />-->
+                                <lightning:menuItem label="Select Fields to Display" value="Fields"  />
+                                <lightning:menuItem label="Delete" value="Delete" disabled="{! v.listViewSelected.isRestricted}" />
+                                <!--<lightning:menuItem label="Reset Column Widths" value="Widths" />-->
+                            </lightning:buttonMenu>
+                        </div>
+                        <div class="slds-page-header__control">
+                            <lightning:buttonIcon iconName="utility:refresh" 
+                                                  variant="border-filled"
+                                                  alternativeText="Refresh List"
+                                                  onclick="{! c.handleRefresh}" />
+                        </div>
+                        <div class="slds-page-header__control">
+                            <lightning:buttonIconStateful iconName="utility:filterList"
+                                                          selected="{! v.showFilterPanel}"
+                                                          variant="border-filled"
+                                                          alternativeText="Filters"
+                                                          onclick="{! c.handleFilterPanel }"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-col slds-grid slds-is-relative" style="width: 100%; height: 100%; background-color: rgb(250, 250, 249);">
+            <aura:if isTrue="{! v.tabsLoaded}">
+                <div class="slds-col slds-grid" style="width: 100%; height: 100%;">
+                    <c:TableForDealsAndChild categories="{! v.categories}"
+                                             columns="{! v.columns}"
+                                             data="{! v.data}"
+                                             child="{! v.listViewSelected.child}"
+                                             maxHeight="{! v.viewportSize}"/>
+                    <c:PanelForDeals isActive="{! v.showFilterPanel}" 
+                                     blockPanel="{! v.showPopoverEditFilter}"
+                                     filters="{! v.filters}"
+                                     maxHeight="{! v.viewportSize}" />
+                </div>
+                <aura:set attribute="else">
+                    <aura:renderIf isTrue="{! v.categories.length > 0}">
+                        <div class="spinner-container">
+                            <lightning:spinner variant="brand" alternativeText="loading table" size="medium" />
+                        </div>
+                    </aura:renderIf>
+                </aura:set>
+            </aura:if>
+        </div>
+        <c:PopoverForDeals isActive="{! v.showPopoverEditFilter}"
+                           fieldName="{! v.fieldName}"
+                           availableFields="{! v.availableFields}"
+                           picklistValues="{! v.picklistValues}"
+                           studioUsers="{! v.studioUsers}"
+                           operators="{! v.operators}" />
+    </div>
+    <c:ModalForDeals title="Select Fields to Display" isActive="{! v.showModalEditFields}">
+        <lightning:combobox aura:id="objectSelected"
+                            name="object"
+                            label=""
+                            value="{! v.selectedObject}"
+                            variant="label-hidden"
+                            options="{! v.optionObjects}"
+                            onchange="{! c.handleChangeObject}"/>
+        <lightning:dualListbox aura:id="fieldsSelected"
+                               name="fields"
+                               label="(You can select up to 5 fields on each object)"
+                               sourceLabel="Available fields"
+                               selectedLabel="Selected fields"
+                               max="5"
+                               size="5"
+                               options="{! v.optionsFields }"
+                               value="{! v.valueFields}"
+                               requiredOptions="{! v.requiredFields }"/>
+        <aura:set attribute="footer">
+            <lightning:button variant="neutral" label="Cancel" onclick="{! c.handleModalEditFieldsCancel}" />
+            <lightning:button variant="brand" label="Save" onclick="{! c.handleModalEditFieldsSave}" />
+        </aura:set>
+    </c:ModalForDeals>
+    <c:ModalForDeals title="New List View" isActive="{! v.showModalNewListView}">
+        <div class="slds-grid slds-gutters">
+            <div class="slds-col">
+                <lightning:input aura:id="newListName"
+                                 name="listName"
+                                 value=""
+                                 required="true"
+                                 label="List Name" />
+            </div>
+            <div class="slds-col">
+                <lightning:combobox aura:id="newListJoin"
+                            		name="listJoin"
+                            		label="Join Deals with..."
+                            		value=""
+                                    required="true"
+                            		options="{! v.optionJoins}"/>
+            </div>
+        </div>
+        <aura:set attribute="footer">
+            <lightning:button variant="neutral" label="Cancel" onclick="{! c.handleModalNewListCancel}" />
+            <lightning:button variant="brand" label="Save" aura:id="submitNewList" type="submit" onclick="{! c.handleModalNewListSave}" />
+        </aura:set>
+    </c:ModalForDeals>
+    <c:ModalForDeals title="Delete List View" isActive="{! v.showModalDeleteListView}">
+        <p>If you delete this list view it will be permanently removed. Are you sure you want to delete?</p>
+        <aura:set attribute="footer">
+            <lightning:button variant="neutral" label="Cancel" onclick="{! c.handleModalListViewCancel}" />
+            <lightning:button variant="brand" label="Delete" aura:id="submitNewList" type="submit" onclick="{! c.handleModalListViewDelete}" />
+        </aura:set>
+    </c:ModalForDeals>
+    <c:ModalForDeals title="Clone Deal" isActive="{! v.showModalCloneDeal}">
+        <div class="slds-grid slds-gutters">
+            <div class="slds-col">
+                <lightning:input aura:id="cloneDeal"
+                                 value="{! v.dealName}"
+                                 required="true"
+                                 label="Deal name" />
+                <p class="slds-text-body_small">
+                    <i>
+                        When you clone a Deal, it will also clone all the related contacts 
+                        and related companies it haves, with the roles they have.
+                    </i>
+                </p>
+            </div>
+        </div>
+        <aura:set attribute="footer">
+            <lightning:button variant="neutral" label="Cancel" onclick="{! c.handleModalCloneDealCancel}" />
+            <lightning:button variant="brand" label="Save" aura:id="submitCloneDeal" type="submit" onclick="{! c.handleModalCloneDealSave}" />
+        </aura:set>
+    </c:ModalForDeals>
+</aura:component>

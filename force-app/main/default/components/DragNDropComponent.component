@@ -1,0 +1,130 @@
+<apex:component >
+
+<html>
+<head>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="//kendo.cdn.telerik.com/2016.1.226/js/kendo.all.min.js"></script>
+</head>
+<body>
+
+            <script>
+            $j = jQuery.noConflict();
+               /* function placeholder(element) {
+                    return element.clone().css({ "opacity": 0.3, "border": "1px dashed #000000" });
+                }
+
+                $j(document).ready(function() {
+                    $j("#sortable-listC").kendoSortable({
+                        connectWith: "#sortable-listD",
+                        change: function(e) {
+                                 $j('#sortable-listC li').each(function(){
+                                    
+                                        
+                                    });    
+                          console.log("from " + e.oldIndex + " to " + e.newIndex);
+                        },
+                        placeholder: placeholder
+                    });
+                    // http://stackoverflow.com/questions/20481047/creating-multi-select-elements-with-kendo-drag-drop
+                    $j("#sortable-listD").kendoSortable({
+                        connectWith: "#sortable-listC",
+                         change: function(e) {
+                             var idSelected = '';
+                                 $j('#sortable-listD li').each(function(){
+                                  //      alert('@@@@@@@@'+this.id);
+                                        idSelected += this.id+'!#!'; 
+                                    });    
+                          console.log("all_IDs : " + idSelected);
+                          console.log("from " + e.oldIndex + " to " + e.newIndex);
+                        },
+                        placeholder: placeholder
+                    });
+                }); */
+            </script>
+
+            <style>
+                #example {
+                    -webkit-user-select: none;
+                    -moz-user-select: none;
+                    -ms-user-select: none;
+                    user-select: none;
+                }
+
+                .demo-section {
+                    padding: 50px 70px;
+                }
+
+                .one-way {
+                   /* background: url('../content/web/sortable/one-way.png') no-repeat 50% 50%;*/
+                }
+
+                .two-way {
+                    /*background: url('../content/web/sortable/two-way.png') no-repeat 50% 50%;*/
+                }
+
+                .list-wrapper {
+                    overflow: hidden;
+                }
+
+                #sortable-listA, #sortable-listB, #sortable-listC, #sortable-listD {
+                    width: 570px;
+                    min-height: 40px;
+                    margin: 0;
+                    padding: 0;
+                    border: 1px solid #dddddd;
+                    border-radius: 4px;
+                }
+
+                #sortable-listA, #sortable-listC {
+                    float: left;
+                }
+
+                #sortable-listB, #sortable-listD {
+                    float: right;
+                }
+
+                .list-item {
+                    list-style-type: none;
+                    width: 560px;
+                    margin: 3px;
+                    line-height: 30px;
+                    text-align: left;
+                    background-color: #222222;
+                    color: #ffffff;
+                    border-radius: 3px;
+                    cursor: move;
+                    border-radius : 8px;
+                }
+
+                #sortable-listA .list-item {
+                    background-color: #54b8fa;
+                    color: #000000;
+                }
+
+                #sortable-listB .list-item {
+                    background-color: #ff879e;
+                    color: #000000;
+                }
+
+                #sortable-listC .list-item {
+                    background-color: #ffcc33;                    
+                    color: #000000;
+                }
+
+                #sortable-listD .list-item {
+                    background-color: #66cc66;
+                    color: #000000;
+                }
+
+                #placeholder.list-item {
+                    background-color: #ffffff;
+                    color: #777;
+                }
+            </style>
+    
+
+
+</body>
+</html>
+
+</apex:component>

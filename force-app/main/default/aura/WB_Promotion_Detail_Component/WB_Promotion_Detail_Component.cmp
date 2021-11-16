@@ -1,0 +1,123 @@
+<aura:component controller="WB_MainMultiSelectController" implements="flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="lstSelectedCountries" type="sObject[]" default="[]"/>
+    <aura:attribute name="lstSelectedAccounts" type="sObject[]" default="[]"/>
+    <aura:attribute name="promotionHeaderSection" type="Boolean" default="true"/>
+    <aura:attribute name="countriesAccountSection" type="Boolean" default="false"/>
+    <aura:attribute name="inputName" type="String"/>
+    <aura:attribute name="countAccFlag" type="Boolean" default="false"/>
+    
+    <lightning:card title="">
+        <div class="slds-box">
+            <div  class="slds-show">
+                <lightning:recordEditForm
+                                          aura:id="form"
+                                          onsubmit="{!c.handleSaveClick}"
+                                          onsuccess="{!c.handleOnSuccess}"
+                                          onerror="{!c.handleOnError}"
+                                          recordId="{!v.recordId}"
+                                          objectApiName="Promotion__c">
+                    <div aura:id="editForm" class="slds-hide">
+                        <div class="slds-m-bottom_small slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="Promotion Header Section" onclick="{! c.showPromotionHeader }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Promotion Header
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.promotionHeaderSection }">
+                            <div class=" slds-grid slds-wrap">
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Name" />
+                                    <div class="slds-hide"><lightning:input required="true" label="Promotion Name" type="text" id="inputName" name="Name" value="{!v.inputName}"/></div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Promotion_Number__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Start_Date__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Status__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="End_Date__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Promotion_Grouping__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Promotion_Owner__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Last_Validated__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Description__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Last_Updated__c" />
+                                </div>
+                                <div class="slds-col slds-size_1-of-4"/>
+                                <div class="slds-col slds-size_1-of-4">
+                                    <lightning:inputField fieldName="Committed_Date__c" />
+                                </div>
+                            </div>
+                        </aura:renderIf>
+                    </div>
+                    <div aura:id="viewForm" class="slds-show slds-m-top_medium">
+                        <div class="slds-m-bottom_small slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="Promotion Header Section" onclick="{! c.showPromotionHeader }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Promotion Header
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.promotionHeaderSection }">
+                            <lightning:recordForm
+                                                  recordId="{!v.recordId}"
+                                                  objectApiName="Promotion__c"
+                                                  layoutType="Full"
+                                                  columns = "2"
+                                                  mode="ReadOnly"/>
+                        </aura:renderIf>
+                    </div>
+                    <div class="slds-m-top_medium slds-m-bottom_small slds-section__title-action">
+                        <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="Promotion Header Section" onclick="{! c.showCountriesAccountSection }"/>
+                        <div class="slds-m-left_small slds-text-heading_medium">
+                            Countries/Account
+                        </div>
+                    </div>
+                    <aura:renderIf isTrue="{!v.countriesAccountSection }">
+                        <c:WB_MultiSelectLookup recordId="{!v.recordId}" lstSelectedRecords="{!v.lstSelectedCountries}"/>
+                        <c:WB_MultiSelectLookupAccount recordId="{!v.recordId}" lstSelectedRecords="{!v.lstSelectedAccounts}"  passLstCountries="{!v.lstSelectedCountries}"/>
+                    </aura:renderIf>
+                    <!--div aura:id="saveFormButton" class="slds-align_absolute-center slds-m-top_medium slds-hide" -->
+                    <div aura:id="saveFormButton" class="slds-grid slds-align_absolute-center slds-m-top_medium" >
+                            <lightning:button aura:id="editFormButton" variant="brand" name="edit" label="Edit" onclick="{! c.handleEditClick }"/>
+                        <lightning:button variant="brand" type="submit" name="save" label="Save"/>
+                            <lightning:button aura:id="cloneButton" variant="brand" name="clone" label="Clone" onclick="{! c.handleCloneClick }"/>
+                    </div>
+                </lightning:recordEditForm>
+            </div>
+            <!--div class="slds-align_absolute-center slds-m-top_medium">
+                <div aura:id="editFormButton" class="slds-show">
+                    <lightning:button variant="brand" type="submit" name="edit" label="Edit" onclick="{! c.handleEditClick }"/>
+                </div>
+                <div aura:id="cloneButton" class="slds-show">
+                    <lightning:button variant="brand" type="submit" name="clone" label="Clone" onclick="{! c.handleCloneClick }"/>
+                </div>
+                <div aura:id="saveFormButton" class="slds-hide" >
+                <lightning:button variant="brand" type="submit" name="save" label="Save" onclick="{! c.handleSaveClick }"/>
+            </div>
+            </div-->
+        </div>
+    </lightning:card>
+</aura:component>

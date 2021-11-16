@@ -1,0 +1,382 @@
+<apex:page standardController="Opportunity" extensions="CRM_DealApproval" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false" title="{!$ObjectType.Opportunity.Label}">
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <head>
+                    <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+                    <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+                    <apex:stylesheet value="{!URLFOR($Resource.CRM_DealApproval, 'DealApproval.css')}" />  
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_DealApproval, 'DealApproval.js')}" />  
+                      <script>
+                            Visualforce.remoting.timeout = 120000; // Set timeout at page level */
+                            /* Pass a few dynamic parameters */
+                            angular.module("appConfig", [])
+                             .service("appConfig", function() {
+                                 return {
+                                     recordId: '{!Opportunity.Id}',
+                                     isTerritoryFrance:{!isTerritoryFrance},
+                                     dealCurrencyCode:'{!Opportunity.CurrencyISOCode} ',
+                                     userDateFormat: '{!UserDateFormat}',
+                                     oppStartDate: '{!OpportunityStartDate}',
+                                     oppCloseDate: '{!OpportunityCloseDate}'
+                                };
+                            });
+                            
+                            
+                      </script> 
+          </head>
+          <body style="padding:0px">
+<!--               <apex:form > -->
+                        <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmdealApproval" ng-controller="crmDealApprovalController" class="slds" ng-init="getLineItems('{!Opportunity.id}');getPBEPMissMatchDealProducts('{!Opportunity.id}');getOverlappingItems('{!Opportunity.id}','{!URLFOR($Action.Opportunity.View,Id)}');" ng-cloak="ngCloak">
+                        <!-- ===========================Spinner================================= -->   
+                        <div class="spinnerModel" ng-show="showSpinner">
+                          <div class="spinnerContent slds-spinner--large">
+                            <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                          </div>
+                        </div>
+                        
+                        <!-- =========================== HEADER BANNER ================================--> 
+                        <div class="slds-page-header" role="banner">
+                            <div class="slds-grid">
+                                <div class="slds-col slds-has-flexi-truncate">
+                                    <nav class="slds-m-bottom--xx-small" role="navigation">
+                                        <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                            <li class="slds-list__item slds-text-heading--label">
+                                                <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$ObjectType.Opportunity.labelPlural}</a>
+                                            </li>
+                                            <li class="slds-list__item slds-text-heading--label">
+                                                <!--a href="{!URLFOR($Action.Opportunity.View,Id)}">{!Opportunity.Name}</a-->
+                                                 <a href="#" ng-click="BackToDeal('{!URLFOR($Action.Opportunity.View,Id)}');">{!Opportunity.Name}</a>
+                                            </li>
+                                        </ol>
+                                    </nav>
+                                    <div class="slds-col slds-has-flexi-truncate">
+                                        <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Approval_Page_Heading_Deal_Approval}">{!$Label.CRM_Approval_Page_Heading_Deal_Approval}</h1>
+                                    </div>
+                                        
+                                </div>
+                                <!--<div>
+                                     <apex:commandButton styleclass="slds-button slds-button--neutral" rendered="{!NOT(entryCriteriaFailed) && NOT(territoryFrance) && raiseAlert}" value="{!$Label.CRM_Approval_Button_Submit_for_Approval}" action="{!callStandardApprovalProcess}"/>
+                                     <apex:commandButton styleclass="slds-button slds-button--neutral" value="{!$Label.CRM_Approval_Button_Back_To_Deal}" action="{!goBackToDeal}"/>
+                                </div>-->
+                                <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                                       <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                          
+                                          <div class="slds-button-group slds-button-space-left" role="group"> <!-- US#207 - added code to "!errorsExist" to check if any validatiopn from CAS side fails -->
+                                              <button ng-show="(!appConfig.isTerritoryFrance && raiseAlert && !errorsExist) || PBEPDatesMissmatchAlert" ng-click="saveAndSendForApproval('{!Opportunity.id}','{!URLFOR($Action.Opportunity.View,Id)}')" class="slds-button slds-button--neutral">{!$Label.CRM_Approval_Button_Submit_for_Approval}</button>
+                                              <button class="slds-button slds-button--neutral" ng-click="BackToDeal('{!URLFOR($Action.Opportunity.View,Id)}')">{!$Label.CRM_Approval_Button_Back_To_Deal}</button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="slds-button-group" role="group">
+                                      </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                         <!--US#207 start-->
+                        <div class="slds-grid" ng-show="errorsExist">     
+                            <div class="slds-col slds-notify slds-theme--error slds-notify--toast slds-box--x-small" role="alert">
+                                <table>
+                                    <tr class="slds-cell-shrink slds-grid">
+                                        <td class="slds-cell-shrink">
+                                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                                            </svg>
+                                        </td>
+                                        
+                                        <td>
+                                            <table> 
+                                            <tr ng-repeat="error in errorList"> 
+                                                <td>
+                                                <!--SLDS Section Start-->
+                                                    <div class="slds-section slds-is-open">
+                                                      <h2 class="slds-section__title">
+                                                        <button class="slds-button slds-section__title-action" style="color:white;border:0px;outline:0;" ng-click="expandErrors= (!expandErrors); errIndex = $index; ">
+                                                          <svg ng-hide="(expandErrors == true && errIndex == $index)"  aria-hidden="true" class="slds-section__title-action-icon slds-button__icon slds-button__icon--left">
+                                                            <use xlink:href="{!$Resource.SLDS0120}/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                                                          </svg>
+                                                          <svg ng-show="(expandErrors == true && errIndex == $index)" aria-hidden="true" class="slds-section__title-action-icon slds-button__icon slds-button__icon--left">
+                                                            <use xlink:href="{!$Resource.SLDS0120}/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                                                          </svg>
+                                                          {{error}}
+                                                         </button>
+                                                      </h2>
+                                                      
+                                                      <div class="slds-section__content" ng-show="expandErrors && errIndex == $index">
+                                                          <table>                                                    
+                                                              <tbody ng-repeat="dealProducts in getDealProducts(error)">                                                          
+                                                                  <tr ng-repeat="DealP in dealProducts">
+                                                                      <td scope="col" style="color:White">
+                                                                        <h4>{{DealP.Name}}</h4>
+                                                                      </td>                                                                                                     
+                                                                  </tr>
+                                                              </tbody>
+                                                          </table>                                                  
+                                                      </div>
+                                                    </div>
+                                                <!--SLDS Section End--> 
+                                                </td>
+                                            </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>      
+                            </div>
+                        </div>
+                        <!--US#207 end-->
+                        <!-- ===========================Exception================================= -->
+                         <div class="slds-grid" ng-show="msgText">
+                                 <div class="slds-col slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                                        <div class="notify__content slds-grid">
+                                              <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                              </svg>
+                                              
+                                             <div class="slds-col ">
+                                                  <h2 class="slds-text-heading--x-small">
+                                                     {{msgText}}
+                                                  </h2>
+                                             </div>
+                                        </div>
+                                  </div>
+                        </div>
+                        <!-- ===========================Entry Criteria Failed================================-
+                        <div class="slds-grid" ng-show="!msgText"> 
+                                      <div class="slds-col slds-notify slds-theme--error slds-notify--toast slds-box--x-small" role="alert">
+                                        <div class="notify__content slds-grid">
+                                              <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                              </svg>
+                                              
+                                             <div class="slds-col">
+                                                     <h2 class="slds-text-heading--x-small" ng-show="appConfig.isEntryCriteriaFailed">{!$Label.CRM_Approval_Entry_Criteria_Failed_Message}</h2>
+                                                     <h2 class="slds-text-heading--x-small" ng-show="appConfig.isClientUnavail && !appConfig.isEntryCriteriaFailed">{!$Label.CRM_Client_UnAvail_Message}</h2>
+                                             </div>
+                                         
+                                         </div>
+                                      </div>
+                        </div>-> 
+                        <!-- ===========================Entry Criteria Passed================================--> 
+                           <div class="slds-grid" ng-show="raiseAlert && !msgText">
+                                         <div class="slds-col slds-notify slds-theme--warning slds-notify--toast slds-box--x-small" role="alert">
+                                            <div class="notify__content slds-grid">
+                                              <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                              </svg>
+                                              
+                                             <div class="slds-col">
+                                                  <h2 class="slds-text-heading--x-small" ng-show="appConfig.isTerritoryFrance">{!$Label.CRM_Approval_France_Overlapping_Deal_Message}</h2>
+                                                  <h2 class="slds-text-heading--x-small" ng-show="!appConfig.isTerritoryFrance">{!$Label.CRM_Approval_Other_Overlapping_Deal_Message}</h2>
+                                             </div>
+                                             </div>
+                                    </div>
+                            </div>
+                         <!--  US#354 : Flag deal products where the deal pricing dates are outside of the PBEP : START -->
+                        <div class="slds-grid" ng-show="PBEPDatesMissmatchAlert && !msgText">
+                            <div class="slds-col slds-notify slds-theme--warning slds-notify--toast slds-box--x-small" role="alert">
+                                <div class="notify__content slds-grid">
+                                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                    </svg>
+                                    <div class="slds-col">
+                                        <h2 class="slds-text-heading--x-small">{!$Label.CRM_Deal_Approval_PBEP_Dates_Missmatch_Products}</h2>                               
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            
+                        <!-- PBEP dates missmatch deal products section -->
+                                <div class="slds-m-around--large slds-section" ng-show="PBEPDatesMissmatchAlert && !msgText">
+                                    <div class="slds-grid slds-section-title--divider">
+                                        <h1 class="slds-text-heading--small slds-truncate slds-section__title" title="{!$Label.CRM_Approval_Section_Heading_Current_Deal}">{!$Label.CRM_Approval_Section_Heading_PBEP_Details}</h1>
+                                    </div>
+                                <div class="slds-section__content">
+                                    <table class="slds-table slds-table--bordered slds-table--stacked-horizontal" >
+                                            <thead>
+                                                <tr class="slds-text-heading--label">
+                                                    <th class="slds-cell-shrink" scope="col">
+                                                        <span class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Name.label}</span>
+                                                    </th>                       
+                                                    <th class="slds-cell-shrink" scope="col"> 
+                                                        <span class="slds-truncate">{!$Label.CRM_Deal_Pricing_start_date_label}</span><!-- {!$ObjectType.Pricebook_Entry_Period__c.fields.Start_Date__c.label} -->
+                                                    </th>
+                                                    <th class="slds-cell-shrink" scope="col">
+                                                        <span class="slds-truncate">{!$Label.CRM_Deal_Pricing_end_date_label}</span><!-- {!$ObjectType.Pricebook_Entry_Period__c.fields.End_Date__c.label} -->
+                                                    </th>
+                                                    <th class="slds-cell-shrink" scope="col">
+                                                        <span class="slds-truncate">{!$Label.CRM_PBEP_Start_Date_Label}</span>
+                                                    </th>
+                                                    <th class="slds-cell-shrink" scope="col">
+                                                        <span class="slds-truncate">{!$Label.CRM_PBEP_End_Date_Label}</span>
+                                                    </th> 
+                                                </tr>
+                                            </thead>
+                                            <tbody ng-repeat="lineItem in PBEPMissMatchlineItems">                                                                                                                              
+                                                        <tr ng-repeat="item in lineItem">
+                                                            <td data-label="{!$ObjectType.Product2.fields.Name.label}">
+                                                                <span class="slds-truncate">
+                                                                <a href="/{{item.lineItemRecord.Product2.Id}}" tabindex="-1" role="presentation">{{item.lineItemRecord.Product2.Name}}</a><!--{{item.lineItemRecord.Product2.Name}}-->
+                                                                </span>
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Opportunity.fields.Start_Date__c.label}">
+                                                                <span class="slds-truncate">{{item.oppStartDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Opportunity.fields.CloseDate.label}" >
+                                                                <span class="slds-truncate">{{item.oppCloseDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Pricebook_Entry_Period__c.fields.Start_Date__c.label}">
+                                                                <span class="slds-truncate">{{item.PBEPStartDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Pricebook_Entry_Period__c.fields.End_Date__c.label}" >
+                                                                <span class="slds-truncate">{{item.PBEPCloseDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                        </tr>   
+                                            </tbody>    
+                                    </table>
+                                </div>
+                            </div>
+                        <!-- PBEP dates missmatch deal products section end -->
+                        <!--  US#354 - Flag deal products where the deal pricing dates are outside of the PBEP - END -->     
+                         <!-- ===========================Current Deal Details================================-->
+                                <div class="slds-m-around--large" ng-show="raiseAlert">
+                                        <div class="slds-grid slds-section-title--divider">
+                                            <h1 class="slds-text-heading--small slds-truncate" title="{!$Label.CRM_Approval_Section_Heading_Current_Deal}">{!$Label.CRM_Approval_Section_Heading_Current_Deal}</h1>
+                                        </div>
+                                         <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                                            <thead>
+                                                    <tr class="slds-text-heading--label">
+                                                             <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Name.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.StageName.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Start_Date__c.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.CloseDate.label}</span>
+                                                            </th>
+                                                    </tr>
+                                             </thead>
+                                             <tbody>
+                                                    <tr> <!--  rowspan="{!dealRecord.OpportunityLineItems.size+1}" -->
+                                                           
+                                                            <th data-label="{!$ObjectType.Opportunity.fields.Name.label}" role="row" >  
+                                                                <span class="slds-truncate"> 
+                                                                    <a href="/{!dealRecord.id}" tabindex="-1" role="presentation">{!dealRecord.name}</a>
+                                                                </span> 
+                                                            </th>
+                                                            <td data-label="{!$ObjectType.Opportunity.fields.StageName.label}"> <span class="slds-truncate">{!Opportunity.StageName}</span> </td>
+                                                            <td data-label="{!$ObjectType.Opportunity.fields.Start_Date__c.label}"> 
+                                                                <span class="slds-truncate">{{appConfig.oppStartDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Opportunity.fields.CloseDate.label}" > 
+                                                                <span class="slds-truncate">{{appConfig.oppCloseDate | date: appConfig.userDateFormat}}</span>
+                                                            </td>
+                                                    </tr> 
+                                                    <tr>
+                                                                    <td colspan="5">
+                                                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal" >
+                                                                            <thead>
+                                                                                    <tr class="slds-text-heading--label">
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">{!$ObjectType.Product2.fields.Name.label}</span>
+                                                                                        </th>
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.label}</span>
+                                                                                        </th> 
+                                                                                        
+<!--                                                                                         <th class="slds-cell-shrink" scope="col" ng-hide="false"> -->
+<!--                                                                                                 <span class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Discount.Label}</span> -->
+<!--                                                                                         </th>  -->
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">Overlapping Deals</span>
+                                                                                        </th>
+                                                                                    </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                            <tr class="slds-hint-parent" ng-repeat="lineItem in lineItemsOverlapping">
+                                                                                                     <td data-label="{!$ObjectType.Product2.fields.Name.Label}" role="row" >
+                                                                                                        <span class="slds-truncate"><a href="/{{lineItem.productId}}" tabindex="-1" role="presentation">{{lineItem.productName}}</a></span>
+                                                                                                     </td>
+                                                                                                      <td data-label="{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.Label}" >
+                                                                                                        <div class="slds-form-element">
+                                                                                                          <div class="slds-form-element__control" ng-class="{'slds-has-error': lineItem.promotedPrice == null || lineItem.promotedPrice == undefined}">
+                                                                                                            <input class="slds-input slds-input--small" type="number" ng-model="lineItem.promotedPrice"  ng-disabled="lineItem.accountPrice <= 0" style="width: 70px" ng-change="lineItem.isDirtyRow = true;handlePriceChange(lineItem, 'promoPriceChange');"/>
+                                                                                                          </div>
+                                                                                                        </div>
+                                                                                                      </td>
+                                                                                                      <!-- <td data-label="{!$ObjectType.OpportunityLineItem.fields.Discount.Label}" ng-hide="false">
+                                                                                                        <div class="slds-form-element" >
+                                                                                                          <div class="slds-form-element__control">
+                                                                                                            <span class="percent-input">
+                                                                                                                <input  class="slds-input slds-input--small" type="number" min="0" max="100" ng-model="lineItem.discount" ng-disabled="lineItem.accountPrice <= 0" style="width: 75px" ng-change="lineItem.isDirtyRow = true;handlePriceChange(lineItem, 'discountChange')"/>
+                                                                                                            </span>
+                                                                                                          </div>
+                                                                                                        </div>
+                                                                                                      </td> -->
+                                                                                                    
+                                                                                                    <td data-label="Overlapping Deals"> 
+                                                                                                          <!--================================================================================================================ -->
+                                                                                                                <div> 
+                                                                                                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal" >
+                                                                                                                                    <thead>
+                                                                                                                                            <tr class="slds-text-heading--label">
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Name.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Opportunity.fields.StageName.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                        <span class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Start_Date__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Opportunity.fields.CloseDate.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                            </tr>
+                                                                                                                                    </thead>
+                                                                                                                                    <tbody ng-repeat="overlappingdealProducts in myfilter(lineItem.productId)"> 
+                                                                                                                                                     <tr ng-repeat="item in overlappingdealProducts track by item.lineItemRecord.Id"> 
+                                                                                                                                                            <td data-label="{!$ObjectType.Opportunity.fields.Name.label}"> 
+                                                                                                                                                                <span class="slds-truncate"><a href="/{{item.lineItemRecord.OpportunityId}}" tabindex="-1" role="presentation">{{item.lineItemRecord.Opportunity.Name}}</a></span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Opportunity.fields.StageName.label}"> <span class="slds-truncate">{{item.lineItemRecord.Opportunity.StageName}}</span> </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.label}"> 
+                                                                                                                                                                <span class="slds-truncate">{{item.lineItemRecord.Promoted_Price__c | currency : appConfig.dealCurrencyCode : 2}}</span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Opportunity.fields.Start_Date__c.label}"> 
+                                                                                                                                                                    <span class="slds-truncate">{{item.oppStartDate | date: appConfig.userDateFormat}}</span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Opportunity.fields.CloseDate.label}" >
+                                                                                                                                                                <span class="slds-truncate">{{item.oppCloseDate | date: appConfig.userDateFormat}}</span> 
+                                                                                                                                                            </td>
+                                                                                                                                                     </tr>   
+                                                                                                                                    </tbody>
+                                                                                                                            </table>
+                                                                                                                    
+                                                                                                                </div>
+                                                                                                          <!--================================================================================================================ -->
+                                                                                                    </td>
+                                                                                            </tr>  
+                                                                            </tbody>
+                                                                    </table>
+                                                                    </td>
+                                                    </tr>
+                                            </tbody>        
+                                        </table>
+                                        
+                                </div>
+                        
+                    </div>
+<!--                 </apex:form>  -->
+            </body>
+    </html>
+</apex:page>

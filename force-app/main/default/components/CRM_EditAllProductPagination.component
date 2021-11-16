@@ -1,0 +1,21 @@
+<apex:component >
+         <div class='slds-grid slds-float--right'>
+           <div class="slds-col slds-m-around--x-small slds-button-group" role="group">
+                <button ng-disabled="pagination.page <= 0" ng-click="pagination.toPageId(0)" class="slds-button slds-button--small slds-button--neutral">
+                   &laquo;
+               </button>
+               <button ng-disabled="pagination.page <= 0" ng-click="pagination.prevPage()" class="slds-button slds-button--small slds-button--neutral">
+                   &lsaquo;
+               </button>
+               <button class="slds-button slds-button--small slds-button--neutral">
+                   {{pagination.page + 1 }} of {{pagination.numPages}} 
+               </button>
+               <button ng-disabled="(pagination.page + 1) >= pagination.numPages" ng-click="pagination.nextPage()" class="slds-button slds-button--small slds-button--neutral">
+                   &rsaquo;
+               </button>
+               <button ng-disabled="(pagination.page + 1) >= pagination.numPages" ng-click="pagination.toPageId(pagination.numPages - 1)" class="slds-button slds-button--small slds-button--neutral">
+                   &raquo;
+               </button>
+            </div>
+    </div>
+</apex:component>

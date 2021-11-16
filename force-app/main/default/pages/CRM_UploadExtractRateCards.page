@@ -1,0 +1,999 @@
+<apex:page controller="CRM_UploadExtractRateCardCtrl" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true" title="{!$ObjectType.Rate_Card__c.Label}">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" charset="utf8" >
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'handsontable.full.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'handsontable.full.js')}"/>
+            
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'handsontable.full.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'handsontable.full.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'languages/all.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'numbro/languages.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'numbro/numbro.js')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_APP_HandsonTable_Library, 'moment/moment.js')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+            
+            <script src="/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+            <script src="/soap/ajax/35.0/apex.js" type="text/javascript"></script>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+            
+            <style> 
+                .wordWrapClass {
+                    text-overflow: ellipsis;
+                    white-space: nowrap !important;
+                    max-width: 20px;    
+                }
+                .slds .slds-notify--toast {
+                    margin: 8px 8px 5px;   
+                }
+                .handsontable thead th {
+                    background-color: #4F6A92 !important;
+                    color: white !important;
+                }
+                .slds .slds-page-header{
+                    padding: 11px !important;
+                }
+                .picklistClass .slds-button,.buttonGroupheight{
+                    height: 31px;
+                }
+                .picklistClass .slds-button,.buttonGroupWidtht{ /*ER-007015*/
+                    width: 90% !important;
+                }
+                .picklistClass span:first-of-type{
+                    color:#636875 !important;
+                    line-height: initial;
+                }
+                .picklistClass span:nth-child(2),.picklistClass span:nth-child(3){
+                    line-height: initial;
+                }
+                html body.sfdcBody{
+                    padding:0px;
+                }
+                .slds-lookup{
+                    width: 90%; /*ER-007015*/
+                }
+                .slds-pill__container, #lookup{
+                    min-height:31px !important;
+                    height:31px;
+                }
+                .slds .slds-pill{
+                    height: 27px !important;
+                    line-height: 1.25 !important;  
+                    padding-left: 14px;
+                }
+                .slds .slds-lookup__item > a, .slds .slds-dropdown__item > a{
+                    padding: 6px 0px 6px 12px !important;
+                }
+                #spinnerText{
+                    font-size: 18px;
+                }
+            </style>
+            
+            <script type="text/javascript"> 
+               
+               sforce.connection.sessionId = '{!$Api.Session_ID}';
+               
+                /* Pass a few dynamic parameters */
+                angular.module("appConfig", [])
+                    .service("appConfig", function() {
+                         return {
+                            userLocal: '{!UserLocale}',
+                            userDateFormat: '{!UserDateFormat}',
+                            pickWrapJSONString: '{!pickWrapJSONString}',
+                            RCEditAccess: {!RCEditAccess},
+                            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', '')
+                         };
+                     });
+                 
+                angular.module("UploadRateCards", ['appConfig', 'crm-components','ngLocale'])
+                    .controller("UploadRateCardsController", ['$scope', '$timeout', 'appConfig','$locale', function($scope, $timeout, appConfig,$locale) {   
+                        
+                        var handsonLocale = new Set(['bg','cs-CZ','da-DK','de-AT','de-CH','de-DE','de-LI','el','en-AU','en-GB','en-IE','en-NZ','en-US','en-ZA',
+                                                     'es-AR','es-CL','es-CO','es-CR','es-ES','es-MX','es-NI','es-PE','es-PR','es-SV','et-EE','fa-IR','fi-FI',
+                                                     'fil-PH','fr-CA','fr-CH','fr-FR','he-IL','hu-HU','id','it-CH','it-IT','ja-JP','ko-KR','lv-LV','nb','nb-NO',
+                                                     'nl-BE','nl-NL','nn','pl-PL','pt-BR','pt-PT','ro-RO','ru-RU','ru-UA','sk-SK','sl','sr-Cyrl-RS','sv-SE','th-TH',
+                                                     'tr-TR','uk-UA','zh-CN','zh-MO','zh-SG','zh-TW']);
+
+                        $scope.showSpinner = false;
+                        $scope.appConfig = appConfig;
+                        $scope.rateCards = [];
+                        $scope.picklistWrap = angular.fromJson(appConfig.pickWrapJSONString);
+                        
+                        //Invalid Value Checker Set
+                        var invalidValueSet = new Set();
+                        invalidValueSet.add("");
+                        invalidValueSet.add(null);
+                        invalidValueSet.add(undefined);
+                        
+                        //Picklist Values
+                        $scope.countryList = $scope.picklistWrap.countryValues.picklist;
+                        $scope.contentTypeList = $scope.picklistWrap.contentTypeValues.picklist;
+                        $scope.channelList = $scope.picklistWrap.channelValues.picklist;
+                        $scope.formatList = $scope.picklistWrap.formatValues.picklist;
+                        $scope.rcCatList = $scope.picklistWrap.RCCategory.picklist;
+                        $scope.currencyList = $scope.picklistWrap.currencyValues.picklist;
+                        $scope.rateCardTypeList = $scope.picklistWrap.rateCardTypeValues.picklist;
+                        
+                        $scope.countryName;
+                        $scope.UserLocal = $scope.appConfig.userLocal; 
+                        $scope.UserDateFormat = $scope.appConfig.userDateFormat;
+                        $scope.UserDateFormatInUpperCase = $scope.UserDateFormat.toUpperCase();
+                        
+                        $scope.filter = {
+                            text: null,
+                            countryId : '',
+                            contentType: [],
+                            channel: [],
+                            format: [],
+                            WBTerritory: [],
+                            RCLifecycle: [],
+                            RCCategory: [] //ER-007015
+                        };
+                        
+                        <!-------- Date Conversion Logic------->
+                        function convertDate(dateVal) {
+                            $scope.DateObj = new Date(dateVal);
+                            $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                            $scope.DateObj.setMinutes($scope.totalMinute);
+                            $scope.DateObj = moment($scope.DateObj.toLocaleDateString($scope.UserLocal),$scope.UserDateFormatInUpperCase);
+                            return $scope.DateObj.format($scope.UserDateFormatInUpperCase);
+                        };   
+                        <!-------- Date Conversion Logic------->
+                        
+                        var initalHeight = ($(window).height() - $('#headerDiv').height() - 26);
+                        $scope.height = initalHeight;
+                        
+                        var container = document.getElementById('tableDiv');
+                        console.log("Loading===========================>");
+                        var hot = new Handsontable(container,
+                        {
+                            data: $scope.rateCards,
+                            colHeaders: true,
+                            height: $scope.height,
+                            trimDropdown: false,
+                            
+                            contextMenu: {
+                                            items: {
+                                                "remove_row": {
+                                                    name: '{!$Label.CRM_Upload_Message_RemoveRow}'
+                                                }
+                                            }
+                                        },
+                            colHeaders: [
+                                '{!$ObjectType.Account.fields.Name.Label}' ,
+                                '{!$ObjectType.Rate_Card__c.fields.Country__c.Label}', 
+                                '{!$ObjectType.Rate_Card__c.fields.Content_Type__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Channel__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Format__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Price_Tier__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.WSP2__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.WSP3__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.WSP_Currency__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Split__c.Label}',/*ER-002742 Add Split start %*/
+                                '{!$ObjectType.Rate_Card__c.fields.SRP__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.SRP_Currency__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Rate_Card_Type__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Start_Date__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.End_Date__c.Label}',
+                                //'{!$ObjectType.Rate_Card__c.fields.Accounting_Category__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.RC_Category__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.RC_Lifecycle__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.WB_Territory__c.Label}',
+                                '{!$ObjectType.Rate_Card__c.fields.Comments__c.Label}',
+                                '{!$Label.CRM_RC_Name_Label}',
+                                '{!$Label.CRM_Upload_Field_Validation}'
+                            ], 
+                            columns: [
+                                { data: 'accountName',type: 'text'},
+                                { data: 'country', type: 'dropdown',source: $scope.countryList},
+                                { data: 'contentType',type: 'dropdown',source: $scope.contentTypeList},
+                                { data: 'channel',type: 'dropdown',source: $scope.channelList},
+                                { data: 'format',type: 'dropdown',source: $scope.formatList},
+                                { data: 'priceTier',type: 'text'},
+                                { data: 'WSP1' , type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},
+                                { data: 'WSP2' , type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},
+                                { data: 'WSP3' , type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},
+                                { data: 'WSPCurrency',type: 'dropdown',source: $scope.currencyList},
+                                { data: 'split',type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},/*ER-002742 Add Split %*/
+                                { data: 'SRP' , type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},
+                                { data: 'SRPCurrency',type: 'dropdown',source: $scope.currencyList},
+                                { data: 'rateCardType',type: 'dropdown',source: $scope.rateCardTypeList},
+                                {
+                                    data: 'startDate',
+                                    type: 'date',
+                                    dateFormat: $scope.UserDateFormatInUpperCase,
+                                    correctFormat: true,
+                                    datePickerConfig: {
+                                        firstDay: 0,
+                                        showWeekNumber: true,
+                                        numberOfMonths: 1,
+                                        i18n: {
+                                            months        : $locale.DATETIME_FORMATS.MONTH,
+                                            weekdays      : $locale.DATETIME_FORMATS.DAY,
+                                            weekdaysShort : $locale.DATETIME_FORMATS.SHORTDAY
+                                        }
+                                    }
+                                },
+                                {
+                                    data: 'endDate',
+                                    type: 'date',
+                                    dateFormat: $scope.UserDateFormatInUpperCase,
+                                    correctFormat: true,
+                                    datePickerConfig: {
+                                        firstDay: 0,
+                                        showWeekNumber: true,
+                                        numberOfMonths: 1,
+                                        i18n: {
+                                            months        : $locale.DATETIME_FORMATS.MONTH,
+                                            weekdays      : $locale.DATETIME_FORMATS.DAY,
+                                            weekdaysShort : $locale.DATETIME_FORMATS.SHORTDAY
+                                        }
+                                    }
+                                },
+                                //{ data: 'accountingCategory',type: 'text'},
+                                { data: 'rcCategory',type: 'dropdown',source: $scope.rcCatList},
+                                { data: 'RCLifecycle',type: 'text', readOnly: true},
+                                { data: 'WBTerritory',type: 'text', readOnly: true},
+                                { data: 'comments',type: 'text',editor: 'maxlength' , maxLength : 255},
+                                { data: 'name',type: 'text', readOnly: true},
+                                { data: 'validation',type: 'text', readOnly: true}
+                            ], 
+                            cells: function(row, col, prop) {
+                                var cellProperties = {};
+                                cellProperties.renderer = $scope.myRenderer;
+                                return cellProperties;
+                            },
+                            
+                            // added for Handsontable issue fix: Starts
+                            beforePaste: (data, coords) => {
+                               angular.forEach(data, function(value, index){
+                                Object.keys(value).forEach(function(key) {
+                                    value[key] = value[key].trim();
+                                });
+                              });
+                            },
+                            // added for Handsontable issue fix: Ends
+                            
+                            afterChange: function(changes, source) {
+                                var ele = this;
+                                $scope.date = new Date();
+                                $scope.isDateChanged = false;
+                                if (changes && changes.length > 0) {
+                                    $.each(changes, function(index, element) {
+                                        if (element) {
+                                            var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                            var actualRowIdex = changes[index][0];
+                                            var prop = changes[index][1];
+                                            var oldValue = changes[index][2];
+                                            var newValue = changes[index][3];
+                                            if ($scope.rateCards && changes[index][2] != changes[index][3] && prop != 'validation') {
+                                                var item;
+                                                if(ele.sortIndex && ele.sortIndex[actualRowIdex] && ele.sortOrder != undefined){
+                                                    item = $scope.rateCards[ele.sortIndex[actualRowIdex][0]];
+                                                }else{
+                                                    item = $scope.rateCards[actualRowIdex];
+                                                }
+                                                
+                                                if(item){
+                                                    
+                                                    if(prop == 'startDate' || prop == 'endDate'){
+                                                       $scope.isDateChanged = true;
+                                                       $scope.startDate = moment(item.startDate, $scope.UserDateFormatInUpperCase);
+                                                       $scope.endDate = moment(item.endDate, $scope.UserDateFormatInUpperCase);
+                                                       if($scope.date >= $scope.startDate && $scope.date <= $scope.endDate){
+                                                           item.RCLifecycle = '{!$label.CRM_RC_Life_Cycle_Active_Current}';
+                                                       }else if($scope.date < $scope.startDate){
+                                                           item.RCLifecycle = '{!$label.CRM_RC_Life_Cycle_Active_Future}';
+                                                       }else if($scope.date > $scope.endDate){
+                                                           item.RCLifecycle = '{!$Label.CRM_RC_Life_Cycle_History_Expired}';
+                                                       }
+                                                    }
+                                                    
+                                                    if(item.existingId && (prop == 'contentType' || prop == 'channel' || prop == 'format')){
+                                                        $scope.rcCom = (item.contentType == '{!$Label.CRM_All_Value_For_Content_Type}' ? '' : item.contentType)+'_'+item.channel+'_'+(item.format == '{!$Label.CRM_All_Value_For_Format}' ? '' : item.format);
+                                                        if(!invalidValueSet.has(item.sfSelCom)){
+                                                            item.invalidCapability = !item.sfSelCom.includes($scope.rcCom);
+                                                        }else{
+                                                            item.invalidCapability = true;
+                                                        }
+                                                    }
+                                                    
+                                                    if(!(!oldValue && newValue == "")){
+                                                        if(appConfig.RCEditAccess){
+                                                            document.getElementById("quickSaveBtn").disabled = false;
+                                                            document.getElementById("quickSaveBtn").style.background ='#c23934';
+                                                            document.getElementById("quickSaveBtn").style.color = 'white';
+                                                        }
+                                                        item.isRowModified = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                    
+                                    var currentEle = this;
+                                    if((source === 'edit' || source === 'loadData ' || source === 'Autofill.fill' || source === 'CopyPaste.paste') && $scope.isDateChanged){
+                                        currentEle.render();
+                                    }
+                                }
+                            },
+                            beforeRemoveRow: function(index, amount) {
+                                var ele = this;
+                                if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                                    return false;
+                                }
+                                for(i=index;i<index+amount;i++) {
+                                      if($scope.rateCards){
+                                        var item;
+                                        if(ele.sortIndex && ele.sortIndex[i] && ele.sortOrder != undefined && $scope.rateCards[ele.sortIndex[i][0]]){
+                                            item =  $scope.rateCards[ele.sortIndex[i][0]];
+                                        }else if($scope.rateCards[i]){
+                                            item = $scope.rateCards[i];
+                                        } 
+                                        if(item){
+                                           item.isRowRemoved = true;
+                                           item.errorOccured = false;
+                                           item.validation = '';
+                                        }
+                                        
+                                        
+                                        if(appConfig.RCEditAccess){
+                                            document.getElementById("quickSaveBtn").disabled = false;
+                                            document.getElementById("quickSaveBtn").style.background ='#c23934';
+                                            document.getElementById("quickSaveBtn").style.color = 'white';
+                                        }
+                                    }
+                                }
+                                $scope.$apply();
+                                this.render();
+                                return false;
+                            },
+                            columnSorting: true, 
+                            copyPaste: {
+                              columnsLimit: 100,
+                              rowsLimit: 2500
+                            },
+                            minSpareRows: 1, 
+                            manualColumnResize: true
+                        });
+                        
+                        (function (Handsontable) {
+
+                            'use strict';
+                            
+                            var MaxLengthEditor = Handsontable.editors.TextEditor.prototype.extend();
+                            
+                            MaxLengthEditor.prototype.prepare = function () {
+                                Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
+                                this.TEXTAREA.maxLength = this.cellProperties.maxLength;
+                            };
+                            
+                            Handsontable.editors.registerEditor('maxlength', MaxLengthEditor);
+                        
+                        })(Handsontable);
+                        
+                        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+                            
+                            if(cellProperties.type == 'text'){
+                                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'numeric'){
+                                Handsontable.renderers.NumericRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'date'){
+                                Handsontable.renderers.DateRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'dropdown'){
+                                Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+                            }
+                            
+                            //Added to truncate comments Column value
+                            if(prop == 'comments'){
+                                $(td).addClass("wordWrapClass");
+                            }
+                            
+                            if($scope.rateCards){
+                                var realIndex = row;
+                                if(cellProperties.instance.sortIndex && cellProperties.instance.sortOrder != undefined && cellProperties.instance.sortIndex[row]){
+                                    realIndex = cellProperties.instance.sortIndex[row][0];
+                                } 
+                                var item = $scope.rateCards[realIndex];
+                                if(item){
+                                    
+                                    if(item.existingId && (prop == 'accountName' || prop == 'country')){
+                                        cellProperties.readOnly = true;
+                                        td.style.color = '#777';
+                                    }
+                                    
+                                    if(item.isRowRemoved && item.isRowRemoved == true){
+                                        td.style.backgroundColor = 'grey';
+                                        td.style.color = 'white';
+                                        item.isRowModified = false;
+                                    }else if(item.errorOccured  && item.errorOccured == true){
+                                        td.style.backgroundColor = 'red';
+                                        td.style.color = 'white';
+                                    }else{
+                                        if(item.existingId && prop == 'SRPCurrency' && item.SRP && !invalidValueSet.has(item.SRP)){
+                                            if(item.SRPCurrency != item.SFSRPCurrency){
+                                                td.style.backgroundColor = '#e7b439';
+                                                td.style.color = 'black';
+                                                td.title = '{!$Label.CRM_Rate_Card_SRP_Currency_Mismathc} '+item.SFSRPCurrency;
+                                            }else{
+                                                td.style.backgroundColor = 'white';
+                                                td.title = '';
+                                            }
+                                        }
+                                        if(item.existingId && prop == 'WSPCurrency'){
+                                            if(item.WSPCurrency != item.SFWSPCurrency){
+                                                td.style.backgroundColor = '#e7b439';
+                                                td.style.color = 'black';
+                                                td.title = '{!$Label.CRM_Rate_Card_WSP_Currency_MissMatch} '+item.SFWSPCurrency;
+                                            }else{
+                                                td.style.backgroundColor = 'white';
+                                                td.title = '';
+                                            }
+                                        }
+                                        if(item.existingId && (prop == 'contentType' || prop == 'channel' || prop == 'format')){
+                                            if(item.invalidCapability){
+                                                td.style.backgroundColor = '#e7b439';
+                                                td.style.color = 'black';
+                                                td.title = '{!$Label.CRM_Rate_Card_Invalid_Capability_Msg}';
+                                            }else{
+                                                td.style.backgroundColor = 'white';
+                                                td.title = '';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        
+                        $scope.getRateCardsRecords = function(){
+                            document.getElementById("quickSaveBtn").style.background ='white';
+                            document.getElementById("quickSaveBtn").style.color = '#d8dde6';
+                            document.getElementById("quickSaveBtn").disabled = true;
+                            if(invalidValueSet.has($scope.filter.text) && $scope.filter.RCLifecycle.length === 0 && invalidValueSet.has($scope.filter.countryId) && $scope.filter.WBTerritory.length === 0 && 
+                                $scope.filter.contentType.length === 0 && $scope.filter.channel.length === 0 && $scope.filter.format.length === 0 && $scope.filter.RCCategory.length === 0 //ER-007015
+                            ){
+                                $scope.msgText = '{!$label.CRM_MultiTactic_SearchError}';
+                                $scope.msgSeverity = 'error';
+                                $scope.showSpinner = false;
+                                $scope.rateCards = [];
+                                hot.loadData($scope.rateCards);
+                                $timeout(setHeight,2);
+                                
+                            }else{
+                                $scope.msgText=null;
+                                $scope.showSpinner = true;
+                                $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Loading}';
+                                $scope.height = initalHeight; 
+                                $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                                $("#tableDiv").css("height",$scope.height);
+                            
+                                CRM_UploadExtractRateCardCtrl.getRateCardRecords($scope.filter,function(result, event) {  
+                                     
+                                     if(!event.status){
+                                        $scope.$apply(function() {
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                     }else{
+                                        console.log('result -----> ',result);
+                                        $.each(result, function( rowKey, rcObj) {  
+                                            if(rcObj.startDate != null && rcObj.startDate != undefined){
+                                                rcObj.startDate = convertDate(rcObj.startDate);
+                                            }
+                                            if(rcObj.endDate != null && rcObj.endDate != undefined){
+                                                rcObj.endDate = convertDate(rcObj.endDate);
+                                            } 
+                                        });
+                                        
+                                        if(!invalidValueSet.has(typeof result[0]) && !invalidValueSet.has(result[0].maxLimitExceededMsg) && result[0].maxLimitExceededMsg){
+                                            $scope.msgText = result[0].maxLimitExceededMsg;
+                                            $scope.msgSeverity = 'Info';
+                                            $scope.showSpinner = false;
+                                            $timeout(setHeight,2);
+                                        }
+                                     }
+                                     $scope.rateCards = result;
+                                     hot.loadData($scope.rateCards); 
+                                     $scope.showSpinner = false;
+                                     $scope.$apply();
+                                },{
+                                    escape: false, timeout: 120000
+                                });
+                            }
+                        };
+                        
+                        $scope.saveRateCards = function(){
+                            
+                            var saveStartTime = new Date();
+                            var timeDiff = 0;
+                            
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            $scope.showSpinner = true;
+                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                            
+                            $scope.chunkSize = {!ChunkSizeForRateCards}; // Recursive batch size
+                            $scope.nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+                            if($scope.nonEmptyRowCount === 0){ $scope.nonEmptyRowCount = -1; }
+                            $scope.failedRecCount = 0;
+                            $scope.filteredGridData = $scope.rateCards.slice(0,$scope.nonEmptyRowCount);
+                            
+                            var chunkTime = new Date();
+                            console.log('Time Elapsed for chunk is Validation Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                    
+                            $.each($scope.filteredGridData, function(rowKey, rcObj) { 
+                                    $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}';
+                                if(rcObj.isRowModified && !rcObj.isRowRemoved){
+                                        var validationMsg = $scope.validateRcRecord(rcObj);
+                                    if(validationMsg){
+                                            $scope.failedRecCount++;
+                                            rcObj.errorOccured = true;
+                                            rcObj.validation = validationMsg;
+                                        }else{
+                                            rcObj.errorOccured = false;
+                                            rcObj.validation = '';
+                                        }
+                                }else{
+                                            rcObj.errorOccured = false;
+                                            rcObj.validation = '';
+                                        }
+                                    });
+                                    
+                            var chunkTime = new Date();
+                            console.log('Time Elapsed for chunk is Validation Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                    
+                            if ($scope.failedRecCount > 0) {
+                                $scope.msgText = $scope.failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                $scope.msgSeverity = 'error';
+                                $scope.rateCards = $scope.filteredGridData;
+                                hot.loadData($scope.rateCards); 
+                                $scope.showSpinner = false;
+                                $scope.spinnerText = '';
+                                $timeout(setHeight,2);
+                            }else if($scope.failedRecCount == 0 && $scope.filteredGridData.length > 0){
+                                /**
+                                 * rowsToProcess - Array of records to save back to salesforce
+                                 * returnedResults - Rows already saved to Salesforce
+                                */
+                                (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                                    chunkedData = rowsToProcess.splice(0, $scope.chunkSize); 
+                                    
+                                    $.each(chunkedData, function(rowKey, rcObj) { 
+                                        if(invalidValueSet.has(rcObj.startDate)){
+                                            rcObj.startDate = null;
+                                        }      
+                                        if(invalidValueSet.has(rcObj.endDate)){
+                                            rcObj.endDate = null;
+                                        }
+                                        
+                                        if(typeof  rcObj.SRP != 'number'){
+                                            rcObj.SRP = null;
+                                        }
+                                        
+                                        /*ER-002742 Add Split start %*/
+                                        if(typeof  rcObj.split != 'number'){
+                                            rcObj.split = null;
+                                        }
+                                        
+                                        if(typeof rcObj.WSP2 != 'number'){
+                                            rcObj.WSP2 = null;
+                                        }
+                                        if(typeof rcObj.WSP3 != 'number'){
+                                            rcObj.WSP3 = null;
+                                        }
+                                        
+                                        if(!invalidValueSet.has(rcObj.accountName)){
+                                            rcObj.accountName = rcObj.accountName.trim();
+                                        }
+                                    });
+                                    
+                                    CRM_UploadExtractRateCardCtrl.saveRateCards(chunkedData,function(result, event){
+                                        if (!event.status) {
+                                            $scope.$apply(function() {
+                                                $scope.msgText = event.message;
+                                                $scope.msgSeverity = 'error';
+                                                $scope.showSpinner = false;
+                                                $timeout(setHeight,2);
+                                            });
+                                        }else if ($scope.filteredGridData.length > 0) { 
+                                            // If successful add results to the main array
+                                            returnedResults = returnedResults.concat(result);
+
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+
+                                            // Update progress text for user
+                                            $scope.$apply(function() {
+                                                $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                                            });
+                                            
+                                            var chunkTime = new Date();
+                                            console.log('Time Elapsed for chunk is Controller Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                    
+                                            // Call salesforce again with remaining rows
+                                            runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                        }else{
+                                           
+                                            $scope.rateCards = returnedResults.concat(result);
+                                            hot.loadData($scope.rateCards); 
+                                            
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+                                            
+                                            if (failedRecCount > 0) {
+                                                $scope.msgText = failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                                $scope.msgSeverity = 'error';
+                                            } else {
+                                                $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                                document.getElementById("quickSaveBtn").style.background ='white';
+                                                document.getElementById("quickSaveBtn").style.color = '#d8dde6';
+                                                document.getElementById("quickSaveBtn").disabled = true;
+                                                $scope.msgSeverity = 'success';
+                                            }
+                                            
+                                            var chunkTime = new Date();
+                                            console.log('Time Elapsed for chunk is Controller Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                    
+                                            $scope.spinnerText = '';
+                                            $scope.showSpinner = false;
+                                            $timeout(setHeight,2);
+                                            
+                                            // Update UI
+                                            $scope.$apply();
+                                        }
+                                    },{
+                                        escape: false,
+                                        timeout: 120000,
+                                        buffer: false  
+                                    });
+                                })($scope.filteredGridData, [], 0);
+                            }
+                        };
+                        
+                        $scope.validateRcRecord= function(rc){
+                            $scope.errorColName = [];
+                            $scope.errorColNameForWSP = [];
+                            $scope.errorColNameForWSP_1 =[];
+                            $scope.negativeCurrencyError = [];
+                            $scope.errorColNameForWSPandStandard = [];
+                            $scope.errorMessage = null;
+                            
+                            if(invalidValueSet.has(rc.accountName)){
+                                $scope.errorColName.push('{!$ObjectType.Account.fields.Name.Label}');
+                            }
+                            if(invalidValueSet.has(rc.country)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Country__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.contentType)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Content_Type__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.channel)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Channel__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.format)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Format__c.Label}');
+                            }
+                            
+                            //ER-002518 ANkita New Rate Card Type as WSP
+                            if(rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP}'|| rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP_Split}'){
+                                if(invalidValueSet.has(rc.WSP1)){
+                                    $scope.errorColNameForWSP_1.push('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}');
+                                }else if(rc.WSP1 < 0){
+                                    $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}');
+                                }
+                                if(!invalidValueSet.has(rc.priceTier)){
+                                    $scope.errorColNameForWSP.push('{!$ObjectType.Rate_Card__c.fields.Price_Tier__c.Label}');
+                                }
+                            }
+                            //ER-002884 New Validation error message for Standard and WSP when WSP2 or WSP3 values are populated start
+                            if(!invalidValueSet.has(rc.WSP2) && (rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_Step_DVD}')){
+                                 $scope.errorColNameForWSPandStandard.push('{!$ObjectType.Rate_Card__c.fields.WSP2__c.Label}');
+                            } 
+                            
+                            if(!invalidValueSet.has(rc.WSP3) && (rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_Step_DVD}')){
+                                $scope.errorColNameForWSPandStandard.push('{!$ObjectType.Rate_Card__c.fields.WSP3__c.Label}');
+                            }
+                            
+                            //ER-002884 New Validation error message for Standard and WSP when WSP2 or WSP3 values are populated start
+                            
+                            /*ER-002742 Add Split start */
+                            if(rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_Standard_Split}' || rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP_Split}'){
+                                 if(invalidValueSet.has(rc.split)){
+                                    $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Split__c.Label}');
+                                    console.log('$scope.errorColNameForWSP::',$scope.errorColNameForWSP);
+                                }else if(rc.split < 0){
+                                    $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.Split__c.Label}');
+                                }
+                                else if(rc.split >100){
+                                    $scope.errorMessage = '{!$Label.CRM_Rate_Card_SplitGreaterThan100_error_message}';
+                                }
+                            } 
+                            if(invalidValueSet.has(rc.priceTier) && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP}' && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP_Split}'){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Price_Tier__c.Label}');
+                            }
+                            if(rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_Step_DVD}' || rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP}' || rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_Standard}' ){
+                                 if(!invalidValueSet.has(rc.split)){
+                                      $scope.errorMessage = '{!$Label.CRM_Rate_Card_Split_Err_Msg}';
+                                 }
+                            }
+                            /*ER-002742 Add Split end */
+                            
+                            if(invalidValueSet.has(rc.WSP1)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}');
+                            }else if(rc.WSP1 < 0){
+                                $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}');
+                            }
+                            
+                            if(invalidValueSet.has(rc.WSP2) && rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_Step_DVD}'){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.WSP2__c.Label}');
+                            }else if(!invalidValueSet.has(rc.WSP2) && rc.WSP2 < 0 && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP}' && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP_Split}'){
+                                $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.WSP2__c.Label}');
+                            }   
+                            
+                            if(invalidValueSet.has(rc.WSP3) && rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_Step_DVD}'){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.WSP3__c.Label}');
+                            }else if(!invalidValueSet.has(rc.WSP3) && rc.WSP3 < 0 && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP}' && rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_WSP_Split}'){
+                                $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.WSP3__c.Label}');
+                            } 
+                            
+                            //ER-002518 New Rate Card Type as WSP end
+                            if(!invalidValueSet.has(rc.SRP) && rc.SRP < 0){
+                                $scope.negativeCurrencyError.push('{!$ObjectType.Rate_Card__c.fields.SRP__c.Label}');
+                            }
+                            
+                            if(invalidValueSet.has(rc.SRPCurrency) && !invalidValueSet.has(rc.SRP)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.SRP_Currency__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.WSPCurrency)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.WSP_Currency__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.rateCardType)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Rate_Card_Type__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.startDate)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.Start_Date__c.Label}');
+                            }
+                            if(invalidValueSet.has(rc.endDate)){
+                                $scope.errorColName.push('{!$ObjectType.Rate_Card__c.fields.End_Date__c.Label}');
+                            }
+                            
+                           
+                            //ER-002518 New Rate Card Type as WSP start
+                            if($scope.errorColName.length > 0){
+                                $scope.errorMessage = '{!$Label.CRM_Rate_Card_Validation_Error_Message} '+$scope.errorColName.join(' , ');
+                            }
+                            
+                            if($scope.errorColNameForWSP.length > 0  && ( rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP}' || rc.rateCardType == '{!$Label.CRM_Rate_Card_Type_WSP_Split}' ) && !$scope.errorColNameForWSP_1.includes('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}')){
+                                $scope.errorMessage = '{!$Label.CRM_Rate_Card_Type_WSP_Error_Msg} '+$scope.errorColNameForWSP.join(' , ');
+                            }else if($scope.errorColNameForWSP_1.includes('{!$ObjectType.Rate_Card__c.fields.WSP1__c.Label}')){
+                                $scope.errorMessage ='{!$Label.CRM_Rate_Card_Type_WSP1_Error_Msg} ';
+                            }
+                            //ER-002518 New Rate Card Type as WSP end
+                            //ER-002884 New Validation error message for Standard and WSP when WSP2 or WSP3 values are populated start
+                            if($scope.errorColNameForWSPandStandard.length > 0 && (rc.rateCardType !== '{!$Label.CRM_Rate_Card_Type_Step_DVD}')) {
+                                 $scope.errorMessage ='{!$Label.CRM_Rate_Card_Type_WSP_Standard_Error_Msg}';
+                            }
+                            //ER-002884 New Validation error message for Standard and WSP when WSP2 or WSP3 values are populated end
+                            
+                            if($scope.negativeCurrencyError.length > 0){
+                                if(invalidValueSet.has($scope.errorMessage)){
+                                    $scope.errorMessage = '{!$Label.CRM_Rate_Card_Nagetive_Currency_Error_Msg} : '+$scope.negativeCurrencyError.join(' , ');
+                                }else{
+                                    $scope.errorMessage = $scope.errorMessage +' ; {!$Label.CRM_Rate_Card_Nagetive_Currency_Error_Msg} : '+$scope.negativeCurrencyError.join(' , ');
+                                }
+                            }
+                            return $scope.errorMessage;
+                        };
+                        
+                        function setHeight() {
+                            $scope.height = (initalHeight - $("#msgDiv").height());
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        };
+                        
+                        $scope.removeMsgBlock= function(){
+                            $scope.msgText = '';
+                            $scope.height = initalHeight; 
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        }; 
+                    }
+                ]);//end of angular class
+             </script>
+        </head>
+        <body>
+            <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="UploadRateCards" ng-controller="UploadRateCardsController" class="slds" ng-cloak="ngCloak">
+                <!-- ===========================Spinner================================= -->   
+                <div class="spinnerModel" ng-show="showSpinner">
+                    <div class="spinnerContent slds-spinner--large">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                        <div id="spinnerText">{{spinnerText}}</div>
+                    </div>
+                </div>
+                <!-- ===========================Spinner================================= --> 
+                
+                <!-- =========================== HEADER BANNER ================================-->     
+                <div id="headerDiv" class="slds-page-header" role="banner">
+                    <div class="slds-grid slds-wrap"> 
+                        <div class ="slds-col slds-size--1-of-12">
+                            <div class="slds-grid slds-grid--vertical">
+                                <!--Back To Home Link  -->
+                                <div class ="slds-col">
+                                    <div class="slds-form-element">
+                                        <nav class="slds-m-bottom--m-small" role="navigation">
+                                            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                                <li class="slds-list__item slds-text-heading--label"><a href="/home/home.jsp">{!$label.CRM_Mass_Update_NR_Page_Back_Button}</a></li>
+                                            </ol>
+                                        </nav>
+                                    </div>
+                                </div>
+                                <div class ="slds-col slds-p-top--large">
+                                    <!-- Quick Search Text ::  -->
+                                    <div class ="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__control">
+                                          </div>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ER-007015 Start -->
+                        <div class ="slds-col slds-size--2-of-12">
+                            <div class="slds-grid slds-grid--vertical">
+                                <div class ="slds-col">
+                                    <!-- Channel filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.RCCategory.filterPicklist" selectedOpts="filter.RCCategory" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.RC_Category__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class ="slds-col slds-p-top--x-small">
+                                    <!-- Format filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__control">
+                                              <input class="slds-input slds-picklist__label buttonGroupheight buttonGroupWidtht" style="min-height:31px !important;" ng-model="filter.text" type="text" placeholder="{!$Label.CRM_Account_Search_PlaceHolder}" ng-keyup="$event.keyCode == 13 ? getRateCardsRecords() : null"/>                            
+                                          </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ER-007015 End -->
+                         
+                        <div class ="slds-col slds-size--2-of-12">
+                            <div class="slds-grid slds-grid--vertical">
+                                <div class ="slds-col">
+                                    <!-- Country filter  -->
+                                    <div class ="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                            <crm-lookup 
+                                                    record-id="filter.countryId" 
+                                                    record-name="countryName" 
+                                                    object-name="Country__c" 
+                                                    slds-resource-loc="{{appConfig.resourceSlds}}"
+                                                    lookup-change=""
+                                                    place-holder="{!$Label.CRM_Country_Search_PlaceHolder}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class ="slds-col slds-p-top--x-small">
+                                    <!-- WB Territory Filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.WBTerritoryValues.filterPicklist" selectedOpts="filter.WBTerritory" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.WB_Territory__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div> 
+                            </div>
+                        </div>
+                        <div class ="slds-col slds-size--2-of-12">
+                            <div class="slds-grid slds-grid--vertical">
+                                <div class ="slds-col">
+                                    <!-- Channel filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.channelValues.filterPicklist" selectedOpts="filter.channel" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.Channel__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class ="slds-col slds-p-top--x-small">
+                                    <!-- Format filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.formatValues.filterPicklist" selectedOpts="filter.format" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.Format__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class ="slds-col slds-size--2-of-12">
+                            <div class="slds-grid slds-grid--vertical">
+                                <div class ="slds-col">
+                                    <!-- Content Type filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.contentTypeValues.filterPicklist" selectedOpts="filter.contentType" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.Content_Type__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class ="slds-col slds-p-top--x-small">
+                                    <!-- Content Type filter  -->
+                                    <div class="slds-form-element">
+                                        <div class="slds-form-element__control picklistClass">
+                                            <crm-multiselect-picklist options="picklistWrap.RCLifecycle.filterPicklist" selectedOpts="filter.RCLifecycle" multiple="true" placeholder="{!$ObjectType.Rate_Card__c.fields.RC_Lifecycle__c.Label}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class ="slds-col slds-size--2-of-12">
+                            <div class="slds-grid slds-grid--align-end">
+                                <div class ="slds-col" style="padding-top: 39px;">
+                                    <!-- Quick Save and Search button -->
+                                    <div class="slds-form-element" style="float: right;">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-button-group slds-button-space-left" role="group">
+                                                <button ng-click="getRateCardsRecords()" class="buttonGroupheight slds-button slds-button--neutral" style="line-height: inherit;">{!$Label.CRM_Search_Label_on_Add_Product_Page}</button>
+                                                <button id="quickSaveBtn" ng-click="saveRateCards()" class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" disabled="true" style="line-height: inherit;">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-button-group" role="group"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 
+                <!-- ===========================Exception=============================== -->
+                <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+                    <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small slds-theme--alert-texture" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid" ng-show="msgText">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===========================Exception=============================== -->
+             
+                <!-- ===========================Dynamic Div================================= -->
+                <div id="tableDiv" class="hot handsontable htColumnHeaders" style="margin: 3px 3px 0;"></div>
+                <c:CRM_SLDSPicklist />
+                <c:CRM_SLDSLookup />
+            </div>                
+        </body>
+    </html>  
+</apex:page>

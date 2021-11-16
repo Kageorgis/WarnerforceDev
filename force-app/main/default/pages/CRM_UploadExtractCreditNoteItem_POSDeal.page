@@ -1,0 +1,893 @@
+<apex:page standardController="Credit_Note__c" extensions="CRM_UploadExtractCreditNoteItem_POSDeal" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" charset="utf8" >
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+            
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+            
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'moment/moment.js')}"/>
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" /> 
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+            <apex:includeLightning />
+
+            <style>
+                .wordWrapClass{
+                    text-overflow: ellipsis;
+                    white-space: nowrap !important;
+                    max-width: 20px;
+                }
+                <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+                .handsontable thead th {
+                    background-color: #4F6A92 !important;
+                    color: white !important;
+                }
+                .handsontableInputHolder .handsontableInput{
+                    background-color: white !important;
+                }
+                #hot-display-license-info{
+                    display: none;
+                }
+                .slds .slds-picklist__label {
+                padding-right: 32px;
+                width: 160px;
+                color: #16325c;
+                text-align: left;
+                }
+                .slds .slds-picklist .slds-dropdown {
+                min-width: 160px !important ;
+                width: auto !important ;
+                max-width: 1000px;
+                }
+                <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            </style>
+            <script type="text/javascript">  
+                window.$Label = window.$Label || {};
+                
+                /* Pass a few dynamic parameters */
+                angular.module("appConfig", [])
+                    .service("appConfig", function() {
+                         return {
+                            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                            apexController: CRM_UploadExtractCreditNoteItem_POSDeal,    
+                            userLocal: '{!UserLocale}',
+                            userDateFormat: '{!UserDateFormat}',
+                            isReadOnlyPage: '{!isPageReadOnly}',
+                            handsontableProLicenseKey: '{!HandsonTable_Pro_Licencekey}', //Added for US 989
+                            creditNoteName : '{!Credit_Note__c.Name}' //Added for US 989
+                         };
+                     });
+                
+            </script>
+
+    <!--script>    
+        $Lightning.use("c:ImportExcelComponentApplication", function() {
+            $Lightning.createComponent(
+                "c:ImportExcelComponent",{},"CreditNote",
+                
+                function(cmp) {
+                    console.log("Component is created!");
+                    console.log(cmp);
+                });
+        });
+
+    </script-->
+      <script>
+
+
+                angular.module("UploadCreditNoteItems", ['ngHandsontable', 'appConfig', 'crm-components', 'sfdcDataService', 'ngLocale'])//Added "ngLocale" for US 989
+                    .controller("UploadCreditNoteItemsController",  ['$scope', '$timeout', 'appConfig', 'getSelectOptionsService', '$locale', function($scope, $timeout, appConfig, getSelectOptionsService, $locale) {//Added "$locale" for US 989   
+                        $scope.showSpinner = false;
+                        $scope.appConfig = appConfig;
+                        $scope.creditNoteItems = [];  
+                        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one)); 
+                        $scope.isReadOnlyPage = {!isPageReadOnly};
+                        $scope.isImportBtnReadOnly = {!importBtnReadOnly};
+                        $scope.isEditableFieldsReadOnly = {!editableFieldsReadOnly};
+                        $scope.isExportBtnReadOnly = {!exportBtnReadOnly};
+                        $scope.UserLocal = $scope.appConfig.userLocal; 
+                        $scope.UserDateFormat = $scope.appConfig.userDateFormat;
+                        $scope.UserDateFormatInUpperCase = $scope.UserDateFormat.toUpperCase();
+                        
+                        <!-------- Defect 4716 ------->
+                        function convertDate(dateVal){
+                            $scope.DateObj = new Date(dateVal);
+                            $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                            $scope.DateObj.setMinutes($scope.totalMinute);
+                            return $scope.DateObj.toLocaleDateString($scope.UserLocal);
+                        };   
+                        <!-------- Defect 4716 ------->
+                        
+                        var initalHeight = ($(window).height() - $('#headerDiv').height() - 40);
+                        $scope.height = initalHeight;
+                        
+                        //Start - US : 994
+                        $scope.resultFilterValues = [{label:'{!$Label.CRM_All_Value_For_Content_Type}', value:"all"},{label:'{!$Label.CRM_Clone_Deal_Error}',value:"error"},{label:'{!$Label.CRM_Success_Message}',value:"success"}];
+                        $scope.resultFilter = [];
+                        $scope.nonProcessedRecrods = [];
+                        $scope.sucessRecords = [];
+                        $scope.errorRecords = [];
+                        $scope.previouslySelectedFilterValue;
+                        $scope.sortObj = {column:0,order:"none"};
+                        $scope.filterdColIndex = [];
+                        //Start - US : 994
+                        
+                        $scope.init = function() {
+                            $scope.showSpinner = true;
+                            $scope.GetLineItems('{!Credit_Note__c.Id}'); 
+                        } 
+                        
+                        var container = document.getElementById('tableDiv'); 
+                        //Added for US : 994
+                        var hot;
+                        $timeout(setHotVar,0);
+                        function setHotVar(){
+                            hot = new Handsontable(container,
+                            {
+                                data: $scope.creditNoteItems,
+                                colHeaders: true,
+                                renderAllRows: true,//Added for US : 994
+                                allowRemoveRow: true, 
+                                height: $scope.height,
+                                contextMenu: {
+                                    items: {
+                                        "remove_row": {
+                                             disabled: function () { 
+                                                 if(!appConfig.isReadOnlyPage){
+                                                     return true;
+                                                 }else{
+                                                    return false }},
+                                            name: '{!$Label.CRM_Upload_Message_RemoveRow}'
+                                        }
+                                    }
+                                },
+                                colHeaders: [
+                                    '{!$Label.CRM_Deal_Name}',
+                                    '{!$ObjectType.Opportunity.fields.Deal_Code__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.ProductCode__c.Label}', 
+                                    '{!$Label.CRM_Clone_Deal_Product_Name}', 
+                                    '{!$Label.CRM_Actual_Spend_Amount}', 
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Reason__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Customer_Reference_Number__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Start_Date__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.End_Date__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.POS_Quantity__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.POS_Rebate__c.Label}',
+                                    '{!$Label.CRM_Media_Comments_Label}',
+                                    /*'{!$ObjectType.Credit_Note_Item__c.fields.POS_Rebate__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.POS_Forecast__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Requested_Co_op_Amount__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.POS_Actuals__c.Label}',
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Status__c.Label}', 
+                                    '{!$ObjectType.Credit_Note_Item__c.fields.Commitment_Number__c.Label}',*/  
+                                    '{!$Label.CRM_Upload_Field_Validation}'
+                                ], 
+                                columns: [
+                                    { data: 'dealName', readOnly: true},
+                                    { data: 'dealCode', type: 'text', readOnly: true},
+                                    { data: 'productCode', type: 'text', readOnly: true},
+                                    { data: 'productName', readOnly: true},
+                                    { data: 'coopActualAmt', type: 'numeric', numericFormat: { pattern: '0,0.00',culture: 'en-US'}, readOnly:{!editableFieldsReadOnly}},
+                                    { data: 'coopReason' , type: 'text', readOnly: true},
+                                    { data: 'custReference', type: 'text', readOnly:{!editableFieldsReadOnly}}, 
+                                    { 
+                                        data: 'startDate', 
+                                        type: 'date', 
+                                        dateFormat: $scope.UserDateFormatInUpperCase, 
+                                        correctFormat: true,
+                                        datePickerConfig: {
+                                            firstDay: 0,
+                                            showWeekNumber: true,
+                                            numberOfMonths: 1,
+                                            i18n: {
+                                                months        : $locale.DATETIME_FORMATS.MONTH,
+                                                weekdays      : $locale.DATETIME_FORMATS.DAY,
+                                                weekdaysShort : $locale.DATETIME_FORMATS.SHORTDAY
+                                            }
+                                        },
+                                        readOnly: true
+                                    }, 
+                                    { 
+                                        data: 'endDate' , 
+                                        type: 'date', 
+                                        dateFormat: $scope.UserDateFormatInUpperCase, 
+                                        correctFormat: true,
+                                        datePickerConfig: {
+                                            firstDay: 0,
+                                            showWeekNumber: true,
+                                            numberOfMonths: 1,
+                                            i18n: {
+                                                months        : $locale.DATETIME_FORMATS.MONTH,
+                                                weekdays      : $locale.DATETIME_FORMATS.DAY,
+                                                weekdaysShort : $locale.DATETIME_FORMATS.SHORTDAY
+                                            }
+                                        },
+                                        readOnly: true 
+                                    },
+                                    { data: 'posQuantity', type: 'numeric', readOnly: true, numericFormat: { pattern: '0,0.00',culture: 'en-US'}},
+                                    { data: 'posRebate', type: 'numeric', readOnly: true, numericFormat: { pattern: '0,0.00',culture: 'en-US'}},
+                                    { data: 'coopComments', type: 'text' , readOnly:{!editableFieldsReadOnly}, editor: 'maxlength' , maxLength : 255},
+                                    /*{ data: 'posRebate' , type: 'numeric',readOnly: true, numericFormat: { pattern: '0,0.00',culture: 'en-US'}},
+                                    { data: 'posForecast', type: 'numeric',readOnly: true},
+                                    { data: 'coopReqAmount', type: 'numeric',readOnly: true,numericFormat: { pattern: '0,0.00',culture: 'en-US'}},
+                                    { data: 'posActual', type: 'numeric',readOnly: true},
+                                    { data: 'status',readOnly: true},
+                                    { data: 'commitmentNum', type: 'numeric', readOnly: true},*/
+                                    { data: 'validation',type: 'text', readOnly: true}
+                                ], 
+                                beforeRemoveRow: function(index, amount, visualRows) {
+                                    var ele = this;
+                                    if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                                        return false;
+                                    }
+                                    var visualIndex = 0;
+                                    if($scope.creditNoteItems){
+                                        for(i=index;i<index+amount;i++) {
+                                            if(visualRows[visualIndex] && $scope.creditNoteItems[visualRows[visualIndex]]){
+                                                $scope.creditNoteItems[visualRows[visualIndex]].isRowRemoved = true;
+                                            }else if($scope.creditNoteItems[i]){
+                                                $scope.creditNoteItems[i].isRowRemoved=true;
+                                            } 
+                                            visualIndex++;
+                                        }
+                                    }
+                                    hot.render();
+                                    $scope.$apply();
+                                    return false;
+                                },
+                                cells: function(row, col, prop) {
+                                    var cellProperties = {};
+                                    cellProperties.renderer = $scope.myRenderer;
+                                    return cellProperties;
+                                }, 
+                                afterChange: function(changes, source) {
+                                    var ele = this;
+                                    if (changes && changes.length > 0) {
+                                        $.each(changes, function(index, element) {
+                                            if (element) { //Added For US : 820
+                                                var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                                var sortedRowIndex = changes[index][0];
+                                                var col= elem.col;
+                                                var prop =elem.prop;
+                                                var oldValue =element[2];
+                                                var newValue =element[3];
+                                                // check if previous and new value of the cell is difference and 
+                                                // cell is not the last column i.e. validation error/message
+                                                if ($scope.creditNoteItems && changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                                                    var item = $scope.creditNoteItems[ele.toPhysicalRow(changes[index][0])]; 
+                                                    
+                                                    if (item) {
+                                                        if(changes[index][1] != 'previouslySelectedForRemoval' && changes[index][1] != 'isRowModified' && changes[index][1] != 'isRowRemoved'){
+                                                            if(!(!oldValue && newValue == "")){
+                                                                document.getElementById("quickSaveBtn").style.background ='#c23934';
+                                                                document.getElementById("quickSaveBtn").style.color = 'white';
+                                                            
+                                                                item.isRowModified = true;
+                                                                item.isRowRemoved = false;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                },
+                                afterCreateRow: function(index, amount){
+                                    $scope.creditNoteItems.splice(index, amount)
+                                },
+                                columnSorting: true, 
+                                copyRowsLimit:2500,
+                                allowInsertRow: false,
+                                manualColumnResize: false,
+                                //Start - US : 994
+                                dropdownMenu: ['clear_column','alignment','filter_by_condition','filter_operators','filter_by_condition2','filter_by_value','filter_action_bar'],
+                                filters: true,
+                                licenseKey: appConfig.handsontableProLicenseKey,
+                                afterColumnSort: function(column,order){
+                                    $scope.sortObj.column = column;
+                                    $scope.sortObj.order = order;
+                                },
+                                afterLoadData: function(firstTime){
+                                    if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                        hot.updateSettings({minSpareRows: 0});
+                                        if(hot.countEmptyRows(true)){
+                                            hot.getPlugin('trimRows').trimRows([($scope.creditNoteItems.length - 1)]);
+                                            hot.render();
+                                        }
+                                    }else if(hot){
+                                        hot.updateSettings({minSpareRows: 1});
+                                    }
+                                },
+                                afterFilter: function(conditionsStack){
+                                    $scope.filterdColIndex = [];
+                                    if(conditionsStack.length > 0){
+                                        $.each(conditionsStack, function(rowKey, object) {
+                                            if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                                $.each(object.conditions, function(rowKey,conditions) {
+                                                    if(conditions.name == 'by_value'){
+                                                        $.each(conditions.args[0], function(rowKey,arg) {
+                                                            if(arg == "" && hot.countEmptyRows(true) === 0){
+                                                                hot.alter('insert_row',($scope.creditNoteItems.length));
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                            $scope.filterdColIndex.push(object.column);
+                                        });
+                                    }else{
+                                        if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                            if(hot.countEmptyRows(true) === 0){
+                                                hot.alter('insert_row',($scope.creditNoteItems.length));
+                                            }
+                                        }
+                                    }
+                                },
+                                afterCreateRow: function(index, amount, source){
+                                    if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                        if(hot && hot.isEmptyRow($scope.creditNoteItems.length - 1)){
+                                            hot.getPlugin('trimRows').trimRows([($scope.creditNoteItems.length - 1)]);
+                                            hot.render();
+                                        }
+                                    }
+                                }
+                                //End - US : 994
+                            });
+                        } 
+               
+                        (function (Handsontable) {
+
+                            'use strict';
+                            
+                            var MaxLengthEditor = Handsontable.editors.TextEditor.prototype.extend();
+                            
+                            MaxLengthEditor.prototype.prepare = function () {
+                                Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
+                                this.TEXTAREA.maxLength = this.cellProperties.maxLength;
+                            };
+                            
+                            Handsontable.editors.registerEditor('maxlength', MaxLengthEditor);
+                        
+                        })(Handsontable);
+                
+                        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+                            
+                            //Start - US : 994
+                            if(cellProperties.type == 'text'){
+                                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'numeric'){
+                                Handsontable.renderers.NumericRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'date'){
+                                Handsontable.renderers.DateRenderer.apply(this, arguments);
+                            }else if(cellProperties.type == 'dropdown'){
+                                Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+                            }
+                            //End - US : 994
+                            
+                            if(!appConfig.isReadOnlyPage){
+                               cellProperties.readOnly = true; 
+                            }
+                            //Added to truncate Co-op Comments Column value
+                            if(prop == 'coopComments'){
+                                $(td).addClass("wordWrapClass");
+                            }
+                            
+                            if($scope.creditNoteItems){
+                                var item = $scope.creditNoteItems[cellProperties.row];
+                                var cell = instance.getCell(cellProperties.row, col);
+                                
+                                if(item && item.isRowRemoved){
+                                    td.style.backgroundColor = 'grey';
+                                    td.style.color = 'white';
+                                    item.isRowModified = false;
+                                    item.previouslySelectedForRemoval=true;
+                                     
+                                }else if(item && item.validation && item.validation != '{!$Label.CRM_Upload_Message_Updated}' && item.validation != '{!$Label.CRM_Upload_Message_Created}' && item.validation != ''){
+                                    td.style.backgroundColor = 'red';
+                                    td.style.color = 'white';
+                                    
+                                    if (typeof item.previouslySelectedForRemoval != 'undefined' && !item.previouslySelectedForRemoval) {
+                                        item.isRowModified = true;
+                                    }
+                                            
+                                }else { //Added For US : 820
+                                    td.style.backgroundColor = null;
+                                    td.style.color = null;
+                                }
+                                 
+                                if(cellProperties.change  && prop != 'validation') {
+                                    $(cell).addClass('has-changed');
+                                    item.isRowModified = true;
+                                    item.isRowRemoved = false;
+                                    item.previouslySelectedForRemoval=false;
+                                }
+                            }
+                        }; 
+               
+                        // Displays the grid on load
+                        $scope.GetLineItems = function(creditNoteId){ 
+                             //$scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                             $scope.showSpinner = true;
+                             $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Loading}';  
+                             var prodRows;
+                             
+                            CRM_UploadExtractCreditNoteItem_POSDeal.getCreditNoteLineItemTactics(creditNoteId,function(result, event) {
+                                if (event.status) {
+                                    $.each(result, function( rowKey, accObject) {  
+                                        if(accObject.startDate != null && accObject.startDate != undefined){
+                                            accObject.startDate = convertDate(accObject.startDate);
+                                        }
+                                        if(accObject.endDate != null && accObject.endDate != undefined){
+                                            accObject.endDate = convertDate(accObject.endDate);
+                                        }
+                                        
+                                        //Defect:4717
+                                        $scope.updateNullFieldsValue(accObject);
+                                    });
+                                    $scope.showSpinner = false;
+                                    $scope.creditNoteItems = result;
+                                    console.log($scope.creditNoteItems);
+                                    hot.loadData($scope.creditNoteItems); 
+                                    $scope.$apply();
+                                }
+                            },{
+                                escape: false, timeout: 120000
+                            }); 
+                        };
+              
+                        // Validates and saves the data changed on the grid
+                        $scope.saveCreditNoteItems = function(oppId){
+                            
+                            var nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+                            if(nonEmptyRowCount === 0){ nonEmptyRowCount = -1; }
+                            var cleanedGridData = [];
+                            
+                            // Start ---------US : 994--------------------
+                            if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'error'){
+                                $scope.errorRecords = $scope.creditNoteItems;
+                            }else if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'success'){
+                                $scope.sucessRecords = $scope.creditNoteItems;
+                            }else{
+                                $scope.errorRecords = [];
+                                $scope.sucessRecords = [];
+                                $scope.nonProcessedRecrods = [];
+                                $scope.nonProcessedRecrods = $scope.creditNoteItems;//Defect#4841 - remvoved slice function  
+                            }
+                        
+                            if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.errorRecords);
+                            if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.sucessRecords);
+                            if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                cleanedGridData = cleanedGridData.concat($scope.nonProcessedRecrods);
+                            
+                            $scope.showSpinner = true;
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            $scope.tacticLineItems = [];
+                                            
+                                /**
+                                 * rowsToProcess - Array of records to save back to salesforce
+                                 * returnedResults - Rows already saved to Salesforce
+                                 */
+                                (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                                    
+                                    if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                        $scope.showSpinner = false;
+                                        return;
+                                    }
+
+                                    var chunkSize ={!ChunkSizeForCreditNoteItems}; // Recursive batch size
+                                    chunkedData = rowsToProcess.splice(0, chunkSize); 
+                                    $.each(chunkedData, function(rowKey, accObject) { 
+                                        
+                                        if(accObject.startDate != '' && accObject.startDate != null && accObject.startDate != undefined){
+                                            $scope.DateObj1 = new Date(accObject.startDate);
+                                            accObject.startDate = $scope.DateObj1.toLocaleDateString($scope.UserLocal);
+                                        }else{
+                                            accObject.startDate = null;
+                                        }
+                                        
+                                        if(accObject.endDate != '' &&  accObject.endDate != null && accObject.endDate != undefined){
+                                            $scope.DateObj2 = new Date(accObject.endDate);
+                                            accObject.endDate = $scope.DateObj2.toLocaleDateString($scope.UserLocal);    
+                                        }else{
+                                            accObject.endDate = null;
+                                        } 
+                                        
+                                        if(typeof  accObject.posRebate != 'number'){
+                                            accObject.posRebate = null;
+                                        }
+                                        if(typeof  accObject.posQuantity != 'number'){
+                                            accObject.posQuantity = null;
+                                        }
+                                        if(typeof accObject.posForecast != 'number'){
+                                            accObject.posForecast = null;
+                                        }
+                                        if(typeof accObject.coopReqAmount != 'number'){
+                                            accObject.coopReqAmount = null;
+                                        }
+                                        if(typeof accObject.posActual != 'number'){
+                                            accObject.posActual =null;
+                                        }
+                                        if(typeof accObject.coopActualAmt != 'number'){
+                                            accObject.coopActualAmt = null;
+                                        }
+                                        accObject.validation = '';
+                                    }); 
+                                    // Call the controller class method which returns the list with validations
+                                    CRM_UploadExtractCreditNoteItem_POSDeal.setCreditNoteLineItems(chunkedData,oppId ,function(result, event) { 
+                                        if (!event.status) {
+                                            $scope.$apply(function() {
+                                                $scope.msgText = event.message;
+                                                $scope.msgSeverity = 'error';
+                                                $scope.showSpinner = false;
+                                            });
+                                        }else if (cleanedGridData.length > 0) {
+                                             // If successful add results to the main array
+                                            returnedResults = returnedResults.concat(result);
+
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+
+                                            // Update progress text for user
+                                            $scope.$apply(function() {
+                                                $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                                            });
+                                            
+                                            //Format dates 
+                                            $.each(returnedResults, function(rowKey, accObject) { 
+                                                if(accObject.startDate && accObject.startDate != ''){
+                                                    $scope.DateObj1 = new Date(accObject.startDate);
+                                                    accObject.startDate = $scope.DateObj1.toLocaleDateString($scope.UserLocal);
+                                                }
+                                                if(accObject.endDate && accObject.endDate != ''){
+                                                    $scope.DateObj2 = new Date(accObject.endDate);
+                                                    accObject.endDate = $scope.DateObj2.toLocaleDateString($scope.UserLocal);    
+                                                }
+                                            }); 
+                                            // Call salesforce again with remaining rows
+                                            runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                        } else {
+                                            $scope.creditNoteItems = [];
+                                            $scope.sortObj.column = 0;
+                                            $scope.sortObj.order = "none";
+                                            //Format dates 
+                                            $.each(returnedResults.concat(result), function(rowKey, accObject) { 
+                                                if(accObject.startDate != '' && accObject.startDate != null && accObject.startDate != undefined){
+                                                    $scope.DateObj1 = new Date(accObject.startDate);
+                                                    accObject.startDate = $scope.DateObj1.toLocaleDateString($scope.UserLocal);
+                                                }
+                                                if(accObject.endDate != '' &&  accObject.endDate != null && accObject.endDate != undefined){
+                                                    $scope.DateObj2 = new Date(accObject.endDate);
+                                                    accObject.endDate = $scope.DateObj2.toLocaleDateString($scope.UserLocal);    
+                                                }
+                                                
+                                                //Defect:4717
+                                                $scope.updateNullFieldsValue(accObject);
+                                                
+                                                // US : 994
+                                                if(accObject.recrodStatus == 'error'){
+                                                    $scope.errorRecords.push(accObject);
+                                                }else if(accObject.recrodStatus == 'success'){
+                                                    $scope.sucessRecords.push(accObject);
+                                                }else{
+                                                    $scope.nonProcessedRecrods.push(accObject);
+                                                }
+                                            });
+                                            
+                                            // US : 994
+                                            if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                                $scope.filterRecords(false);
+                                            }else{
+                                                $scope.creditNoteItems = returnedResults.concat(result);
+                                                hot.loadData($scope.creditNoteItems);
+                                                hot.getPlugin('filters').filter();
+                                            }
+                                            
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+                                            
+                                            if (failedRecCount > 0) {
+                                                $scope.msgText = failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                                $scope.msgSeverity = 'error';
+                                            } else {
+                                                $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                                document.getElementById("quickSaveBtn").style.background ='white';
+                                                document.getElementById("quickSaveBtn").style.color = 'rgb(0, 134, 222)';
+                                                $scope.msgSeverity = 'success';
+                                            }
+                                            
+                                            $scope.spinnerText = '';
+                                            $scope.showSpinner = false;
+                                            $timeout(setHeight,2);
+                                            
+                                            // Update UI
+                                            $scope.$apply();
+                                        }
+                                    },{
+                                        escape: false,
+                                        timeout: 120000,
+                                        buffer: false  
+                                })
+                            })(cleanedGridData, [], 0);
+                        };
+               
+                        $scope.backToCreditNote = function(url) {
+                            $scope.navigateToURL(url);
+                        };
+                        $scope.importFile = function(record,name) { 
+                            // var url="/lightning/cmp/c__ImportExcelComponent?c__Id="+record+"&c__objectName=Credit_Note_Item__c&c__pageName="+name;
+                            var url = {!$Label.CRM_Credit_Note_Import_Url};
+                            url = url.replace("record", record);
+                            url= url.replace("name", name);
+                            $scope.navigateToURL(url);
+                        };
+                        
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                            if ($scope.isLightningExperienceOrSf1){
+                                sforce.one.navigateToURL(url);
+                            }else{
+                                document.location.href = url;
+                            }
+                        };  
+                    
+                        function setHeight() {
+                            $scope.height = (initalHeight - $("#msgDiv").height());
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        }
+                        
+                        $scope.removeMsgBlock= function(){
+                            $scope.msgText = '';
+                            $scope.height = initalHeight;
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        };
+                        
+                        <!-----Defect:4717------------>
+                        $scope.updateNullFieldsValue = function(tactic){
+                            if(!tactic.posRebate){
+                                tactic.posRebate = "";
+                            }
+                            
+                            if(!tactic.posQuantity){
+                                tactic.posQuantity = "";
+                            }
+                            
+                            if(!tactic.posForecast){
+                                tactic.posForecast = "";
+                            }
+                            
+                            if(!tactic.coopReqAmount){
+                                tactic.coopReqAmount = "";
+                            }
+                            
+                            if(!tactic.posActual){
+                                tactic.posActual = "";
+                            }
+                            
+                            if(!tactic.coopActualAmt && tactic.dealName!=null){
+                                tactic.coopActualAmt = 0.00;
+                            }
+                            
+                            if(!tactic.commitmentNum){
+                                tactic.commitmentNum = "";
+                            }
+                            
+                            if(!tactic.custReference){
+                                tactic.custReference = "";
+                            }
+                            
+                            if(!tactic.coopComments){
+                                tactic.coopComments = "";
+                            }
+                        };
+                        
+                        <!-------- Us 989 ------------>
+                        $scope.refreshPage = function(){
+                            window.location.reload(); 
+                        }
+                        
+                        <!-------- Us 994 ------------>
+                        $scope.filterRecords = function(falg){
+                            $scope.currentFilterValue = $scope.resultFilter[0] ? $scope.resultFilter[0].value : $scope.resultFilter[0];
+                            if(($scope.previouslySelectedFilterValue != $scope.currentFilterValue && 
+                               !((!$scope.previouslySelectedFilterValue && $scope.currentFilterValue == 'all') || 
+                               (!$scope.currentFilterValue && $scope.previouslySelectedFilterValue == 'all'))) || !falg
+                              ){
+                                hot.getPlugin('trimRows').untrimAll();//placed this inside if 
+                                if(falg){
+                                    if($scope.previouslySelectedFilterValue == 'error'){
+                                        $scope.errorRecords = [];
+                                        $.each($scope.creditNoteItems, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey)){
+                                                  $scope.errorRecords.push(dealProd);
+                                             }
+                                        });
+                                    }else if($scope.previouslySelectedFilterValue == 'success'){
+                                        $scope.sucessRecords = [];
+                                        $.each($scope.creditNoteItems, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey)){
+                                                  $scope.sucessRecords.push(dealProd);
+                                             }
+                                        });
+                                    }else{
+                                         $scope.nonProcessedRecrods = [];
+                                         $.each($scope.creditNoteItems, function(rowKey, dealProd) {  
+                                             if(!hot.isEmptyRow(rowKey) && dealProd.recrodStatus != 'error' && dealProd.recrodStatus != 'success'){
+                                                  $scope.nonProcessedRecrods.push(dealProd);
+                                             }
+                                         });
+                                    }
+                                }
+                                $scope.creditNoteItems = [];
+                                if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                    if($scope.currentFilterValue == 'error'){
+                                        $scope.creditNoteItems =  $scope.errorRecords;
+                                        hot.updateSettings({minSpareRows: 0});
+                                    }else if($scope.currentFilterValue == 'success'){
+                                        $scope.creditNoteItems =  $scope.sucessRecords;
+                                        hot.updateSettings({minSpareRows: 0});
+                                    }
+                                }else{
+                                    if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                        $scope.concatArray($scope.errorRecords);
+                                    if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                        $scope.concatArray($scope.sucessRecords);
+                                    if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                        $scope.concatArray($scope.nonProcessedRecrods);
+                                }
+                                hot.loadData($scope.creditNoteItems);
+                                hot.getPlugin('columnSorting').sort($scope.sortObj.column,$scope.sortObj.order);
+                                if($scope.filterdColIndex.length > 0 && falg){
+                                    hot.getPlugin('filters').removeConditions($scope.filterdColIndex);
+                                }
+                                hot.getPlugin('filters').filter();  
+                            }
+                            $scope.previouslySelectedFilterValue = $scope.currentFilterValue;
+                        };
+                        
+                        $scope.concatArray = function(items){
+                            var lastIndex = $scope.creditNoteItems.length > 0 ? ($scope.creditNoteItems.length) : 0;
+                            $scope.tempArray = $scope.creditNoteItems.slice();
+                            [].splice.apply($scope.tempArray, [lastIndex, 0].concat(items));
+                            $scope.creditNoteItems = $scope.tempArray;
+                        };
+                        
+                        //Added For US : 989
+                        $scope.exportCSVFile = function(){
+                            hot.getPlugin('exportFile').downloadFile('csv', {
+                                filename: appConfig.creditNoteName +' {!$Label.CRM_Export_File_Label}',
+                                columnDelimiter: '{!UserLocaleForCSV}' === 'true' ? ';' :',',      //  ";" for DE Locale and "," for all other territories 
+                                columnHeaders: true       // default false, exports the column headers
+                            });
+                        };
+                        
+                    }]
+                )//end of angular class
+            
+            </script>
+        </head>
+        <body  style="padding:0px">
+            <!--<apex:form >
+                <apex:pagemessages />-->
+                <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="UploadCreditNoteItems" ng-controller="UploadCreditNoteItemsController" class="slds" ng-init="init()" ng-cloak="ngCloak" style="overflow : hidden">
+                    <!-- ===========================Spinner================================= -->   
+                    <div class="spinnerModel" ng-show="showSpinner">
+                        <div class="spinnerContent slds-spinner--large">
+                            <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                            <div id="spinnerText">{{spinnerText}}</div>
+                        </div>
+                    </div>
+                    <!-- ===========================Spinner================================= -->  
+                    
+                    <!-- =========================== HEADER BANNER ================================-->     
+                    <div id="headerDiv" class="slds-page-header" role="banner">
+                        <div class="slds-grid">
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <nav class="slds-m-bottom--xx-small" role="navigation">
+                                    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                        <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Credit_Note__c.Tab, $ObjectType.Credit_Note__c)}'">{!$ObjectType.Credit_Note__c.labelPlural}</a></li>
+                                        <li class="slds-list__item slds-text-heading--label"><a href="/{!Credit_Note__c.Id}">{!Credit_Note__c.Name}</a></li>
+                                    </ol> 
+                                </nav> 
+                                <div class="slds-col slds-has-flexi-truncate">
+                                    <h1 class="slds-float--left slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Upload_UploadProducts}">{!$Label.CRM_Upload_UploadProducts}</h1>  
+                                </div>
+                            </div>
+                            <!----------------------------US : 994------------------------->
+                            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                                <div class="slds-form-element" style="Width:80%">
+                                    <div class="slds-form-element__control picklistClass">
+                                        <crm-multiselect-picklist options="resultFilterValues" selectedOpts="resultFilter" multiple="false" placeholder="{!$Label.CRM_Result_Filter_PlaceHolder}" ng-click="filterRecords(true)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <c:CRM_SLDSPicklist />
+                            <!----------------------------US : 994------------------------->
+                            
+                            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-button-group slds-button-space-left" role="group">
+                                            <div id = "CreditNote" /> 
+                                            <!-- US 994 ------->
+                                            <button class="slds-button slds-button--neutral" ng-click="refreshPage()">{!$Label.CRM_Reset_button_label}</button>
+                                            <!-- US 994 ------->
+                                            <!-- US 989 ------->
+                                            <button class="slds-button slds-button--neutral" ng-click="exportCSVFile()" ng-disabled="isExportBtnReadOnly">{!$Label.CRM_Export_File_Button_Label}</button>
+                                            <!-- US 989 ------->
+                                            <button class="slds-button slds-button--neutral" ng-click="importFile('{!Credit_Note__c.Id}','{!Credit_Note__c.Name}')" ng-disabled="isImportBtnReadOnly">{!$Label.CRM_Import_Button}</button>
+                                            <button id="quickSaveBtn" ng-click="saveCreditNoteItems('{!Credit_Note__c.Id}')" class="slds-button slds-button--neutral" ng-disabled="isEditableFieldsReadOnly">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                            <button class="slds-button slds-button--neutral" ng-click="backToCreditNote('{!URLFOR($Action.Credit_Note__c.View,Id)}')">{!$Label.CRM_Clone_Credit_Note_Back_Button}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-button-group" role="group"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ===========================Exception=============================== -->
+                    <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+                        <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                            <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                                <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                            <div class="notify__content slds-grid" ng-show="msgText">
+                                <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                                </svg>
+                                <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                                </svg>
+                                <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                                </svg>
+                                <div class="slds-col slds-align-middle">
+                                    <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ===========================Exception=============================== --> 
+                    
+                    <!-- ===========================Dynamic Div================================= -->
+                    <div id="tableDiv" style="margin: 3px 3px 0;"></div> 
+                </div>
+            <!--</apex:form>-->
+        </body> 
+    </html>
+</apex:page>

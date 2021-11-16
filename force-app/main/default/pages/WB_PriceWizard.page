@@ -1,0 +1,1627 @@
+<apex:page controller="WB_PriceWizardController" showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="true" id="pricePagePoc">
+
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+<head> 
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" />
+  
+  <apex:stylesheet value="{!URLFOR($Resource.WBSLDSv1, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+  
+ <!-- <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />-->
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  <!--<apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/UploadDealProducts.js')}" /> -->
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.svg4everybody)}" /> 
+<style>
+    .wbslds .slds-dropdown--small {
+      min-width: 10rem; }
+    .wbslds .slds-dropdown {
+    min-width: 6rem;
+    max-width: 10rem; } 
+    .wbslds .slds-picklist__label {
+    width: 10rem; }
+    
+    .handsontable {
+      font-size:11px
+    }
+    
+    .handsontable .relative {
+        text-align: left
+    }
+    
+    .handsontable col.rowHeader {
+        width: 200px !important;
+    }
+    
+    .handsontable thead th {
+        background-color: #4F6A92;
+        color: white
+    }
+    
+    .handsontable tbody th {
+        background-color: #A7B8D1
+    }
+    
+    .handsontable td {
+        -webkit-transition: all 0.5s ease;
+        -moz-transition: all 0.5s ease;
+        -o-transition: all 0.5s ease;
+        transition: all 0.5s ease;
+    }
+    
+    .has-changed {
+    	color: red;
+    }
+    /*
+    .handsontable tr:first-child td {
+    	background-color: #4F6A92;
+        color: white;
+    }
+    */
+    .total-row {
+        font-weight: bold
+    }
+    
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+    
+    .sortClass a {
+    	color: white;
+    	text-decoration: underline;
+    	transition: color .1s linear;
+	}
+	
+	.sortClass a:focus, .sortClass a:hover {
+    	text-decoration: underline;
+    	color: white;
+	}
+    
+    .currentRow {
+      background-color: #FFE09F !important;
+      color: #222 !important;
+    }
+        
+      
+
+</style>
+
+<script>
+//$.noConflict();
+//Test
+svg4everybody(); //This is for SFDC LDS CSS to render preperly in IE.
+
+	var editPropArray = [];
+	editPropArray.push('caCategory');
+	editPropArray.push('priceCode');
+	editPropArray.push('effectiveDate');
+	editPropArray.push('price');
+	editPropArray.push('priceTier');
+	editPropArray.push('episodePrice');
+	editPropArray.push('episodePriceTier');
+	editPropArray.push('announcementOverride');
+	editPropArray.push('internalComment');
+	editPropArray.push('caName');
+	editPropArray.push('capName');
+		     
+angular.module("PriceWizard", ['ngHandsontable'])
+    .controller("PriceWizardController", ['$scope', function($scope) {
+        $scope.itemsBackup = [];
+        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.sourceEvent;
+        $scope.tableWidth = jQuery(document).width()-30;
+        $scope.tableHeight = jQuery(document).height()-285;
+        $scope.resultFilter; 
+        $scope.countries;
+        $scope.accounts;
+        $scope.channels;
+        $scope.formats;
+        $scope.languages;
+        $scope.languageTypes;
+        $scope.wbTerritories;
+        $scope.priceTiers;
+        $scope.contentTypes;
+        $scope.caLifeCycles;
+        $scope.mpmNumbers;
+        $scope.mpmText='';
+        $scope.vvText='';
+        $scope.submitFlag = false;
+        
+        $scope.selectedCountries=[];
+        $scope.selectedAccounts=[];
+        $scope.selectedChannels=[];
+        $scope.selectedFormats=[];
+        $scope.selectedLangs=[];
+        $scope.selectedLangTypes=[];
+        $scope.selectedWBTerritories=[];
+        $scope.selectedPriceTiers=[];
+        $scope.selectedContentTypes=[];
+        $scope.selectedCALifeCycles=[];
+        
+        $scope.countryToolTip = 'None';
+        $scope.accountToolTip = 'None';
+        $scope.channelToolTip = 'None';
+        $scope.formatToolTip = 'None';
+        $scope.languageToolTip = 'None';
+        $scope.langTypeToolTip = 'None';
+        $scope.territoryToolTip = 'None';
+        $scope.priceTierToolTip = 'None';
+        $scope.contentTypeToolTip = 'None';
+        $scope.caLifeCycleToolTip = 'None';
+        $scope.queryParam =[];
+        $scope.idValue = false;
+        $scope.actionValue = '{!actionValue}';
+        $scope.hotInstance = null;
+        
+        //$scope.headers = ['Video Version#','Title','Country','Account','Channel','Format','Language','Language Type','CA Category','Price Code','Price Start Date','WSP','Price Tier','Episode WSP','Episode Price Tier','Comment','Announce Override'];
+	    $scope.headersObject=[{key:'videoVersion',label:'Video Version#',isSorted:false},{key:'title',label:'Title',isSorted:false},{key:'country',label:'Country',isSorted:false},{key:'account',label:'Account',isSorted:false},{key:'channel',label:'Channel',isSorted:false},{key:'format',label:'Format',isSorted:false},{key:'language',label:'Language',isSorted:false},{key:'languageType',label:'Language Type',isSorted:false},{key:'caCategory',label:'CAP Category',isSorted:false},{key:'priceCode',label:'Price Code',isSorted:false},{key:'effectiveDate',label:'Price Start Date',isSorted:false},{key:'priceTier',label:'Price Tier',isSorted:false},{key:'price',label:'WSP',isSorted:false},{key:'episodePriceTier',label:'Episode Price Tier',isSorted:false},{key:'episodePrice',label:'Episode WSP',isSorted:false},{key:'internalComment',label:'Comment',isSorted:false},{key:'announcementOverride',label:'Announce Override'}];
+        $scope.headers = [];
+        
+        $scope.filterCriteria = {selectedCountries:$scope.selectedCountries,selectedAccounts:$scope.selectedAccounts,selectedChannels:$scope.selectedChannels,selectedFormats:$scope.selectedFormats,selectedLangs:$scope.selectedLangs,selectedLangTypes:$scope.selectedLangTypes,selectedWBTerritories:$scope.selectedWBTerritories,selectedPriceTiers:$scope.selectedPriceTiers,selectedContentTypes:$scope.selectedContentTypes,selectedCALifeCycles:$scope.selectedCALifeCycles,mpmNumbers:null};
+        $scope.init = function() {
+            $scope.showSpinner = true;
+            $.when(
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+            ).then(function() {
+                var locale = '{!UserLocale}'; //'de';
+                console.log('--locale->',locale);
+                var de = Globalize.locale(locale);
+                console.log('--Globalize.locale->',de);
+                
+                $scope.uniqueIds = '{!clientIds}';
+                console.log('Unique Ids from Grid ' + $scope.uniqueIds);
+        
+                
+                
+                $scope.GetFilterData('Countries');
+                $scope.GetFilterData('Accounts');
+                $scope.GetFilterData('Channels');
+                $scope.GetFilterData('Formats');
+                $scope.GetFilterData('Languages');
+                $scope.GetFilterData('LanguageTypes');
+                $scope.GetFilterData('WBTerritories');
+                $scope.GetFilterData('PriceTiers');
+                $scope.GetFilterData('ContentTypes');
+                $scope.GetFilterData('CALifeCycles');
+                
+         //     $scope.tableOptions.items.splice(0, 0, $scope.tableOptions.colHeadersLabels);
+         //     $scope.mpmData.data.splice(0, 0, $scope.mpmSettings.colHeadersLabels);
+         //     $scope.vvData.data.splice(0, 0, $scope.vvSettings.colHeadersLabels);
+                
+                jQuery('#mpmDisplay').prop( "disabled", true );
+                jQuery('#vvDisplay').prop( "disabled", true );
+                $scope.loadData();
+                $scope.$apply();
+                
+           });
+        };
+        
+        $scope.generateHeader = function(propertyName,sortOrder){
+	        //$scope.headers.splice(0,$scope.headers.length);
+	        $scope.headers = [];
+	        
+	        for(headerIndex=0;headerIndex<$scope.headersObject.length;headerIndex++){
+	            headerObject = $scope.headersObject[headerIndex];
+	        	if(headerObject.key == 'effectiveDate'){
+	        		linktext = headerObject.label;
+	        		$scope.headers.push(linktext);
+	        	}else{
+	        		key = headerObject.key;
+	        		linktext = '<a class="sortClass" id="'+key+'Link" href="javascript:sortData(\''+key+'\');">'+headerObject.label+'</a>';
+	        		if(propertyName === key){
+	        			if(sortOrder == true){
+	        				linktext = linktext + sortIconAsc;	
+	        			}else{
+	        				linktext = linktext + sortIconDesc;
+	        			}
+	        		}/*else{
+	        			linktext = linktext + '<span style="visibility: hidden;">'+sortIconAsc+'</span>';
+	        		}*/
+	        		$scope.headers.push(linktext);
+	        	}
+	        }
+	        
+	        if($scope.actionValue == 'priceUpdate'){
+	        	$scope.headers.splice(11,0,'Price End Date');
+	        	$scope.headers.push('CAP ID');
+	        }else{
+	        	$scope.headers.push('CA ID');
+	        	$scope.headers.push('Existing Price(Start - End - Price - E.Price)');
+	        }
+	        
+	        $scope.headers.push('Validation');
+	        $scope.headers.push('Announcement');
+	        
+        };
+        
+        $scope.generateHeader('',false);
+		
+		$scope.updateTableHeaders = function(){
+			$scope.mySettings.colHeaders = $scope.headers;        
+			$scope.hotInstance.updateSettings($scope.mySettings);
+			//$scope.hotInstance.updateSettings({columns: $scope.headers});
+			//$scope.hotInstance.render();
+		};
+
+        $scope.QueryString = function () {
+ 
+            var a1 = window.location.href;
+            urlValue='';
+            var url;
+            //console.log('a1:-------'+a1);
+            if(window.location.href.indexOf("UNIQUEID")>-1){
+                console.log('Contains UNIQUEID');
+                url = window.location.href;
+                url = url.slice(url.indexOf("UNIQUEID"));
+                url = url.slice(url.indexOf('=')+1);
+                if(url.indexOf('&') != -1)
+                	url = url.substring(0,url.indexOf('&'));
+                console.log('url is',url);
+                WB_PriceWizardController.getUniqueIDvalue(url,function(result,event){
+                    urlValue = result;
+                    console.log('urlValue:'+urlValue);
+                    $scope.GetRecordsById(urlValue);
+                    return urlValue;
+                });
+            }else if(window.location.href.indexOf("ID")>-1){
+                //urlValue = "ID";
+                console.log('Contains ID');
+                urlValue = window.location.href;
+                urlValue = urlValue.slice(urlValue.indexOf("ID"));
+                urlValue = unescape(urlValue);
+                urlValue = urlValue.slice(urlValue.indexOf('=')+1).split(',');
+                console.log('urlValue:'+urlValue);
+                $scope.idValue = true;
+                return urlValue;
+            }
+        }();
+        
+        
+        
+       $scope.loadData = function(){
+          
+            $scope.queryParam = urlValue;
+            console.log('QueryString ' + $scope.queryParam);
+            if($scope.idValue){
+                $scope.GetRecordsById($scope.queryParam);
+            }else{
+                $scope.showSpinner = false;
+            }
+                
+       };
+       
+        
+        
+        $scope.showHideModal = function(modalId,mode){
+        	jQuery('#'+modalId).toggleClass('slds-fade-in-open');
+        	jQuery('#backDrop').toggleClass('slds-backdrop--open');
+        	if(mode == 'close'){
+        		dataList = [];
+        		if(modalId == 'mpmModal'){
+        		    dataList = $scope.mpmData.data;
+        		}else{
+        			dataList = $scope.vvData.data;
+        		}
+        		
+        		hasData = false;
+       			if(dataList != null && dataList.length > 1){
+       				for(index=0;index<dataList.length;index++){
+	     				if(modalId == 'mpmModal' && dataList[index].mpm != null && dataList[index].mpm != ''){
+		        		    if(hasData == true){
+   								$scope.mpmText = $scope.mpmText + ',...';
+   								break;
+   							}
+   							$scope.mpmText = dataList[index].mpm;
+   							hasData = true;	
+		        		}else if(modalId == 'vvModal' && dataList[index].vv != null && dataList[index].vv != ''){
+		        			if(hasData == true){
+		        				$scope.vvText = $scope.vvText + ',...';
+		        				break;
+		        			}
+		        			$scope.vvText = dataList[index].vv;
+		        			hasData = true;			
+		        		}
+       				}
+       			}
+       			
+       			if(hasData == false){
+       				if(modalId == 'mpmModal'){
+        		    	$scope.mpmText = null;
+	        		}else{
+	        			$scope.vvText = null;
+	        		}	
+       			}
+       		}	
+        }
+        
+        $scope.togglePickList = function(element,className){
+            jQuery('#'+element).toggleClass(className);
+        };
+        
+        $scope.toggleSelect = function(element,index,className,selectedList,value){
+            jQuery('#'+element+index).toggleClass(className);
+            if(jQuery.inArray(value, selectedList) == -1){
+                selectedList.push(value);
+            }else{
+                selectedList.splice(jQuery.inArray(value, selectedList), 1);
+            }
+            
+            $scope.prepareTooltip(element,selectedList);        
+        };
+        
+        $scope.prepareTooltip = function(element,selectedValues){
+            selectedVal = 'None';
+            
+            for (var i = 0; i < selectedValues.length; i++) {
+                if(i==0) {
+                    selectedVal = selectedValues[i];
+                }else{
+                    selectedVal = selectedVal + ','+selectedValues[i];
+                }
+            }
+            
+            if(element == 'countryOption') $scope.countryToolTip = selectedVal;
+            else if(element == 'accountOption') $scope.accountToolTip = selectedVal;
+            else if(element == 'channelOption') $scope.channelToolTip = selectedVal;
+            else if(element == 'formatOption') $scope.formatToolTip = selectedVal;
+            else if(element == 'languageOption') $scope.languageToolTip = selectedVal;
+            else if(element == 'langTypeOption') $scope.langTypeToolTip = selectedVal;
+            else if(element == 'territoryOption') $scope.territoryToolTip = selectedVal;
+            else if(element == 'priceTierOption') $scope.priceTierToolTip = selectedVal;
+            else if(element == 'contentTypeOption') $scope.contentTypeToolTip = selectedVal;
+            else if(element == 'caLifeCycleOption') $scope.caLifeCycleToolTip = selectedVal;
+        }
+        
+        $scope.GetFilterData = function(filterName){
+                WB_PriceWizardController.getFilterData(filterName,$scope.actionValue,
+                    function(result,event){
+                        if (event.status) {
+                            if(filterName == 'Countries') $scope.countries = result;
+                            if(filterName == 'Accounts') $scope.accounts = result;
+                            if(filterName == 'Channels') $scope.channels = result;
+                            if(filterName == 'Formats') $scope.formats = result;
+                            if(filterName == 'Languages') $scope.languages = result;
+                            if(filterName == 'LanguageTypes') $scope.languageTypes = result;
+                            if(filterName == 'WBTerritories') $scope.wbTerritories = result;
+                            if(filterName == 'PriceTiers') $scope.priceTiers = result;
+                            if(filterName == 'ContentTypes') $scope.contentTypes = result;
+                            if(filterName == 'CALifeCycles')$scope.caLifeCycles = result;
+                        }else{
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                        }   
+                    },
+                    {
+                        escape: false,
+                        timeout: 120000
+                    });
+        };
+        
+        $scope.pageRefresh = function(){
+            window.location = '/apex/WB_PriceWizard?action='+$scope.actionValue;
+        }
+        
+        $scope.filterRecords = function(){
+        	clearSort();
+            filteredItems = [];
+            if($scope.resultFilter == 'error'){
+                for(index=0;index<$scope.itemsBackup.length;index++){
+                    item = $scope.itemsBackup[index]; 
+                    if(item.validation != null && item.validation !='' && item.validation != 'Success')
+                        filteredItems.push(item);
+                }
+                $scope.tableOptions.items = filteredItems;
+            }else if($scope.resultFilter == 'success'){
+                for(index=0;index<$scope.itemsBackup.length;index++){
+                    item = $scope.itemsBackup[index]; 
+                    if(item.validation == 'Success' && item.validation != 'Validation')
+                        filteredItems.push(item);
+                }
+                
+                $scope.tableOptions.items = filteredItems;
+            }else{
+            	$scope.tableOptions.items = $scope.itemsBackup;
+            }
+        }
+        
+        
+        $scope.GetRecords = function() {
+            
+            $scope.showSpinner = true;
+            var startTime = new Date();
+            $scope.msgText = '';
+            $scope.msgSeverity = '';
+            
+            var vvDataArray = $scope.vvData.data.slice(0, -1);
+            var videoVersionList = [];
+            for(index=0;index<vvDataArray.length;index++){
+                if(vvDataArray[index] != null && vvDataArray[index].vv != null && vvDataArray[index].vv.trim().length > 0)
+                    videoVersionList.push(vvDataArray[index].vv);
+            }
+            
+            var mpmDataArray = $scope.mpmData.data.slice(0, -1);
+            var mpmList = [];
+            for(index=0;index<mpmDataArray.length;index++){
+                if(mpmDataArray[index] != null && mpmDataArray[index].mpm != null && mpmDataArray[index].mpm.trim().length > 0)
+                    mpmList.push(mpmDataArray[index].mpm);
+            }
+            $scope.filterCriteria.mpmNumbers = mpmList;
+                
+            WB_PriceWizardController.getRecordIDs(videoVersionList,$scope.filterCriteria,$scope.actionValue,
+                function(result,event){
+                    var endTime = new Date();
+                    console.log('Time Elapsed (ms) in getClientAvailIDs is', (endTime - startTime));
+                    clearSort();
+                    if (event.status) {
+                    	if(result.length == 0){
+                    		$scope.msgText = 'No results found. Please check search criteria.';
+                        	$scope.msgSeverity = 'error';
+                        	$scope.showSpinner = false;
+                        	$scope.tableOptions.items = [];
+                        	$scope.itemsBackup = [];
+                        	$scope.$apply();
+                    	}else if(result.length == 1 && result[0] == 'LIMIT EXCEEDED'){
+                    		$scope.msgText = 'Search exceeded 25000 records. Please narrow search criteria.';
+	                        $scope.msgSeverity = 'error';
+	                        $scope.showSpinner = false;
+	                        $scope.tableOptions.items = [];
+                        	$scope.itemsBackup = [];
+	                        $scope.$apply();
+                    	}else{
+                        	$scope.GetRecordsById(result);
+                        }
+                    }else {
+                        $scope.msgText = event.message;
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                        $scope.$apply();
+                    }
+                },
+                {
+                    escape: false,
+                    timeout: 120000
+                });
+        };
+        
+        $scope.GetRecordsById = function(returnedIds){
+            
+          //****************************************************************
+          // Code added by Shubham for ER - 3328    
+            inputIDs = [];
+            if(returnedIds.length > 0){
+                for(i=0;i<returnedIds.length;i++){
+                    inputIDs.push(returnedIds[i].split('&')[0]);
+                }
+            }
+            
+          //*****************************************************************   
+            
+            (function RetrieveRecords(recordIDs,returnedRows) {
+                //console.log('caIDs:'+caIDs);
+                //console.log('returnedRows:'+returnedRows);
+                recordIDsChunked = recordIDs.splice(0,2000);
+                //console.log('caIDsChunked:'+caIDsChunked);
+                WB_PriceWizardController.getRecords(recordIDsChunked,$scope.actionValue,
+                    function(result,event){
+                        if (!event.status) {
+                            console.log('In exception case ', event.status);
+                            clearSort();
+                            $scope.$apply(function() {
+                                $scope.msgText = event.message;
+                                $scope.msgSeverity = 'error';
+                                $scope.showSpinner = false;
+                            });
+                        } else if (inputIDs.length > 0) {
+                            returnedRows = returnedRows.concat(result);
+                            RetrieveRecords(recordIDs,returnedRows);
+                        }else {
+                    		clearSort();
+                            $scope.$apply(function() {
+                                $scope.tableOptions.items = returnedRows.concat(result);
+                                $scope.itemsBackup = $scope.tableOptions.items;
+                            
+                                $scope.spinnerText = '';
+                                $scope.showSpinner = false;
+                            });
+                        }
+                    },{
+                        escape: false,
+                        timeout: 120000,
+                        buffer: false
+                    });
+                
+            })(inputIDs,[]);
+        }
+        
+        $scope.mpmData = {
+        	data:[]
+        }
+        
+        $scope.mpmSettings = {
+         	colHeaders: ['MPM#'],
+         	minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            //rowHeaders: true,
+            columnSorting: false,
+            sortIndicator: false,
+            copyRowsLimit:1000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.mpmvvRenderer;
+                return cellProperties;
+            }
+         }
+         
+         $scope.vvData = {
+        	data:[]
+         }
+         $scope.vvSettings = {
+         	colHeaders: ['Video Version#'],
+         	minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: false,
+            manualRowResize: false,
+            //rowHeaders: true,
+            columnSorting: false,
+            sortIndicator: false,
+            copyRowsLimit:1000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                cellProperties.renderer = $scope.mpmvvRenderer;
+                return cellProperties;
+            }
+         }
+         
+         $scope.mpmvvRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+         	Handsontable.renderers.TextRenderer.apply(this, arguments);
+         	return td;
+         }
+        
+        $scope.tableOptions = {
+        	items: []
+        } 
+        $scope.mySettings = {
+            /*contextMenu: {
+                items: {
+                    "remove_row": {
+                        name: '{!$Label.CRM_Upload_Message_RemoveRow}',
+                        disabled: function() {
+                            //disable this option
+                            if (this.getSelected()) {
+                                var start_row = this.getSelected()[0];
+                                var end_row = this.getSelected()[2];
+                                
+                                if (start_row === 0 || end_row === 0) return true; // if header is selected
+                                return false;
+                            }
+                        }
+                    }
+                }
+            },*/
+            renderAllRows: true,
+            contextMenu: ['remove_row'],
+            colHeaders: $scope.headers,
+            minSpareRows: 1,
+            stretchH: 'all',
+            manualColumnResize: true,
+            manualRowResize: false,
+            currentRowClassName: 'currentRow',
+          //  rowHeaders: true,
+            copyRowsLimit:25000,
+            wordWrap: true,
+            cells: function(row, col, prop) {
+                var cellProperties = {};
+                /*if (row == 0) {
+                    cellProperties.readOnly = true;
+                }*/ // first row should not be editable but user should able to copy
+                cellProperties.renderer = $scope.myRenderer;
+                var item = $scope.tableOptions.items[row];
+                return cellProperties;
+            },
+
+            beforeChange: function(changes, source) {
+                var ele = this;
+                $scope.sourceEvent = source;
+                
+                $.each(changes, function(index, element) {
+                    //console.log(index, element);
+                    // changes is a 2d array like [[row, prop, oldVal, newVal], ...]
+                    if (changes[index][3] == "") {
+                        changes[index][3] = null;
+                    }
+                    if (changes[index][2] != changes[index][3]) {
+                        //var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                        //elem.change = true;
+                        
+                        /*var item = $scope.tableOptions.items[changes[index][0]];
+                        if(item != null && typeof item != 'undefined' && jQuery.inArray(changes[index][1],editPropArray) != -1){
+                        	item['is'+changes[index][1]] = true;
+                        }*/
+                    }
+
+                });
+            },
+
+            afterChange: function(changes, source) {
+                var ele = this;
+                $scope.sourceEvent = source;
+                
+                if (changes && changes.length > 0) {
+                    $.each(changes, function(index, element) {
+                        //element is object {
+                        // 0: rowIndex, 1: prop, 2: oldValue 3: New Value 
+                        //}
+                        var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+
+                        // check if previous and new value of the cell is difference and 
+                        // cell is not the last column i.e. validation error/message
+                        if (changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                            // update the row at the given index 
+                            var item = $scope.tableOptions.items[changes[index][0]];
+
+                            item.isRowModified = true;
+                            item.isRowRemoved = false;
+                            item.previouslySelectedForRemoval = false;
+                            
+                            if(elem.prop === 'caName' || elem.prop === 'capName'){
+                                item.hasAnnouncement = false;
+                            //  item.hasFuturePrice = false;
+                            }
+                             
+                            if(jQuery.inArray(changes[index][1],editPropArray) != -1){
+                        		item['is'+changes[index][1]] = true;
+                        	}
+                        }
+
+                    });
+                }
+            },
+
+            beforeRemoveRow: function(index, amount) {
+                if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                    return false;
+                }
+                for (i = index; i < index + amount; i++) {
+                    $scope.tableOptions.items[i].isRowRemoved = true;
+                }
+                $scope.$apply();
+                return false;
+            },
+            
+            afterRender: function(){
+            	$scope.submitFlag = false;
+            	setHeaderBackground();
+            //	console.log(' $scope.submitFlag afterRender ->',$scope.submitFlag);
+            },
+            
+            beforeOnCellMouseDown: function(event, coords, element) {
+			  //console.log('Test header '+coords.row);
+			  if (coords.row < 0) {
+			    event.stopImmediatePropagation();
+			  }
+			},
+			
+			afterInit: function() {
+        		$scope.hotInstance = this;
+    		}
+            
+        };
+        
+        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            
+            var item = $scope.tableOptions.items[row];
+            var cell = instance.getCell(row, col);
+            var cellvalue = instance.getDataAtCell(row, col);
+            
+            if(prop == 'message'){ //} && row > 0){
+                //console.log(' Row Column ->',row+' '+col);
+                if(item.hasAnnouncement == false){// && item.hasFuturePrice == false){
+                    Handsontable.Dom.empty(td); 
+                }else{
+                    if($scope.sourceEvent == 'loadData'){
+                        Handsontable.Dom.empty(td);
+                        /*if(item.hasFuturePrice == true){
+                            addIcon(td,item.caRecordId,rowsIcon);
+                        }*/
+                        
+                        if(item.hasAnnouncement == true){
+                            addIcon(td,item.announcementId,announcementIcon);
+                        }
+                    }
+                }
+            }else{
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+            }
+            if (item.isRowRemoved) {
+                td.style.backgroundColor = 'grey';
+                td.style.color = 'white';
+                item.isRowModified = false;
+                item.previouslySelectedForRemoval = true;
+            }/*else if(row == 0){//cellvalue == 'Validation' || cellvalue == 'Title'){
+            	if(col > 7 && col <= 18){
+            		td.style.backgroundColor = '#04844b'; //green
+            		if((col == 11 && $scope.actionValue == 'priceUpdate') || (col == 18 && $scope.actionValue == 'rePrice'))
+            			td.style.backgroundColor = '#4f6a92';//blue
+            	}else{
+                	td.style.backgroundColor = '#4f6a92';//blue
+                }
+                
+                td.style.color = 'white';
+                td.style.textAlign = 'center';
+            }*/else if (item.validation != 'Success' && item.validation != '' && item.validation != null){ // && row > 0) {
+                td.style.backgroundColor = '#c23934';//red
+                td.style.color = 'white';
+
+                if (typeof item.previouslySelectedForRemoval != 'undefined' && !item.previouslySelectedForRemoval) {
+                    item.isRowModified = true;
+                }
+            }
+            if (col > 7 && item['is'+prop] && prop != 'validation') {
+                $(cell).addClass('has-changed');
+            }
+            /*
+            if($scope.submitFlag == true){
+            	cellProperties.change = false;
+            }else if (cellProperties.change && col > 7 && prop != 'validation') {
+                $(cell).addClass('has-changed');
+            }
+            */
+            //console.log(' $scope.submitFlag ->',$scope.submitFlag);
+            
+            return td;
+        };
+
+        $scope.isEmpty = function(objectjson) {
+            var dataExists = true;
+            $.each(objectjson, function(i, d) {
+                if (d != null && d != '' && typeof d != 'object') {
+                    dataExists = false;
+                }
+            });
+            return dataExists;
+        };
+        
+        $scope.showPriceCode = function(){
+            $scope.showSpinner = true;
+            var tableData = $scope.tableOptions.items.slice(0, -1);
+            for(index=0;index<tableData.length;index++){
+                if(tableData[index] != null && tableData[index].priceCodeHidden != null && tableData[index].priceCodeHidden.trim().length > 0){
+                    tableData[index].priceCode = tableData[index].priceCodeHidden;
+                    tableData[index].isRowModified = true;
+                }
+            }
+            $scope.showSpinner = false;
+        }
+        
+        $scope.SubmitData = function() {
+            $scope.showSpinner = true;
+            var chunkSize = {!$Label.WB_RePrice_Batch_Size}; // Recursive batch size
+            // Flatten out the data, skip the first and last empty row
+            var inputData = $scope.tableOptions.items.slice(0, -1);
+            var seasonData = [];
+            $scope.msgText = '';
+            $scope.msgSeverity = '';
+            var cleanedGridData = [];
+            var modifiedRows = 0;
+            $scope.parser = Globalize.numberParser();
+            $scope.integerFormatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+            $scope.decimalFormatter = Globalize.numberFormatter({ maximumFractionDigits: 2 });
+
+            rePriceInputData = angular.copy(inputData);
+            for(index=0;index<rePriceInputData.length;index++){
+                rePriceInputData[index].rowIndex = index;
+                rePriceInputData[index].contentType = null;
+                if(rePriceInputData[index].isRowModified == true)
+                    modifiedRows++;
+            }
+            
+            if(modifiedRows == 0){
+                $scope.msgText = 'Please change price data to proceed.';
+                $scope.msgSeverity = 'error';
+                $scope.showSpinner = false;
+                return;
+            }
+            
+            /**
+             * rowsToProcess - Array of records to save back to salesforce
+             * returnedResults - Rows already saved to Salesforce
+             */
+            (function savePriceRecords(rowsToProcess, returnedResults, failedRecCount) {
+                console.log(rowsToProcess.length, returnedResults.length);
+
+                if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                    $scope.showSpinner = false;
+                    return;
+                }
+                
+                batchLimit = 0;
+                chunkIndex = 0;
+                for(index=0;index<rePriceInputData.length && index < chunkSize;index++){
+                    if(rePriceInputData[index].contentType == 'Season'){
+                        if(batchLimit + rePriceInputData[index].episodeCount + 1 > chunkSize){
+                            break;
+                        }
+                        batchLimit = batchLimit + rePriceInputData[index].episodeCount + 1;
+                    }else{
+                        batchLimit = batchLimit+1;
+                    }
+                    chunkIndex = index;
+                }
+                chunkedData = rowsToProcess.splice(0, chunkIndex+1);
+
+                var saveStartTime = new Date();
+
+                // Save data back
+                WB_PriceWizardController.savePriceRecords(chunkedData,$scope.actionValue, function(result, event) {
+                    // Log time to complete
+                    var saveEndTime = new Date(); 
+                    console.log('Time Elapsed for chunk is', (saveEndTime - saveStartTime) +' $$$$$ rePriceInputData is ->'+rePriceInputData.length);
+
+                    if (!event.status) {
+                        console.log('In exception case ', event.status);
+                        $scope.$apply(function() {
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                        });
+                    } else if (rePriceInputData.length > 0 || seasonData.length > 0) {
+                        console.log('After response returned from Save -  rePriceInputData.length=', rePriceInputData.length);
+                        // If successful add results to the main array
+                        for(index=0;index<result.length;index++){
+                            if(result[index].contentType == 'Season'){
+                                chunkedData[index].contentType = result[index].contentType;
+                                chunkedData[index].episodeCount = result[index].episodeCount;
+                                seasonData.push(chunkedData[index]);        
+                            }else{
+                                returnedResults.push(result[index]);        
+                            }
+                        }
+                        
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                        failedRecCount += failedCount;
+                        // Update progress text for user
+                        $scope.$apply(function() {
+                            $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length + seasonData.length);
+                        });
+                        // Call salesforce again with remaining rows
+                        if(rePriceInputData.length > 0){
+                            savePriceRecords(rowsToProcess, returnedResults, failedRecCount);
+                        }else{
+                            rePriceInputData = seasonData;
+                            seasonData = [];
+                            savePriceRecords(rePriceInputData, returnedResults, failedRecCount);
+                        }
+                    } else {
+                        console.log('After response returned from Save - In Else rePriceInputData.length=', rePriceInputData.length);
+                        for(index=0;index<result.length;index++){
+                            if(result[index].contentType == 'Season'){
+                                chunkedData[index].contentType = result[index].contentType;
+                                chunkedData[index].episodeCount = result[index].episodeCount;
+                                seasonData.push(chunkedData[index]);        
+                            }else{
+                                returnedResults.push(result[index]);        
+                            }
+                        }
+                        
+                        if(seasonData.length > 0){
+                            rePriceInputData = seasonData;
+                            seasonData = [];
+                            savePriceRecords(rePriceInputData, returnedResults, failedRecCount);
+                        }else{
+                            
+                            $scope.$apply(function() {  // Update UI
+                            //    returnedResults = returnedResults.concat(result);
+                            	$scope.submitFlag = true;
+                                process = $scope.actionValue == "rePrice"?"Re-Price":"Price Update";
+                                for(index=0;index<returnedResults.length;index++){
+                                    existingItem = $scope.tableOptions.items[returnedResults[index].rowIndex]; 
+                                    existingItem.validation = returnedResults[index].validation;
+                                    existingItem.isRowModified = returnedResults[index].isRowModified;
+                                    existingItem.existingPrice = returnedResults[index].existingPrice;
+                                    if(existingItem.validation == 'Success'){
+                                    	existingItem.iscaCategory = false;
+								        existingItem.ispriceCode = false;
+								        existingItem.iseffectiveDate = false;
+								        existingItem.isprice = false;
+								        existingItem.ispriceTier = false;
+								        existingItem.isepisodePrice = false;
+								        existingItem.isepisodePriceTier = false;
+								        existingItem.isannouncementOverride = false;
+								        existingItem.isinternalComment = false;
+										existingItem.iscaName = false;
+										existingItem.iscapName = false;
+										if($scope.actionValue != "rePrice" && existingItem.priceCode != null){
+                                    		existingItem.price = returnedResults[index].price;
+							            	existingItem.priceTier = returnedResults[index].priceTier;
+							            	existingItem.episodePrice = returnedResults[index].episodePrice;
+							            	existingItem.episodePriceTier = returnedResults[index].episodePriceTier;
+							            }
+                                    }
+                                }
+                                $scope.itemsBackup = $scope.tableOptions.items;
+                                
+                                var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                failedRecCount += failedCount;
+    
+                                if (failedRecCount > 0) {  
+                                    $scope.msgText = "Out of "+modifiedRows+" modified record(s), "+failedRecCount.toString() + " record(s) have been failed during "+ process +". Please correct the data to fix the errors.";
+                                    $scope.msgSeverity = 'error';
+                                } else {
+                                    $scope.msgText = "Out of "+modifiedRows+" modified record(s), "+ process+" has been processed successfully for "+modifiedRows+"  record(s).";
+                                    $scope.msgSeverity = 'success';
+                                }
+    
+                                $scope.spinnerText = '';
+                                $scope.showSpinner = false;
+                            });
+                        }
+                  }
+                }, {
+                    escape: false,
+                    timeout: 120000,
+                    buffer: false
+                });
+            })(rePriceInputData, [], 0);
+        };
+        
+    }]);
+	
+	var prevSortColumn = null;
+	var sortOrder = true;
+	
+	function sortData(propertyName){
+		angScope = angular.element(jQuery('#ng-app')).scope();
+		var inputData = angScope.tableOptions.items.slice(0, -1);
+		
+		if(prevSortColumn == null || prevSortColumn != propertyName){
+			sortOrder = true;
+		}else{
+			sortOrder = !sortOrder;
+		}
+		
+		angScope.generateHeader(propertyName,sortOrder);
+	    angScope.updateTableHeaders();
+		prevSortColumn = propertyName;
+		
+		performSort(inputData,propertyName);
+		angScope.$apply(function(){
+	       	angScope.tableOptions.items = inputData;
+	    });
+		
+	}
+	
+	function clearSort(){
+		prevSortColumn = null;
+		angScope = angular.element(jQuery('#ng-app')).scope();
+		angScope.generateHeader('',false);
+	    angScope.updateTableHeaders();
+	}
+	
+	function performSort(inputData,propertyName){
+	//	console.log('property value is',propertyName);
+		if(propertyName == null || typeof propertyName == 'undefined'){
+			return;
+		}
+		
+   		inputData.sort(function(a,b){
+   			
+   			property1 = a[propertyName];
+   			property2 = b[propertyName];
+   			
+   			if(propertyName == 'price' || propertyName == 'episodePrice'){
+   				if(property1 == null || property1 == '' || typeof property1 == 'undefined' || Number.isNaN(property1)){
+   					property1 = 0;
+   				}
+   				if(property2 == null || property2 == '' || typeof property2 == 'undefined' || Number.isNaN(property2)){
+   					property2 = 0;
+   				}
+   				
+   				if(sortOrder){
+					return parseFloat(property1) - parseFloat(property2);
+				}else{
+					return parseFloat(property2) - parseFloat(property1);
+				}   			
+   			}else{
+   				property1 = property1 == null || typeof property1 == 'undefined'?'':property1;
+   				property2 = property2 == null || typeof property2 == 'undefined'?'':property2;
+   				
+	   			if(sortOrder){
+	   				return property1.localeCompare(property2);
+	   			}else{
+	   				return property2.localeCompare(property1);
+	   			}
+	   		}	
+   		});
+   		
+    }
+		
+    jQuery(document).ready(function() {
+        jQuery(".slds-dropdown-trigger--click").keypress(function(event){handleDropDownScroll(event,this);});
+        //setHeaderBackground();
+    });
+    
+    function setHeaderBackground(){
+    	jQuery(".colHeader").each(function(){
+    	    colHeaderStr = jQuery(this).text();  
+    		if(colHeaderStr == 'CAP Category'|| colHeaderStr == 'Price Code' || colHeaderStr == 'Price Start Date' || colHeaderStr == 'WSP' || colHeaderStr == 'Price Tier' || colHeaderStr == 'Episode WSP' 
+    				|| colHeaderStr == 'Episode Price Tier' || colHeaderStr == 'Comment' || colHeaderStr == 'Announce Override' || colHeaderStr == 'CA ID' || colHeaderStr == 'CAP ID'){ 
+    			jQuery(this).parent().parent().css('background-color', '#04844b');
+    		}
+    	//	console.log( 'Value == ',jQuery(this).parent().parent());
+    	});
+    }
+    
+    function handleDropDownScroll(eventObject,thisObject){
+        if((eventObject.which >= 48 && eventObject.which <= 57) || (eventObject.which >= 65 && eventObject.which <= 90) || (eventObject.which >= 97 && eventObject.which <= 122)){
+            var totalheight = 0;
+            jQuery('#'+thisObject.id).find('ul li a span').each(function(){
+                totalheight = totalheight + jQuery(this).parent().parent().outerHeight(true);
+                var str = jQuery(this).text().trim();
+                //console.log( ' '+str , str.charCodeAt(0));
+                if(str.charCodeAt(0) === eventObject.which || (eventObject.which <=90 && str.charCodeAt(0) === eventObject.which+32) || (eventObject.which >=97 && str.charCodeAt(0) === eventObject.which-32)){
+                    jQuery('#'+thisObject.id).find('.slds-dropdown__list').scrollTop(totalheight-jQuery(this).parent().parent().outerHeight(true));
+                    return false;   
+                }
+            });
+        }
+    }
+    
+    function openRecord(recordId){
+        //console.log('In openRecord','Test');
+        window.open('/'+recordId,'_blank');
+    }
+    
+    function addIcon(tdElem,recordId,iconMarkup){
+        anchElem = document.createElement('a');
+        anchElem.setAttribute("href", "javascript:void(0)");
+        anchElem.setAttribute("onClick", "openRecord('"+recordId+"')");
+        anchElem.innerHTML = iconMarkup;
+        tdElem.appendChild(anchElem);
+    }
+    
+    var announcementIcon = '<svg style="height: 23px" aria-hidden="true" class="slds-icon  slds-icon--x-small slds-icon-text-default"><use style="height: 23px" xlink:href="'+"{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#announcement')}"+'"></use></svg>';
+    var rowsIcon = '<svg style="height: 23px" aria-hidden="true" class="slds-icon  slds-icon--x-small slds-icon-text-default"><use style="height: 23px" xlink:href="'+"{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#rows')}"+'"></use></svg>';
+    var sortIcon = '<svg style="height: 15px; fill: white;" aria-hidden="true" class="slds-icon  slds-icon--x-small slds-icon-text-default"><use style="height: 15px" xlink:href="'+"{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#sort')}"+'"></use></svg>';
+    var sortIconDesc = '<svg style="height: 15px; fill: white;" aria-hidden="true" class="slds-icon  slds-icon--x-small slds-icon-text-default"><use style="height: 15px" xlink:href="'+"{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"+'"></use></svg>';
+    var sortIconAsc = '<svg style="height: 15px; fill: white;" aria-hidden="true" class="slds-icon  slds-icon--x-small slds-icon-text-default"><use style="height: 15px" xlink:href="'+"{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#arrowup')}"+'"></use></svg>';
+    
+</script>
+
+
+
+</head>
+
+    <body  style="padding:0px">
+        <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="PriceWizard" ng-controller="PriceWizardController" class="wbslds" ng-init="init()" ng-cloak="ngCloak">
+           <!-- ===========================Spinner================================= -->   
+           <div class="spinnerModel" ng-show="showSpinner">
+             <div class="spinnerContent slds-spinner--medium">
+               <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+               <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+             </div>
+           </div>
+
+            <!-- =========================== HEADER BANNER ================================-->     
+           <div class="slds-page-header" role="banner">
+             <div class="slds-grid">
+                   <div class="slds-col slds-has-flexi-truncate">
+                     <div class="slds-col slds-has-flexi-truncate">
+                       <h1 class="slds-text-heading--medium slds-truncate" title="Upload Title Group Items">Price Wizard - {!IF(actionValue =='rePrice','Re-Price','Price Update')}</h1>
+                     </div>
+                   </div>
+                   
+                   <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                          
+                          <div class="slds-form-element">
+                              <label class="slds-form-element__label" for="select-01">Result Filter</label>
+                              <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                  <select id="selectProcess" class="slds-select" ng-model="resultFilter" ng-change="filterRecords()" ng-disabled="itemsBackup.length == 0">
+                                    <option value="all">All</option>
+                                    <option value="success">Success</option>
+                                    <option value="error">Error</option>
+                                  </select>
+                                </div>
+                              </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="pageRefresh()" onclick="return false;" class="slds-button slds-button--neutral">Reset Page</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element" ng-show="actionValue == 'rePrice'">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="GetRecords()" onclick="return false;" class="slds-button slds-button--neutral">Get Client Avails</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element" ng-show="actionValue == 'priceUpdate'">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="GetRecords()" onclick="return false;" class="slds-button slds-button--neutral">Get Price Records</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="showPriceCode()" onclick="return false;" class="slds-button slds-button--neutral">Get Price Code</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                          <div class="slds-form-element" ng-show="actionValue == 'rePrice'">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="SubmitData()" onclick="return false;" class="slds-button slds-button--neutral">Re-Price</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         <div class="slds-form-element" ng-show="actionValue == 'priceUpdate'">
+                           <div class="slds-form-element__control">
+                             <div class="slds-button-group slds-button-space-left" role="group">
+                                 <button ng-click="SubmitData()" onclick="return false;" class="slds-button slds-button--neutral">Update Price</button>
+                             </div>
+                           </div>
+                         </div>
+                         
+                   </div>
+                </div>
+           </div>
+            
+            <!-- ===========================Filter Section Start================================= -->
+            
+            <div class="slds-tabs--scoped">
+              <div id="tab-scoped-1" class="slds-tabs--scoped__content slds-show" role="tabpanel" aria-labelledby="tab-scoped-1__item">
+              
+                <div class="slds-grid">
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11">
+                        <label class="slds-form-element__label" for="countrySelect">Country</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="countrySelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('countrySelect','slds-is-open')" ng-attr-title="{{countryToolTip}}">
+                            <span class="slds-truncate">{{selectedCountries.length == 0?"None":selectedCountries.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--small slds-dropdown--left" >
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="country in countries" id="countryOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('countryOption',$index,'slds-is-selected',selectedCountries,country.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{country.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11">
+                        <label class="slds-form-element__label" for="countrySelect">Account</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="accountSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('accountSelect','slds-is-open')" ng-attr-title="{{accountToolTip}}">
+                            <span class="slds-truncate">{{selectedAccounts.length == 0?"None":selectedAccounts.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="account in accounts" id="accountOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('accountOption',$index,'slds-is-selected',selectedAccounts,account.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{account.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Channel</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="channelSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('channelSelect','slds-is-open')" ng-attr-title="{{channelToolTip}}">
+                            <span class="slds-truncate">{{selectedChannels.length == 0?"None":selectedChannels.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="channel in channels" id="channelOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('channelOption',$index,'slds-is-selected',selectedChannels,channel.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{channel.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Format</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="formatSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('formatSelect','slds-is-open')" ng-attr-title="{{formatToolTip}}">
+                            <span class="slds-truncate">{{selectedFormats.length == 0?"None":selectedFormats.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="format in formats" id="formatOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('formatOption',$index,'slds-is-selected',selectedFormats,format.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{format.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Language</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="languageSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('languageSelect','slds-is-open')" ng-attr-title="{{languageToolTip}}">
+                            <span class="slds-truncate">{{selectedLangs.length == 0?"None":selectedLangs.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="language in languages" id="languageOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('languageOption',$index,'slds-is-selected',selectedLangs,language.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{language.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-align-middle slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Language Type</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="langTypeSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('langTypeSelect','slds-is-open')" ng-attr-title="{{langTypeToolTip}}">
+                            <span class="slds-truncate">{{selectedLangTypes.length == 0?"None":selectedLangTypes.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="langType in languageTypes" id="langTypeOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('langTypeOption',$index,'slds-is-selected',selectedLangTypes,langType.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{langType.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                </div>
+                
+                <div style="height:10px;">
+                </div>
+                
+                <div class="slds-grid">
+                    <!-- 
+                    <div class="slds-align-middle slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--2-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="text-input-01">MPM#</label>
+                        <div class="slds-form-element__control">
+                            <input id="text-input-01" class="slds-input" type="text" ng-model="mpmNumbers" placeholder="MPM# separated by commas" />
+                        </div>
+                    </div>
+                    -->
+                     
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+		               <label class="slds-form-element__label" for="text-input-01">MPM#</label>
+		               <div class="slds-form-element__control">
+		               <input type="text" id="mpmDisplay" class="slds-input" placeholder="MPM#" ng-model="mpmText" style="width: 160px;"/>
+		               	<a href="javascript:void(0);" ng-click="showHideModal('mpmModal','open')">
+		                   <svg aria-hidden="true" class="slds-icon slds-icon--x-small slds-icon-text-default">
+		                   	<use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#rows')}"></use>
+		                   </svg>
+		                </a>   
+		               </div>
+		            </div>
+           			
+           			<div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+		               <label class="slds-form-element__label" for="text-input-01">Video Version#</label>
+		               <div class="slds-form-element__control">
+		               <input type="text" id="vvDisplay" class="slds-input" placeholder="Video Version#" ng-model="vvText" style="width: 160px;"/>
+		               	<a href="javascript:void(0);" ng-click="showHideModal('vvModal','open')">
+		                   <svg aria-hidden="true" class="slds-icon slds-icon--x-small slds-icon-text-default">
+		                   	<use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#rows')}"></use>
+		                   </svg>
+		                </a>   
+		               </div>
+		            </div>
+		            
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">WB Territory</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="territorySelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('territorySelect','slds-is-open')" ng-attr-title="{{territoryToolTip}}">
+                            <span class="slds-truncate">{{selectedWBTerritories.length == 0?"None":selectedWBTerritories.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="territory in wbTerritories" id="territoryOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('territoryOption',$index,'slds-is-selected',selectedWBTerritories,territory.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{territory.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Price Tier</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="priceTierSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('priceTierSelect','slds-is-open')" ng-attr-title="{{priceTierToolTip}}">
+                            <span class="slds-truncate">{{selectedPriceTiers.length == 0?"None":selectedPriceTiers.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="priceTier in priceTiers" id="priceTierOption{{$index}}" ng-attr-title="{{priceTier.label}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('priceTierOption',$index,'slds-is-selected',selectedPriceTiers,priceTier.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{priceTier.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                    
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">Content Type</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="contentTypeSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('contentTypeSelect','slds-is-open')" ng-attr-title="{{contentTypeToolTip}}">
+                            <span class="slds-truncate">{{selectedContentTypes.length == 0?"None":selectedContentTypes.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="contentType in contentTypes" id="contentTypeOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('contentTypeOption',$index,'slds-is-selected',selectedContentTypes,contentType.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{contentType.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                   
+                    <div class="slds-p-horizontal--small slds-size--1-of-5 slds-medium-size--1-of-5 slds-large-size--1-of-11" >
+                        <label class="slds-form-element__label" for="countrySelect">CA Life Cycle</label>
+                        <div class="slds-picklist slds-dropdown-trigger slds-dropdown-trigger--click" id="caLifeCycleSelect">
+                          <button class="slds-button slds-button--neutral slds-picklist__label" aria-haspopup="true" ng-click="togglePickList('caLifeCycleSelect','slds-is-open')" ng-attr-title="{{caLifeCycleToolTip}}">
+                            <span class="slds-truncate">{{selectedCALifeCycles.length == 0?"None":selectedCALifeCycles.length+" Selected"}}</span>
+                            <svg aria-hidden="true" class="slds-icon">
+                              <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                            </svg>
+                          </button>
+                          <div class="slds-dropdown slds-dropdown--left">
+                            <ul class="slds-dropdown__list slds-dropdown--length-5" role="menu">
+                              <li class="slds-dropdown__item" role="presentation" ng-repeat="caLifeCycle in caLifeCycles" id="caLifeCycleOption{{$index}}">
+                                <a href="javascript:void(0);" role="menuitemcheckbox" tabindex="0" ng-click="toggleSelect('caLifeCycleOption',$index,'slds-is-selected',selectedCALifeCycles,caLifeCycle.value)">
+                                  <span class="slds-truncate">
+                                    <svg aria-hidden="true" class="slds-icon slds-icon--selected slds-icon--x-small slds-icon-text-default slds-m-right--x-small">
+                                      <use xlink:href="{!URLFOR($Resource.WBSLDSv1, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>  
+                                    </svg>{{caLifeCycle.label}}</span> 
+                                </a> 
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                    </div>      
+                </div>
+            </div>
+        </div>
+
+           <!-- ===========================Filter Section End================================= -->
+           
+           <!-- ===========================Exception================================= -->
+           <div class="slds-grid" ng-show="msgText">
+             <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+               <span class="slds-assistive-text">Info</span> 
+               <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                 <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                   <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                 </svg>
+                 <span class="slds-assistive-text">Close</span>
+               </button>
+               <div class="notify__content slds-grid">
+                 <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+               </div>
+             </div>
+           </div>
+           
+           <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal" id="mpmModal" >
+			  <div class="slds-modal__container" style="width: 150px;">
+			    <div class="slds-modal__header">
+			      <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" ng-click="showHideModal('mpmModal','close')">
+			        <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+			          <use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+			        </svg>
+			        <span class="slds-assistive-text">Close</span>
+			      </button>
+			      <h2 id="header43" class="slds-text-heading--medium">MPM#</h2>
+			    </div>
+			    <div class="slds-modal__content slds-p-around--medium">
+                   <hot-table settings="mpmSettings" datarows="mpmData.data" height="250" width="200">
+                   	<hot-column data="mpm"></hot-column>
+                   </hot-table>
+			    </div>
+			    <div class="slds-modal__footer">
+			      <button class="slds-button slds-button--brand" ng-click="showHideModal('mpmModal','close')">Close</button>
+			    </div>
+			  </div>
+		  </div>
+		  
+		  <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal" id="vvModal" >
+			  <div class="slds-modal__container" style="width: 150px;">
+			    <div class="slds-modal__header">
+			      <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" ng-click="showHideModal('vvModal','close')">
+			        <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+			          <use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+			        </svg>
+			        <span class="slds-assistive-text">Close</span>
+			      </button>
+			      <h2 id="header43" class="slds-text-heading--medium">Video Version#</h2>
+			    </div>
+			    <div class="slds-modal__content slds-p-around--medium">
+                   <hot-table settings="vvSettings" datarows="vvData.data" height="250" width="200">
+                   	<hot-column data="vv"></hot-column>
+                   </hot-table>
+			    </div>
+			    <div class="slds-modal__footer">
+			      <button class="slds-button slds-button--brand" ng-click="showHideModal('vvModal','close')">Close</button>
+			    </div>
+			  </div>
+		  </div>
+		  
+		  <div class="slds-backdrop" id="backDrop"></div>
+		   
+           <!-- =========================== Table ================================-->
+           <apex:OutputPanel rendered="{!IF(actionValue == 'rePrice',true,false)}" styleClass="sortClass">
+               <div class="slds-m-around--x-small" id="rePriceTable">
+                   <hot-table settings="mySettings" datarows="tableOptions.items" afterRender="firstRowRenderer" height="tableHeight" width="tableWidth">
+                     <hot-column data="videoVersion" id="vv"></hot-column>
+                     <hot-column data="title"></hot-column>
+                     <hot-column data="country"></hot-column>
+                     <hot-column data="account"></hot-column>
+                     <hot-column data="channel"></hot-column>
+                     <hot-column data="format"></hot-column>
+                     <hot-column data="language"></hot-column>
+                     <hot-column data="languageType"></hot-column>
+                     <hot-column data="caCategory"></hot-column>
+                     <hot-column data="priceCode"></hot-column>
+                     <hot-column data="effectiveDate"></hot-column>
+                     <hot-column data="priceTier"></hot-column>
+                     <hot-column data="price"></hot-column>
+                     <hot-column data="episodePriceTier"></hot-column>
+                     <hot-column data="episodePrice"></hot-column>
+                     <hot-column data="internalComment"></hot-column>
+                     <hot-column data="announcementOverride"></hot-column>
+                     <hot-column data="caName"></hot-column>
+                     <hot-column data="existingPrice" read-only="true"></hot-column>
+                     <hot-column data="validation" read-only="true"></hot-column>
+                     <hot-column data="message" read-only="true"></hot-column>
+                   </hot-table>
+               </div>
+           </apex:OutputPanel>
+           
+           <apex:OutputPanel rendered="{!IF(actionValue == 'priceUpdate',true,false)}" styleClass="sortClass">
+               <div class="slds-m-around--x-small" id="priceUpdateTable">
+                   <hot-table settings="mySettings" datarows="tableOptions.items" afterRender="firstRowRenderer" height="tableHeight" width="tableWidth">
+                     <hot-column data="videoVersion"></hot-column>
+                     <hot-column data="title"></hot-column>
+                     <hot-column data="country"></hot-column>
+                     <hot-column data="account"></hot-column>
+                     <hot-column data="channel"></hot-column>
+                     <hot-column data="format"></hot-column>
+                     <hot-column data="language"></hot-column>
+                     <hot-column data="languageType"></hot-column>
+                     <hot-column data="caCategory"></hot-column>
+                     <hot-column data="priceCode"></hot-column>
+                     <hot-column data="effectiveDate"></hot-column>
+                     <hot-column data="expiryDate" read-only="true"></hot-column>
+                     <hot-column data="priceTier"></hot-column>
+                     <hot-column data="price"></hot-column>
+                     <hot-column data="episodePriceTier"></hot-column>
+                     <hot-column data="episodePrice"></hot-column>
+                     <hot-column data="internalComment"></hot-column>
+                     <hot-column data="announcementOverride"></hot-column>
+                     <hot-column data="capName"></hot-column> 
+                     <hot-column data="validation" read-only="true"></hot-column>
+                     <hot-column data="message" read-only="true"></hot-column>
+                   </hot-table>
+               </div>
+           </apex:OutputPanel>
+        </div>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,147 @@
+<aura:component implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="CRM_Deal_CheckforPrice">
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="futurePriceList" type="sObject" />
+    <aura:attribute name="futurePriceExist" type="Boolean" default="false"/>
+    <aura:attribute name="opportunity" type="sObject" />
+    <aura:attribute name="objectId" type="String"/>
+    <aura:attribute name="filterData" type ="sObject"/>
+    <aura:attribute name="slNo" type="Integer" default="1"/>
+    <aura:attribute name="msgSeverity" type="String"/>
+    <aura:attribute name="msgText" type="String" />
+    
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.reInit}" />
+    <aura:if isTrue="{!v.spinner}">
+        <div class="spinner spinner-style">
+            <lightning:spinner alternativeText="Loading" size="large" variant="brand"/>
+        </div>
+    </aura:if>
+    
+    <!-- =========================== HEADER BANNER ================================--> 
+    <div class="slds-page-header" role="banner">
+        <div class="slds-grid">
+            <div class="slds-col slds-has-flexi-truncate">
+                <nav class="slds-m-bottom--xx-small" role="navigation">
+                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                        <li class="slds-list__item slds-text-heading--label"><a href="">Deal</a></li>
+                        <li class="slds-list__item slds-text-heading--label"><a href="{!'/one/one.app#/alohaRedirect/'+v.opportunity.Id}" target="_blank">{!v.opportunity.Name}</a></li>
+                    </ol>
+                </nav>
+                <div class="slds-col slds-has-flexi-truncate">
+                    <h1 class="slds-text-heading--medium slds-truncate" title="Check_for_Price_Changes">{!$Label.c.CRM_Check_for_Price_Changes}</h1>
+                </div>    
+            </div>
+            
+            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                <div class="slds-form-element">
+                    <div class="slds-form-element__control"> 
+                        <div class="slds-button-group slds-button-space-left" role="group">
+                            <lightning:button onclick="{!c.backToDeal}">{!$Label.c.CRM_Approval_Button_Back_To_Deal}</lightning:button>
+                        </div>
+                        <div class="slds-button-group" role="group">
+                            <lightning:button onclick="{!c.reloadPage}">Refresh</lightning:button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- =========================== HEADER BANNER ================================-->
+    
+    <!-- ===========================Exception================================= -->
+    <aura:if isTrue="{!v.msgText.length > 0}" >                     
+        <div class="slds-grid">
+            <div class="{!'slds-col slds-notify slds-theme--'+v.msgSeverity+' slds-notify--toast slds-box--x-small'}" role="alert">
+                <div class="notify__content slds-grid">
+                    <lightning:icon iconName="{!v.msgSeverity == 'warning' || v.msgSeverity == 'error' ? 'utility:warning' : ''}" size="small" variant="inverse"></lightning:icon>
+                    <div class="slds-col">
+                        <h2 class="slds-text-heading--medium">{!v.msgText}</h2>                           
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    
+    <!-- ===========================Current Deal Details================================-->
+    <div class="c-container">
+        <div class="slds-m-around--medium currentDeal">
+            <div class="slds-grid slds-section-title--divider">
+                <div class="slds-text-heading--small" title="{!$Label.c.CRM_Approval_Section_Heading_Current_Deal}">{!$Label.c.CRM_Approval_Section_Heading_Current_Deal}</div>
+            </div>
+            <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal table-style">
+                <thead>
+                    <tr class="slds-text-heading--label  header-style">
+                        <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Deal Name</span></th>
+                        <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Account Name</span></th>
+                        <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Class of Trade</span></th>
+                        <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Pricing Start Date</span></th>
+                        <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">Pricing End Date</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr> 
+                        <th role="row" ><span class="slds-truncate"> <a href="{!'/one/one.app#/alohaRedirect/'+v.opportunity.Id}" tabindex="-1" role="presentation" target="_blank">{!v.opportunity.Name}</a></span></th>
+                        <td><span class="slds-truncate">{!v.opportunity.Account.Name}</span></td>
+                        <td><span class="slds-truncate">{!v.opportunity.Account.Class_of_Trade__c}</span></td>
+                        <td><span class="slds-truncate">{!v.opportunity.Start_Date__c}</span></td>
+                        <td><span class="slds-truncate">{!v.opportunity.CloseDate}</span></td> 
+                    </tr> 
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <aura:if isTrue="{!v.futurePriceExist}">
+        <div class="c-container midDealPriceChange">
+            <aura:if isTrue="{!and(v.futurePriceList,v.futurePriceList.length > 0)}">
+                <c:Pagination aura:id="ser" PaginationData = "{!v.futurePriceList}" slNo="{!v.slNo}" filterData="{!v.filterData}" len="{!v.futurePriceList.length}" spinner="{!v.spinner}" />
+            </aura:if>
+            <div class="slds-m-around_small">  
+                <div class="slds-scrollable_Y scroll-height">  
+                    <table class="slds-table slds-table--bordered slds-table--stacked-horizontal table-style" >
+                        <thead>
+                            <tr class="slds-text-heading--label  header-style">
+                                <th class="slds-cell-shrink" scope="col">Sl No</th>
+                                <th class="slds-cell-shrink" scope="col">Commitment Number</th>
+                                <th class="slds-cell-shrink" scope="col">Product</th> 
+                                <th class="slds-cell-shrink" scope="col">Start Date</th>
+                                <th class="slds-cell-shrink" scope="col">End Date</th>
+                                <th class="slds-cell-shrink" scope="col">Price</th>
+                                <th class="slds-cell-shrink" scope="col">Mid-Deal Price Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <aura:iteration items="{!v.filterData}" var="proRow" indexVar="sNo">        
+                                <tr class="slds-hint-parent">
+                                    <td class="slds-cell-shrink"><ui:outputText value="{!sNo + v.slNo}"/> </td>
+                                    <td class="slds-cell-shrink">{!proRow.commitmentNumber}</td>
+                                    <td class="slds-cell-wrap"><a href="{!'/one/one.app#/alohaRedirect/'+proRow.productId}" tabindex="-1" role="presentation" target="_blank">{!proRow.productName}</a></td>
+                                    <td class="slds-cell-shrink">{!proRow.startDate}</td>
+                                    <td class="slds-cell-shrink">{!proRow.endDate}</td>
+                                    <td class="slds-cell-shrink">{!proRow.systemCost}</td>
+                                    <td>
+                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal table-style" >
+                                            <thead>
+                                                <tr class="slds-text-heading--label header-style">
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">New Price Start Date</span></th>
+                                                    <th class="slds-cell-shrink" scope="col"><span class="slds-truncate">New Price</span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <aura:iteration items="{!proRow.futurePrices}" var="newPBEP" indexVar="key">
+                                                    <tr>
+                                                        <td><span class="slds-truncate">{!newPBEP.startDate}</span></td>
+                                                        <td><span class="slds-truncate">{!newPBEP.listPrice}</span></td>
+                                                    </tr>
+                                                </aura:iteration>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,63 @@
+<aura:component extensible="true">
+    <aura:attribute name="categories" type="String[]" required="true" />
+    <aura:attribute name="columns" type="DealsWrapper.Column[]" required="true" />
+    <aura:attribute name="data" type="Object" required="true" />
+    <aura:attribute name="child" type="String" required="true" />
+    <aura:attribute name="maxHeight" type="Integer" default="0" />
+    
+    <aura:attribute name="dataByCategories" type="Object" default="{}" />
+    <aura:attribute name="tabs" type="Aura.Component[]" />
+    <aura:attribute name="tableColumns" type="List" />
+    <aura:attribute name="dataTable" type="Object" />
+    <aura:attribute name="loadingTable" type="Boolean" default="true" />
+    <aura:attribute name="sortedBy" type="String" default="urlId" />
+    <aura:attribute name="sortedDirection" type="string" default="asc" />
+    <aura:attribute name="switchSort" type="Boolean" default="false" />
+    <aura:attribute name="hideDummy" type="Boolean" default="true" />
+    <aura:attribute name="searchOnTable" type="String" default="" />
+    <aura:attribute name="searching" type="Boolean" default="false" />
+    <aura:registerEvent name="followEvent" type="c:ContactsToFollow" />
+    <aura:registerEvent name="dealCopyHideEvent" type="c:CloneHideDeal" />
+    <aura:handler event="c:SearchKeyChange" action="{! c.handleUpdateData}" />
+    <aura:handler name="init" value="{! this }" action="{! c.init}" />
+    <div class="slds-col slds-no-space" style="height: 100%;">
+        <aura:renderIf isTrue="{! v.searching}">
+            <div>
+                <lightning:spinner variant="brand" alternativeText="loading table" size="medium" />
+            </div>
+        </aura:renderIf>
+        <div class="slds-grid slds-grid--vertical" style="{! 'height: 100%;  max-height: '+v.maxHeight+'px'}">
+            <div>
+                <lightning:tabset variant="scoped">
+                    <aura:if isTrue="{! v.hideDummy}" >
+                        <lightning:tab label="dummy" id="dummy" />
+                    </aura:if>
+                    {! v.tabs}
+                </lightning:tabset>
+            </div>
+            <div class="slds-col slds-scrollable_y showTable" style="{! if(v.dataTable.length==0,'display: none;','')}">
+                <lightning:datatable aura:id="dataTable"
+                                     columns="{! v.tableColumns}"
+                                     data="{! v.dataTable}"
+                                     keyField="tableId"
+                                     sortedBy="{! v.sortedBy}"
+                                     sortedDirection="{! v.sortedDirection}"
+                                     onsort="{! c.updateColumnSorting}"
+                                     hideCheckboxColumn="{! v.child == 'Related Contacts' ? false : true}"
+                                     onrowaction="{! c.handleRowAction}"
+                                     onrowselection="{! c.handleRowSelection}"/>
+            </div>
+            <aura:if isTrue="{! v.dataTable.length==0}">
+                <div class="category_message" style="font-weight: bold; font-style: italic; padding: 1rem; background: white;">
+                    <aura:if isTrue="{! v.searchOnTable != ''}">
+                        <span>Your search did not give results.</span>
+                        <aura:set attribute="else">
+                            <span>No deals found in this phase.</span>
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </aura:if>
+        </div>
+    </div>
+    
+</aura:component>

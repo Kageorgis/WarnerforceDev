@@ -1,0 +1,115 @@
+<apex:page standardController="MPM__c" extensions="WB_RequestRightonMPM_Controller">
+   <!--apex:pageMessage severity="normal" strength="3" rendered="true"/ ER-006863  Start-->
+   <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+   <!--apex:pageMessage severity="normal" strength="3" /-->
+
+   <head>
+      <meta charset="utf-8" />
+      <meta http-equiv="x-ua-compatible" content="ie=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+      <apex:slds />
+      <!--ER-006863 >
+      <script type="text/javascript">
+
+         function pageLoad() {
+            var id = '{!idRec}';
+            //var id1 = '{!$CurrentPage.parameters.Id}';
+            var detectUserUI = "{!$User.UIThemeDisplayed}";
+
+            if (detectUserUI == 'Theme3') {
+               if (id != null) {
+                  window.open('apex/wb_request_refresh?param=std&id=' + id, '_parent');
+               }
+            }
+            else if (detectUserUI == 'Theme4d') {
+               if (id != null) {
+                  var newWin = window.open('apex/wb_request_refresh?param=std&id=' + id, '_blank');
+
+                  if (!newWin || newWin.closed || typeof newWin.closed == 'undefined') {
+                     alert('Please allow the pop-up and Refresh the Page.');
+                  } else {
+                     history.back();
+                  }
+               }
+            }
+         }
+
+         window.onload = pageLoad;  
+      </script-ER-006863  -->
+
+      <script type="text/javascript">
+
+         function pageLoad() {
+            var id = '{!idRec}';
+            var detectUserUI = "{!$User.UIThemeDisplayed}";
+            //alert(detectUserUI);  
+            Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.WB_RequestRightonMPM_Controller.checkRightRequestPermissionMPM}',
+               function (result, event) {
+                  if (event.status) {
+                     console.log('result : ', result);
+                     if (result) {
+                        if (detectUserUI == 'Theme3') {
+                           if (id != null) {
+                              window.open('apex/wb_request_refresh?param=std&id=' + id, '_parent');
+                           }
+                        }
+                        else if (detectUserUI == 'Theme4d') {
+                           if (id != null) {
+                              window.open('apex/wb_request_refresh?param=std&id=' + id, '_blank');
+                              history.back();
+                           }
+                        }
+                     } else {
+                        $("#headerDiv").css("display", "block");
+                     }
+                  }
+               },
+               { escape: true }
+            );
+         }
+         window.onload = pageLoad;
+         function closeTab() {
+            var detectTheme = "{!$User.UIThemeDisplayed}";
+            if (detectTheme == 'Theme3') {
+               // console.log('---CL---', detectTheme);
+               window.close();
+            } else if (detectTheme == 'Theme4d') {
+               //console.log('---LT---', detectTheme);
+               history.back();
+            }
+         }
+      </script>
+   </head>
+
+   <body>
+      <apex:form >
+         <div class="slds-scope">
+            <article id="headerDiv" class="slds-card" style="display : none;">
+               <!-- =========================== Header Starts =========================== -->
+               <header class="slds-card__header slds-grid mainHeader" style="padding : 0;">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                     <div class="slds-media__body slds-truncate">
+                        <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                           <h2>
+                              <apex:outputText rendered="{!$User.UIThemeDisplayed == 'Theme3'}" styleclass="slds-text-heading--small">You do not have the level of access necessary to perform the operation you requested. Please
+                                 press OK to close window.</apex:outputText>
+                              <apex:outputText rendered="{!$User.UIThemeDisplayed == 'Theme4d'}" styleclass="slds-text-heading--small">You do not have the level of access necessary to perform the operation you requested. Please
+                                 press OK to go back to previous page.</apex:outputText>
+                           </h2>
+                        </div>
+                     </div>
+                  </div>
+               </header>
+               <!---------------------Deal Table End---------------------->
+               <footer class="slds-card__footer footerDiv">
+                  <apex:commandLink styleClass="slds-card__footer-action" value="OK" onclick="closeTab();return false;" />
+               </footer>
+            </article>
+         </div>
+      </apex:form>
+   </body>
+
+   </html>
+   <!--ER-006863 Complete-->
+</apex:page>

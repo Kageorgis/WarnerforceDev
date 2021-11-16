@@ -1,0 +1,726 @@
+<apex:page standardController="Order" extensions="CRM_EditAllOrderProductsCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+  
+      
+  <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'css/EditProducts.css')}" /> 
+  
+  
+  <script>
+        window.$Label = window.$Label || {}; 
+        window.$Label.updateSuccessMsg = "{!$Label.CRM_Deal_Entry_Edit_Products_Message}";
+        window.$Label.selectRecordForAnyOperationMsg = "{!$Label.CRM_Select_Record_For_Any_Operation}";
+        window.$Label.delectSuccessMsg = "{!$Label.CRM_Product_Deleted_Success_Message}";
+  </script>
+   
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular-sanitize.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+  
+  <!-- to use the picklist component -->
+  
+ <!-- <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/EditProductsCtrl.js')}" /> -->
+  <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" />
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+  
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/angular-input-masks.js"/>
+
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+</head>
+
+
+<script>
+    /* Login to sforce proxy service */
+
+   sforce.connection.sessionId = "{!$Api.Session_ID}";
+    /* Pass a few dynamic parameters */
+    angular.module("appConfig", ['ui.utils.masks'])
+        .service("appConfig", function() {
+             return {
+                resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                recordType: 'Order',
+                recordId: "{!$CurrentPage.parameters.ordId}",
+                apexController: CRM_EditAllOrderProductsCtrl,
+                breadcrumbObjectName: '{!$ObjectType.Order.labelPlural}',
+                breadcrumbObjectLink: '{!URLFOR($Action.Order.Tab, $ObjectType.Order)}',           
+                breadcrumbRecordLink: '{!URLFOR($Action.Order.View,$CurrentPage.parameters.ordId)}',
+                breadcrumbRecordName: {!order.OrderNumber},
+                userTerritory : '{!TEXT($User.Territory__c)}',           
+                onSaveSuccessUrl: '{!URLFOR($Action.Order.View, $CurrentPage.parameters.ordId)}',
+                orderCurrencyCode: '{!Order.CurrencyISOCode}',
+                IsOrderHighLevelReturn: {!IsOrderHighLevelReturn},
+                decimalPlaces: {!decimalPlaces},
+                userLocale : '{!UserLocale}'
+            };
+        });
+    
+    function checkUncheckAll() {
+        var val = $("#select-all").prop("checked");
+        $("input[id^='select-row-']").prop('checked', val);
+    }
+ 
+</script>
+
+<body>
+<div class="mainContainer" xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmEditOrderProducts" ng-cloak="ngCloak" ng-controller="crmEditOrderProductController" ng-init="loadLineItems()">
+  <c:CRM_SLDSPicklist />
+  <c:CRM_SLDSLookup />
+  
+  <div class="slds">
+    <div class="spinnerModel" ng-show="showSpinner">
+     <div class="spinnerContent slds-spinner--large">
+       <img src="{{appConfig.resourceSlds+'/assets/images/spinners/slds_spinner_brand.gif'}}" alt="Loading..." />
+     </div>
+   </div>
+   
+   
+   <div class="slds-page-header" role="banner">
+      <div class="slds-grid">
+        <div class="slds-col slds-has-flexi-truncate">
+          <nav class="slds-m-bottom--xx-small" role="navigation">
+            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+              <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.Tab, $ObjectType.Order)}'">{!$ObjectType.Order.labelPlural}</a></li>
+             <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.View,$CurrentPage.parameters.ordId)}">{!order.OrderNumber}</a></li>
+            </ol>
+          </nav>
+          <div class="slds-col slds-has-flexi-truncate">
+            <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Edit_Product_Label}">{!$Label.CRM_Edit_Product_Label}</h1>
+          </div>
+         </div>
+        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline" ng-show="showOrderLI">
+            <div class="slds-form-element" ng-show="!appConfig.IsOrderHighLevelReturn">
+                <div class="slds-form-element__control">
+                     <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Product_Material_Number}</label>
+                     <input id= "txt2" class="slds-form-element slds-input" type="text" ng-model="search.materialNumber" style="width:150px;" ng-keyup="moveFocusAndAdd()" ng-disabled="appConfig.isReadOnlyPage"/>
+                </div>
+            </div>
+            <div class="slds-form-element">
+                <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                <div class="slds-form-element__control">
+                  <input class="slds-input slds-input--small"  ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" />
+                </div>
+            </div>
+            
+          <div class="slds-form-element">
+            <div class="slds-form-element__control">     
+              <div class="slds-button-group slds-button-space-left" role="group">
+                  <button ng-click="saveData(true)" class="slds-button slds-button--neutral">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                  <button ng-click="saveData(false)" class="slds-button slds-button--neutral">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="slds-button-group" role="group">
+          </div>
+          </div>
+        </div>
+       </div>
+  
+    
+    <div class="slds-grid" ng-show="msgText">
+      <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+        <span class="slds-assistive-text">Info</span>
+        <button class="slds-button slds-notify__close" ng-click="msgText=''">
+          <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+            <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+          </svg>
+          <span class="slds-assistive-text">Close</span>
+        </button>
+        <div class="notify__content slds-grid">
+          <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slds-grid slds-max-small-hide" ng-show="showOrderLI">
+        <div class="slds-col--padded slds-m-vertical--small slds-form--inline">
+            <div class="slds-form-element">
+                
+                <label class="slds-form-element__label">{!$Label.CRM_Deal_Entry_Message}</label>
+                <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="updateRowFieldOptions" selectedOpts="updateRowsField" multiple="false" placeholder="{!$Label.CRM_Deal_Entry_Select_Field_Placeholder}"/>
+                </div>
+                <div class="slds-form-element__control">
+                    <input class="slds-form-element slds-input"  format-number="{{appConfig.decimalPlaces}}" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-model="updateRowsFieldVal" style="width:150px;"/>
+                </div>
+             
+                <div class="slds-form-element__control" role="group">
+                    <div class="slds-button-group slds-button-space-left" role="group">
+                        <button class="slds-button slds-button--neutral" ng-click="updateAllRows()">{!$Label.CRM_Deal_Entry_Update_All_Button}</button>
+                        <button class="slds-button slds-button--neutral" ng-click="deleteAllRows()">{!$Label.CRM_Deal_Entry_Delete_All_Button}</button>
+                    </div>
+                </div>
+             </div>
+        </div>
+    </div>
+    
+    <div id="wb-listview">
+            <table id="wb-listtable" class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                <thead>
+                  <tr class="slds-text-heading--label">
+                    <th scope="col">
+                      <label class="slds-checkbox" for="select-all">
+                        <input name="checkbox" type="checkbox" id="select-all" ng-model="isMasterChecked" ng-click="checkUncheckAll()"/>
+                        <span class="slds-checkbox--faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">select all</span>
+                      </label>
+                    </th>
+                    
+                  <!--US#615 ankita  -->
+                         
+                    <th class="slds-is-sortable  wb-col-fixed" scope="col">
+                      <span class="slds-truncate" ng-show="propertyName === 'productName'" ng-class="{reverse: reverse}">{!$ObjectType.Product2.fields.Name.Label}</span>
+                      <button class="slds-button slds-button--icon-bare slds-button--icon-border-small" ng-click="sortByName('productName')" >
+                        <svg ng-hide="reverse == false" aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                          <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#arrowup')}"></use>
+                        </svg>
+                        <svg ng-hide="reverse == true" aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                          <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Sort</span>
+                      </button>
+                    </th>
+                    <!--US#615 end ankita  -->
+                    
+                    <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.Order.fields.OrderNumber.Label}</span>
+                      <button class="slds-button slds-button--icon-bare slds-button--icon-border-small">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                         
+                        </svg>
+                        <!--<span class="slds-assistive-text">Sort</span>-->
+                      </button>
+                    </th>
+ 
+                   <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.Pricebookentry.fields.ProductCode.Label}</span>
+                    </th>
+                    
+                   <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.OrderItem.fields.ListPrice.Label}</span>
+                    </th>
+                    
+                    <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.OrderItem.fields.UnitPrice.Label}</span>
+                    </th>
+                    
+                    <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.OrderItem.fields.Quantity.Label}</span>
+                    </th>
+
+                    <th scope="col">
+                      <span class="slds-truncate">{!$ObjectType.OrderItem.fields.Total_Price__c.Label}</span>
+                    </th>
+                    
+                </tr>
+              </thead>
+        
+              
+              <tbody>
+                <!--US#615 start ankita  -->
+                <tr class="slds-hint-parent" ng-repeat="lineItem in lineItems | filter:search.text | orderBy:propertyName:reverse ">
+                  <td class="slds-row-select">
+                    <label class="slds-checkbox" for="select-row-{{$index}}">
+                       <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="lineItem.isSelected"/>
+                      <span class="slds-checkbox--faux"></span>
+                      <span class="slds-form-element__label slds-assistive-text">select row-{{$index}}</span>
+                    </label>
+                  </td>
+                     
+                  <!--US#615 end ankita  -->
+       
+                  <th data-label="{!$ObjectType.Product2.fields.Name.Label}" class="wb-ProductName" role="row" >
+                    <span class="slds-truncate">
+                        <a  href="javascript:void(0)" ng-click="showMoreInfoPopup(lineItem)" ng-bind-html="lineItem.productName"></a>
+                    </span><br />
+                    <!--<span class="slds-truncate">{{lineItem.productName}}</span>-->
+                    <!-- US#617 -->
+                    <span class="slds-truncate">Product Format ({{lineItem.productFormat}})</span>
+                  </th>
+                  
+                  <td data-label="{!$ObjectType.Order.fields.Name.Label}"><span class="slds-truncate" >{{lineItem.OrderName}}</span></td>
+
+                  <th data-label="{!$ObjectType.Product2.fields.Name.Label}" class="wb-ProductCode" role="row" >
+                   <!-- <span class="slds-truncate">
+                        <a  href="javascript:void(0)" ng-click="showMoreInfoPopup(lineItem)" ng-bind-html="lineItem.productCode"></a>
+                    </span><br />-->
+                    <span class="slds-truncate">{{lineItem.productCode}}</span>
+                  </th> 
+
+                  <td data-label="{!$ObjectType.OrderItem.fields.ListPrice.Label}"><span class="slds-truncate" >{{lineItem.listPrice | currency : appConfig.orderCurrencyCode : appConfig.decimalPlaces}}</span></td>
+                  
+                  <td data-label="{!$ObjectType.OrderItem.fields.UnitPrice.Label}"><span class="slds-truncate" >{{lineItem.UnitPrice | currency : appConfig.orderCurrencyCode : appConfig.decimalPlaces}}</span></td>
+                  
+                  
+                  <td data-label="{!$ObjectType.OrderItem.fields.Quantity.Label}">
+                    <div class="slds-form-element" ng-show="showOrderLI">
+                      <div class="slds-form-element__control" ng-class="{'slds-has-error': (lineItem.totalQty == null || lineItem.totalQty == undefined || isNan(lineItem.totalQty))}">
+                        <input id="totalQty-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" ng-model="lineItem.totalQty" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'totalQty');"/>
+                      </div>
+                    </div>
+                   <span ng-show="!showOrderLI ">{{lineItem.totalQty | number : 0}}</span>
+                  </td>
+                  
+                  
+                 
+                  
+                  <td data-label="Total Price">
+                    <!-- <div class="slds-form-element">
+                      <div class="slds-form-element__control">
+                        <input class="slds-input slds-input--small" type="number" ng-model="lineItem.totalPrice" style="width: 75px"  ng-disabled="!lineItem.isDigital || lineItem.scheduleEnabled || lineItem.isMarketingMaterial" ng-change="lineItem.isDirtyRow = true;"/>
+                      </div>
+                    </div> -->
+                    <span>{{lineItem.totalPrice | currency : appConfig.orderCurrencyCode : appConfig.decimalPlaces}}</span>
+                  </td>
+ 
+                 
+                
+                </tr>
+              </tbody>
+            </table>
+        </div>
+    
+      
+
+      <!-- Modal dialog for product details -->
+      <div id="productMoreInfoPopup" ng-show="moreInfoProduct">
+        <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+          <div class="slds-modal__container" ng-click="$event.stopPropagation()">
+            <div class="slds-modal__header slds-page-header">
+              <h2 class="slds-text-heading--medium" ng-bind-html="moreInfoProduct.productName"></h2>
+              <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="hideMoreInfoPopup()">
+                <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                  <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                </svg>
+                <span class="slds-assistive-text">Close</span>
+              </button>
+            </div>
+            <div class="slds-modal__content">
+              <iframe style="height:100%" src="{{moreInfoProductUrl}}" id="wb-moreInfo" />
+            </div>
+          </div>
+        </div>
+        <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+      </div>
+
+</div>
+</div>
+<script>
+$(function() {
+ /**
+  * Assistive Help
+  */
+  $('.wb-help-icon').hover(function(e) {
+     $(e.currentTarget).next().show();
+   },
+   function(e) {
+     $(e.currentTarget).next().hide();
+  });
+
+  /**
+   * Picklist
+   
+   $('.wb-picklist').click(function(e) {
+     $(e.currentTarget).next().toggleClass('slds-hide');
+   });*/
+
+});
+
+
+crmApp = angular.module('crmEditOrderProducts', ['appConfig', 'crm-components', 'ngSanitize'])
+
+.controller('crmEditOrderProductController', function($scope, $filter, getLineItemsService, addLineItemsService, saveLineItemsService, appConfig) {
+  $scope.appConfig = appConfig;
+  $scope.lineItems;
+  $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+  $scope.search = {};
+  $scope.updateRowFieldOptions = [{label:"{!$ObjectType.OrderItem.fields.Quantity.Label}", value:"totalQty"}];
+  $scope.updateRowsField = [];
+
+  $scope.updateRowsFieldVal;
+  
+  $scope.showSpinner;
+  $scope.showOrderLI;
+  $scope.msgText;
+  $scope.msgSeverity;
+  $scope.quickSave;
+  console.log($scope.appConfig.recordId);
+  $scope.datepickerOptions = {language : 'en', dateFormat: 'mm/dd/yyyy', todayHighlight: true};
+
+  $scope.dateObj;
+  
+    // Method to validate the input number format
+    $scope.validateFormat = function(lineItem, fieldName) {
+        var inputElement = document.getElementById(fieldName +'-'+lineItem.lineItemId);
+        if (lineItem.inValidFormatMap[fieldName +'-'+lineItem.lineItemId] || lineItem.totalQty == 0) {
+            inputElement.style.borderWidth = "2px";
+            inputElement.style.borderColor = 'red';
+        } else {
+            inputElement.style.borderWidth = null;
+            inputElement.style.borderColor = null;
+        }
+    }
+
+   $scope.updateAllRows = function(){
+        console.log($scope.lineItems);
+        $scope.msgText = null;
+        var isAnyRowSelected = false
+        angular.forEach($scope.lineItems, function(item, i) {
+            if(item.isSelected) {
+                isAnyRowSelected = true;
+                if ($scope.updateRowsField[0] != null && $scope.updateRowsField[0] != undefined) {
+                    if (isNaN($scope.updateRowsFieldVal)) {
+                        $scope.addPageMessage("{!$Label.CRM_Enter_Value_to_Update}", 'error');
+                    } else {
+                        if($scope.updateRowsField[0].value == 'totalQty' && $scope.updateRowsFieldVal) {
+                            item.isDirtyRow = true;
+                            item.totalQty = parseInt($scope.updateRowsFieldVal);
+                            delete item.inValidFormatMap['totalQty-' + item.lineItemId];
+                            $scope.validateFormat(item, 'totalQty');
+                            item.totalPrice = item.totalQty * item.UnitPrice;
+                        } 
+                   }
+                } else {
+                    $scope.addPageMessage("{!$Label.CRM_Select_Field_To_Update}", 'error');
+                }
+            }
+        });
+
+        // If any row is not selected to update the selected records then show a message
+        if (!isAnyRowSelected) {
+            $scope.addPageMessage("{!$Label.CRM_Select_Record_For_Any_Operation}", 'error');
+        }
+    };
+
+    $scope.deleteAllRows = function(){
+        console.log($scope.lineItems);
+        var isAnyRowSelected = false;
+        angular.forEach($scope.lineItems, function(item, i) {
+            if(item.isSelected) {
+                item.isDirtyRow = true;
+                item.isDelete = true;
+                console.log(item.totalQty);
+                isAnyRowSelected = true;
+            }
+        });
+         
+        //Modified as part of Defect # 3475
+        // If no rows are selected add a message to select any record else delete the records
+        if (isAnyRowSelected) {
+            $scope.addPageMessage(null, null);
+            $scope.deleteData(true);
+        } else {
+            $scope.addPageMessage($Label.selectRecordForAnyOperationMsg, 'error');
+        }
+  };
+ 
+  
+  $scope.isMasterChecked = false;
+
+  $scope.checkUncheckAll = function() {
+    console.log('isChecked--->'+$scope.isMasterChecked);
+    angular.forEach($filter('filter')($scope.lineItems, $scope.search.text), function(item, i) {
+      item.isSelected = $scope.isMasterChecked;
+    });
+  };
+ 
+ 
+//Function to initially load the order products for a order
+  $scope.loadLineItems = function(){
+        $.when(
+            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+        ).then(function() {
+            var locale = $scope.appConfig.userLocale; //'de';
+            console.log('--locale->',locale);
+            var de = Globalize.locale(locale);
+            console.log('--Globalize.locale->',de);
+            $scope.msgText = null;
+            $scope.showSpinner = true;
+            $scope.showOrderLI = true;
+            console.log($scope.appConfig.recordId);
+            //console.log($CurrentPage.parameters.ordId);
+            getLineItemsService($scope.appConfig.apexController, $scope.appConfig.recordId).then(function(data){
+            //getLineItemsService($scope.appConfig.apexController, orderId).then(function(data){
+              console.log(data);
+              $scope.lineItems = data;
+              console.log('{!IsSBOMConfig}');
+              if({!IsSBOMConfig}){
+                 $scope.showOrderLI = false;
+              }
+              $scope.showSpinner = false;
+            },
+            function(error){
+              console.log(error);
+              $scope.msgText = error.message;
+              $scope.msgSeverity = 'error';
+              $scope.showSpinner = false;
+            });
+        });
+  };
+  
+  $scope.navigateToURL = function(url) {
+    var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+    if ($scope.isLightningExperienceOrSf1)
+        sforce.one.navigateToURL(url);
+      else
+        document.location.href = url;
+  };
+  
+  $scope.addPageMessage =  function(msg, sev) {
+    $scope.msgText = msg;
+    $scope.msgSeverity = sev;
+  };
+  //Move focus to next component and add Product
+    $scope.moveFocusAndAdd = function() {
+        if(event.keyCode == 13 && document.getElementById('txt2')){
+            console.log(event.keyCode);
+            console.log(document.getElementById('txt2'));
+            $scope.addProduct();
+        }
+    }
+    // Method to validate the data and set proper error message for invalid data
+    $scope.inValidMaterialNumber = function(search) {
+        $scope.msgText = null;
+        if (search.materialNumber == null || search.materialNumber == undefined || isNaN(search.materialNumber) || search.materialNumber == 0) {
+                  $scope.addPageMessage($Label.enterMaterialNumberDataMsg , 'error');
+        }
+        console.log($scope.msgText);
+        return $scope.msgText;
+     }
+    // Bind the add Product function to the SFDC controller to commit the records
+    $scope.addProduct = function() {
+        $scope.msgText = null;
+        $scope.showSpinner = true;
+        console.log($scope.search.materialNumber);
+        if (!$scope.inValidMaterialNumber($scope.search)) {
+        addLineItemsService($scope.appConfig.apexController, $scope.appConfig.recordId, $scope.search)
+          .then(function(data) {
+              $scope.lineItems = data;
+              console.log($scope.lineItems);
+              $scope.showSpinner = false;
+              $scope.search.materialNumber = null;
+          },
+          function(data){
+              console.log(data.message);
+              $scope.addPageMessage(data.message, 'error');
+              $scope.showSpinner = false;
+              $scope.search.materialNumber = null;
+          });
+        }else {
+            $scope.showSpinner = false;
+            $scope.search.materialNumber = null;
+        }
+   };
+    // Bind the save function to the SFDC controller to commit the records
+  $scope.saveData = function(qSave) {
+    $scope.msgText = null;
+    $scope.showSpinner = true;
+    $scope.quickSave = qSave;
+    
+    console.log($scope.lineItems);
+        angular.forEach($scope.lineItems, function(item, i) {
+            //Internet Explorer compatibility Defect ID : 4508 Ankita 
+            var arrValues = Object.keys(item.inValidFormatMap).map(function(key) {return item.inValidFormatMap[key];});
+            if (arrValues.length > 0 || item.totalQty == null || item.totalQty == 0) {
+                $scope.addPageMessage("{!$Label.CRM_Enter_Valid_Value_For_Number}", 'error');
+                $scope.showSpinner =  false;
+            }
+        });
+     
+        if ($scope.msgText == null) {
+            saveLineItemsService($scope.appConfig.apexController, $scope.appConfig.recordId, $scope.lineItems, $scope.quickSave)
+              .then(function(data) {
+                $scope.lineItems = data;
+                console.log($scope.lineItems);
+                console.log(qSave);
+                  if(qSave) {
+                    $scope.addPageMessage($Label.updateSuccessMsg, 'success');
+                    $scope.showSpinner = false;
+                    $scope.isMasterChecked = false;
+                  }
+                  else {
+                    $scope.navigateToURL(appConfig.onSaveSuccessUrl);
+                  }
+                },
+                function(data){
+                  console.log(data.message);
+                  $scope.addPageMessage(data.message, 'error');
+                  $scope.showSpinner = false;
+                }
+              );
+        }
+    };
+    // Bind the delete records to save function of SFDC controller to delete the records and show deleted message after successful delete
+    $scope.deleteData = function(qDelete) {
+        $scope.msgText = null;
+        $scope.showSpinner = true;
+        saveLineItemsService($scope.appConfig.apexController, $scope.appConfig.recordId, $scope.lineItems, true)
+            .then(function(data) {
+            $scope.lineItems = data;
+            if (qDelete) {
+                $scope.addPageMessage($Label.delectSuccessMsg, 'success');
+                $scope.showSpinner = false;
+                $scope.isMasterChecked = false;
+            }
+        },
+        function(data){
+          $scope.addPageMessage(data.message, 'error');
+          $scope.showSpinner = false;
+        }
+      );
+    };
+ 
+
+  $scope.moreInfoProduct;
+  $scope.moreInfoProductUrl;
+
+  $scope.showMoreInfoPopup = function(prodLi) {
+    $scope.moreInfoProduct = prodLi;
+    $scope.moreInfoProductUrl = '/apex/CRM_ProductMoreinfo?dealOrOrderId='+ prodLi.dealOrOrderId +'&priceBookEntryID='+prodLi.pricebookEntryId;
+  };
+
+  $scope.hideMoreInfoPopup = function() {
+    $scope.moreInfoProduct = null;
+    $scope.moreInfoProductUrl = null;
+  };
+   //US#615 start ankita  
+   $scope.propertyName = 'productName';
+   $scope.reverse = true;
+   
+  $scope.sortByName = function(propertyName) {
+    $scope.reverse = ($scope.propertyName === propertyName) ? !$scope.reverse : false;
+    $scope.propertyName = propertyName;
+  };
+ //US#615 end ankita 
+  
+})
+.factory("addLineItemsService", ['$q', '$rootScope', function($q, $rootScope) {
+      return function(apexController, recordId, search) {
+            var deferred = $q.defer();
+            // Save the products to the salesforce controller
+            apexController.addLineItems(recordId, search,
+                function(result, event) {
+                    $rootScope.$apply(function() {
+                      if (event.status) {
+                        deferred.resolve(result);
+                      } else {
+                        deferred.reject(event);
+                      }
+                    })
+                }
+            );
+            return deferred.promise;
+        }
+    }])
+.factory("getLineItemsService", ['$q', '$rootScope', function($q, $rootScope) {
+  return function(apexController, orderId, priceBookId) {
+        var deferred = $q.defer();
+
+        // Load the products from the salesforce controller
+        apexController.getLineItems(orderId,
+            function(result, event) {
+                
+                $rootScope.$apply(function() {
+                  if (event.status) {
+                      
+                    deferred.resolve(result);
+                  } else {
+                    deferred.reject(event);
+                  }
+                })
+            }
+        );
+
+        return deferred.promise;
+    }
+}])
+
+.factory("saveLineItemsService", ['$q', '$rootScope', function($q, $rootScope) {
+    return function(apexController, recordId, lineItems, quickSave) {
+        var deferred = $q.defer(); 
+        console.log(lineItems);
+       
+        
+        var selectedLineItems = lineItems;
+        /*var selectedLineItems = $.grep(lineItems, function(x){
+            if(x.scheduleEnabled == null){
+                x.scheduleEnabled = false;
+            }
+            return (x.isDirtyRow == true);
+        });*/
+       
+        console.log(selectedLineItems);
+       
+        
+         // Rip the two fields that are needed
+        var lineItemsSave = $.map(selectedLineItems, function(x) {
+           
+            
+            return {
+                OrderName: x.OrderName,
+                pricebookEntryId: x.pricebookEntryId, 
+                listPrice: x.listPrice,
+                lineItemId: x.lineItemId,
+                pricebookEntryId: x.pricebookEntryId,
+                productId: x.productId,
+                productName: x.productName,
+                totalQty: x.totalQty,
+                UnitPrice: x.UnitPrice,
+                LineDescription: x.LineDescription,
+                dealOrorderId: x.dealOrorderId,
+                totalPrice: x.totalPrice,
+                ReturnReason: x.ReturnReason,
+                isDelete:x.isDelete
+            }
+        }); 
+        
+        console.log(lineItemsSave);
+       
+        console.log(recordId);
+        
+        // Save the products to the salesforce controller
+        apexController.saveLineItems(recordId, lineItemsSave, quickSave,
+            function(result, event) {
+                $rootScope.$apply(function() {
+                  if (event.status) {
+                    deferred.resolve(result);
+                  } else {
+                    deferred.reject(event);
+                  }
+                })
+            }
+        );
+        return deferred.promise;
+    }
+
+}]);
+
+
+ 
+</script>
+
+</body>
+</html>
+</apex:page>

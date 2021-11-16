@@ -1,0 +1,4 @@
+<apex:page sidebar="false" controller="WB_CommunityKeyTabs_Controller" lightningStylesheets="true" >   
+    <PowerGrid:PowerGrid gridTemplateId="{!vendorGrid}" />    
+    <link href="{!URLFOR($Page.PowerLoader__FrameworkCustomCSS)}" rel="STYLESHEET" type="text/css" />
+</apex:page>

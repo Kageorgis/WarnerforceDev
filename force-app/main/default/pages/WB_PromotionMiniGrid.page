@@ -1,0 +1,31 @@
+<apex:page standardController="Promotion__c" sidebar="false" showHeader="false">
+<script src="{!URLFOR($Resource.Powerloader__domain_js)}"></script>
+
+<b>View Mode:</b> <select id="toggleViewMode" onchange="toggleViewMode()"><option value="Pivot">Pivot</option><option value="Normal">Normal</option></select>
+<div id="disp">
+</div>
+
+<script>
+function toggleViewMode() {
+    var xa = document.getElementById('mini_disp_iframe');
+    var sortSeq = false;
+    if (xa && xa.contentWindow.mygrid) {
+        sortSeq = xa.contentWindow.mygrid.CF_sortSequence;
+    }
+    if (sortSeq) sortSeq = escape(xa.contentWindow.JSON.stringify(sortSeq));
+
+    var vm = document.getElementById('toggleViewMode').value;
+    var html = '';
+    if (vm == 'Normal') {
+        //html = '<iframe id="mini_disp_iframe" marginheight="0" marginwidth="0" width="100%" height="480" frameborder="0" border="0" src="/apex/Minigrid__MiniGrid?obj=Promotion__c&val={!Promotion__c.Id}&relObj=Promotion_Title__c&defaultTemplateName=Promotion+Title' + (sortSeq ? '&sortSeq=' + sortSeq : '') + '"></iframe>';
+        html = '<iframe id="mini_disp_iframe" marginheight="0" marginwidth="0" width="100%" height="480" frameborder="0" border="0" src="/apex/Minigrid__MiniGrid?obj=Promotion__c&val={!Promotion__c.Id}&relObj=Promotion_Title__c' + (sortSeq ? '&sortSeq=' + sortSeq : '') + '"></iframe>';
+    } else {
+        //html = '<iframe id="mini_disp_iframe" marginheight="0" marginwidth="0" width="100%" height="480" frameborder="0" border="0" src="/apex/c__WB_PromotionPivotMiniGrid?id={!Promotion__c.Id}&defaultTemplateName=Promotion+Title' + (sortSeq ? '&sortSeq=' + sortSeq : '') + '"></iframe>';
+        html = '<iframe id="mini_disp_iframe" marginheight="0" marginwidth="0" width="100%" height="480" frameborder="0" border="0" src="/apex/c__WB_PromotionPivotMiniGrid?id={!Promotion__c.Id}' + (sortSeq ? '&sortSeq=' + sortSeq : '') + '"></iframe>';
+    }
+    document.getElementById('disp').innerHTML = html;
+}
+toggleViewMode();
+</script>
+
+</apex:page>

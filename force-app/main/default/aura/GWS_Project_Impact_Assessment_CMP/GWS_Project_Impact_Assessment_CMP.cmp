@@ -1,0 +1,818 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId" access="global" controller="GWSController">
+    <!-- aura attributes-->  
+      <!-- aura attributes-->
+    <aura:attribute name="listControllingValues" type="list" default="[]" description="to store controller field values"/>
+    <aura:attribute name="listDependingValues" type="list" default="['--- None ---']" description="to store dependent field values"/>
+    <aura:attribute name="depnedentFieldMap" type="map" description="map to store dependent values with controlling value"/>
+    <aura:attribute name="bDisabledDependentFld" type="boolean" default="true"/> 
+    <aura:attribute name="isProfileAccess" type="boolean" default="true"/> 
+    <aura:attribute name="stage" type="String"/> 
+    
+    <aura:attribute name="Message" type="String" default=""/>
+    <aura:attribute name="wbtSubmitterDetailsSection" type="Boolean" default="false"/>
+    <aura:attribute name="wbtProjectAdministrationDetailsSection" type="Boolean" default="false"/>
+    <aura:attribute name="wbtTypeofRequestSection" type="Boolean" default="false"/>
+    <aura:attribute name="wbtProjectObjectiveBackgroundSection" type="Boolean" default="false"/>
+    <aura:attribute name="gwsProjectDetailsSection" type="Boolean" default="false"/>
+    <aura:attribute name="gwsAssessmentDetailsSection" type="Boolean" default="false"/>
+    <aura:attribute name="gwsAssessmentCostAndDeliveryEstimate" type="Boolean" default="false"/>
+    <aura:attribute name="controllingFieldAPI" type="string" default="Approval_Stage__c" description="store field API name of Controller field"/>
+    <aura:attribute name="dependingFieldAPI" type="string" default="Reason__c" description="store field API name of dependent field"/>
+    <aura:attribute name="selectedProjectRequester" type="sObject" default="{}"/>
+    <aura:attribute name="listOfSearchRecords" type="List" />
+    <aura:attribute name="contactRec" type="Contact" default="{
+                                                              'sobjectType':'Contact',
+                                                              'Name':'',
+                                                              'Id':'',
+                                                              'Email':'',
+                                                              'Phone':''
+                                                              }"/>
+    <aura:attribute name="SearchKeyWord" type="String" />
+    <aura:attribute name="submitterInfo" type="Boolean" default="true"/>
+    <aura:attribute name="loaded" type="Boolean" default="false"/>
+    <aura:handler name="oSelectedRecordEvent" event="c:SelectedRecordEvent" action="{!c.handleComponentEvent}"/>
+    
+    <aura:attribute name="wbProjectObj" type="WB_Project__c" default="{sobjectType : 'WB_Project__c'}"/>
+    <aura:attribute name="gwsSection" type="Boolean" default="false"/>
+    <aura:attribute name="wbtSection" type="Boolean" default="false"/>
+    <aura:attribute name="valuesRequest_Type" type="List" default="[]"/>
+    <aura:attribute name="valuesRequired_Services" type="List" default="[]"/>
+    <aura:attribute name="valuesLocations_of_impacted_users" type="List" default="[]"/>
+    <aura:attribute name="valuesHigh_Level_Project_Activities" type="List" default="[]"/>
+    <aura:attribute name="valuesImpacted_Teams" type="List" default="[]"/>
+    <aura:attribute name="valuesOther_Potential_Impacts" type="List" default="[]"/>
+    <aura:attribute name="Project_Type" type="String[]" default="New Product,New Service,Modify Existing Product/Service"/>
+    <!---aura:attribute name="Project_Type" type="String[]" /-->
+    <aura:attribute name="Users_Level" type="String[]" default="--None--,Beginner,Intermediate,Advanced,Mix"/>
+    <aura:attribute name="Request_Type" type="List" default="[
+                                                             {label:'Training',value: 'Training'},
+                                                             {label:'Advisory Consultation',value: 'Advisory Consultation'},
+                                                             {label:'Project Planning &amp; Design',value: 'Project Planning &amp; Design'},
+                                                             {label:'Migration',value: 'Migration'},
+                                                             {label:'Other',value: 'Other'}
+                                                             ]"/>
+    <!--aura:attribute name="Locations_of_impacted_users" type="String[]" /-->
+    <aura:attribute name="Locations_of_impacted_users" type="List" />
+    <aura:attribute name="Required_Services" type="List" default="[
+                                                                  {label:'SCCM',value: 'SCCM'},
+                                                                  {label:'JAMF',value: 'JAMF'},
+                                                                  {label:'SharePoint',value: 'SharePoint'},
+                                                                  {label:'Asset Management',value: 'Asset Management'},
+                                                                  {label:'OKTA',value: 'OKTA'},
+                                                                  {label:'I Don\'t Know',value: 'I Don\'t Know'}
+                                                                  ]"/>
+    <aura:attribute name="GWS_Project_Type" type="String[]" default="Back-end Tech Change,New Product or Service,Modification"/>
+    <aura:attribute name="High_Level_Project_Activities" type="List" default="[
+                                                                              {label:'Technical Modification',value: 'Technical Modification'},
+                                                                              {label:'License Procurement',value: 'License Procurement'},
+                                                                              {label:'Plan/Track Project',value: 'Plan/Track Project'},
+                                                                              {label:'Legal Review',value: 'Legal Review'},
+                                                                              {label:'SOW Development',value: 'SOW Development'},
+                                                                              {label:'I&amp;CS Product or Vendor Review',value: 'I&amp;CS Product or Vendor Review'}
+                                                                              ]"/>
+    <aura:attribute name="Impacted_Teams" type="List" default="[
+                                                               {label:'Workplace/Tech Architecture',value: 'Workplace/Tech Architecture'},
+                                                               {label:'Workplace Engineering',value: 'Workplace Engineering'},
+                                                               {label:'Workplace Desktop',value: 'Workplace Desktop'},
+                                                               {label:'Workplace Asset Management',value: 'Workplace Asset Management'},
+                                                               {label:'EIS Data Center',value: 'EIS Data Center'},
+                                                               {label:'EIS Active Directory',value: 'EIS Active Directory'},
+                                                               {label:'Service Desk',value: 'Service Desk'},
+                                                               {label:'I&amp;CS',value: 'I&amp;CS'},
+                                                               {label:'Applications Teams',value: 'Applications Teams'},
+                                                               {label:'Other',value: 'Other'}                             
+                                                               ]"/>
+    <aura:attribute name="Other_Potential_Impacts" type="List" default="[
+                                                                        {label:'Lack of in house resources/skill',value: 'Lack of in house resources/skill'},
+                                                                        {label:'Lack of funding',value: 'Lack of funding'},
+                                                                        {label:'New Licenses Required',value: 'New Licenses Required'},
+                                                                        {label:'Compliance/ Privacy',value: 'Compliance/ Privacy'},
+                                                                        {label:'I&amp;CS or Legal Approval Required',value: 'I&amp;CS or Legal Approval Required'},
+                                                                        {label:'New Vendor/SOW needed',value: 'New Vendor/SOW needed'},
+                                                                        {label:'Other Teams Required',value: 'Other Teams Required'},
+                                                                        {label:'Training Development Needed',value: 'Training Development Needed'},
+                                                                        {label:'Other',value: 'Other'}                             
+                                                                        ]"/>
+    <aura:attribute name="Cost_Delivery_Estimate" type="String[]"  default="--None--,Small: Less then 40 hours,Medium: 41 to 160 hours,Large: More than 160 hours"/>
+    <aura:attribute name="Complexity" type="String[]" default="--None--,1,2,3,4,5"/>
+    <aura:attribute name="Next_Steps" type="String[]"  default="Client Consultation Session,Formal Requirements Capture,Project Planning,RFP / SOW,Procurement,Other"/>
+    
+    <aura:attribute name="wbtFields" type="String[]" default="['Name','Service_Type__c',
+                                                              'Submitter_First_Name__c','Submitter_Last_Name__c',
+                                                              'Submitter_Email_Id__c',
+                                                              'Submitter_Phone_Number__c','Project_Name__c',
+                                                              'Project_Requester__c','Project_Owner__c',
+                                                              'Requesting_DivisionDepartment__c',
+                                                              'Executive_Sponsor__c','Technology_Sponsor__c',
+                                                              'Project_Type__c','Request_Type__c',
+                                                              'If_other_please_describe__c',
+                                                              'Business_or_Technology_Problems__c',
+                                                              'Required_Services__c','Users_Level__c',
+                                                              'Project_Approved__c','If_no_expected_approval_date__c',
+                                                              'Project_Funded__c','If_no_expected_funding_date__c',
+                                                              'Number_of_impacted_user__c','Impacted_user_groups__c',
+                                                              'Locations_of_impacted_users__c','Users_are_in_each_location__c',
+                                                              'Project_align_to_specific_business__c']" />
+    <aura:attribute name="gwsFields" type="String[]" default="['Name','Project_Name__c','Project_Requester__c','Project_Owner__c',
+                                                              'Requesting_DivisionDepartment__c','Executive_Sponsor__c',
+                                                              'GSW_Review_Date__c','Reviewed_By__c','GWS_Project_Type__c',
+                                                              'High_Level_Project_Activities__c','Impacted_Teams__c',
+                                                              'Application_Other_Team_Checked__c','Other_Potential_Impacts__c',
+                                                              'If_other_please_explain__c','Cost_Delivery_Estimate__c','Complexity__c',
+                                                              'Describe_any_Risks__c','Estimated_1X_Cost__c','Estimated_Ongoing_OPEX_Costs__c',
+                                                              'Funding_Source__c','Estimated_Start_Date__c','Estimated_Delivery_Date__c',
+                                                              'Next_Steps__c','If_you_selected_other_please_explain__c','GWS_Director_Approval__c',
+                                                              'Date_of_GWS_Director_Approval__c','GWS_VP_Approval__c',
+                                                              'Date_of_GWS_VP_Approval__c','Any_other_Considerations__c']"/>
+    <aura:attribute name="recordId" type="Id"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    
+    <div aura:id="wbtDisplay" class="slds-show slds-m-bottom_small">	
+        <lightning:card  class="slds-p-left_large slds-p-right_medium" title="">
+            <div class="slds-section__title-action">
+                <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showWBT }"/>
+                <div class="slds-text-heading_small slds-m-left_small">
+                    WBT Intake Form
+                </div>
+            </div>
+            <div class="slds-m-top_medium slds-p-left_large slds-p-right_medium">
+                <aura:renderIf isTrue="{!v.wbtSection}">
+                    <!--lightning:recordForm
+                                          recordId="{!v.recordId}"
+                                          objectApiName="WB_Project__c"
+                                          layoutType="Compact"
+                                          fields="{!v.wbtFields}"
+                                          columns="3"
+                                          mode="readonly" /-->
+                    <lightning:recordViewForm recordId="{!v.recordId}" objectApiName="WB_Project__c">
+                        <div class="slds-box slds-grid slds-gutters slds-wrap">
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Name" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Service_Type__c" />
+                            </div>
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Submitter Details
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Submitter_First_Name__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Submitter_Last_Name__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Submitter_Email_Id__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Submitter_Phone_Number__c" />
+                            </div>
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Project Administration Details
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Name__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Requester__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Owner__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Requesting_DivisionDepartment__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Executive_Sponsor__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Technology_Sponsor__c" />
+                            </div>
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Type of Request
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Type__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Approved__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="If_no_expected_approval_date__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Funded__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="If_no_expected_funding_date__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Request_Type__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="If_other_please_describe__c" />
+                            </div>
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Project Objective/Background
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Business_or_Technology_Problems__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Required_Services__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Users_Level__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Number_of_impacted_user__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Impacted_user_groups__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Locations_of_impacted_users__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Users_are_in_each_location__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_align_to_specific_business__c" />
+                            </div>
+                        </div>
+                    </lightning:recordViewForm>
+                </aura:renderIf>
+            </div>
+        </lightning:card>
+    </div>
+    
+    <div aura:id="wbtEdit" class="slds-show slds-m-bottom_small">
+        <div class="slds-m-bottom_small slds-box slds-page-header">
+            <div class="slds-page-header__title slds-truncate">
+                Document Purpose
+            </div>
+            <div>
+                The purpose of this document is to capture the high level project requirements from our clients.  The information provided in this document will be the basis for Global Workplace Solutions (GWS) to provide technical consultation, project cost and delivery timeline to our clients.
+            </div>
+        </div>
+        <lightning:card  class="slds-p-left_large slds-p-right_medium" title="WBT Intake Form">
+            <div onmouseleave="{!c.onblur}" class="slds-box">
+                <div aura:id="lookupId">
+                    <div aura:id="lookupDiv" class="slds-grid slds-gutters slds-wrap">
+                        <div class="slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showWBTSubmitterDetails }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Submitter Details
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.wbtSubmitterDetailsSection }">
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <div>
+                                    <abbr class="slds-required" title="required">*</abbr>
+                                    <label>Submitter Search</label>
+                                    <div aura:id="lookupContact" class="slds-hide slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right slds-lookup slds-is-close">
+                                        <ui:inputText click="{!c.onfocus}"
+                                                      updateOn="keyup"
+                                                      keyup="{!c.keyPressController}"
+                                                      class="slds-m-top_x-small slds-lookup__search-input slds-input"
+                                                      value="{!v.SearchKeyWord}"
+                                                      placeholder="Search"/>
+                                        <ul style="min-height:170px" class="slds-scrollable_y slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu slds" role="listbox">
+                                            <center> {!v.Message}</center>
+                                            <aura:iteration items="{!v.listOfSearchRecords}" var="singleRec">
+                                                <c:ResultLookup oRecord="{!singleRec}"/>
+                                            </aura:iteration>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div aura:id="lookupValue" class="slds-pill-container slds-show"><!--class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right slds-lookup slds-is-close"-->
+                                    <lightning:pill class="slds-input" label="{!v.contactRec.Name}" name="{!v.contactRec.Id}" onremove="{! c.clear }"/>
+                                </div>
+                                <div aura:id="errorId" class="slds-hide slds-form-element__help" id="form-error-01">This field is required</div>
+                            </div>
+                            <aura:renderIf isTrue="{!v.submitterInfo}">
+                                <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                    <!--lightning:input aura:id='wbtInput' label="Submitter First Name:" required="true" value="{!v.wbProjectObj.Submitter_First_Name__c}"/-->
+                                    <label class="slds-form-element__label">Submitter First Name:</label>
+                                    <ui:outputText class="slds-form-element__label slds-form-element__static" value="{!v.wbProjectObj.Submitter_First_Name__c}"/>
+                                </div>
+                                <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                    <!--lightning:input aura:id='wbtInput' label="Submitter Last Name:" required="true" value="{!v.wbProjectObj.Submitter_Last_Name__c}"/-->
+                                    <label class="slds-form-element__label">Submitter Last Name:</label>
+                                    <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Last_Name__c}"/>
+                                </div>
+                                <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                    <!--lightning:input aura:id='wbtInputEmail' label="Submitter Email Id:" required="true" value="{!v.wbProjectObj.Submitter_Email_Id__c}"/-->
+                                    <label class="slds-form-element__label">Submitter Email Id:</label>
+                                    <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Email_Id__c}"/>
+                                </div>
+                                <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                    <!--lightning:input aura:id='wbtInputPhNo' label="Submitter Phone Number:" required="true" value="{!v.wbProjectObj.Submitter_Phone_Number__c}"/-->
+                                    <label class="slds-form-element__label">Submitter Phone Number:</label>
+                                    <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Phone_Number__c}"/>
+                                </div>
+                            </aura:renderIf>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Requesting Division/Department:" required="true" value="{!v.wbProjectObj.Requesting_DivisionDepartment__c}"/>
+                            </div>
+                        </aura:renderIf>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showWBTProjectAdministrationDetails }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Project Administration Details
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.wbtProjectAdministrationDetailsSection }">
+                            
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Project Name:" required="true" value="{!v.wbProjectObj.Project_Name__c}"/>
+                            </div>
+                            
+                            
+                            
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Project Requester:" required="true" value="{!v.wbProjectObj.Project_Requester__c}"/>
+                                <!--c:ContactLookup objectAPIName="Contact" IconName="standard:contact" selectedRecord="{!v.selectedProjectRequester}" label="Project Requester:"/-->
+                            </div>
+                            
+                            
+                            
+                            
+                            
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Project Owner:" required="true" value="{!v.wbProjectObj.Project_Owner__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Executive Sponsor:" required="true" value="{!v.wbProjectObj.Executive_Sponsor__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input aura:id='wbtInput' label="Technology Sponsor:" required="true" value="{!v.wbProjectObj.Technology_Sponsor__c}"/>
+                            </div>
+                        </aura:renderIf>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showWBTTypeofRequest }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Type of Request
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.wbtTypeofRequestSection }">
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:select aura:id="projecttype" name="projecttype" label="Project Type: What can we help you with?" required="true">
+                                    <aura:iteration items="{!v.Project_Type}" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Type__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                                <lightning:dualListbox aura:id="typeofrequest"
+                                                       name="typeofrequest"  
+                                                       label= "Type of Request: What type of help do you need? Select all that apply"
+                                                       required="true"
+                                                       sourceLabel="Available" 
+                                                       selectedLabel="Selected" 
+                                                       options="{!v.Request_Type}"
+                                                       value="{!v.valuesRequest_Type}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_3-of-3">
+                                <lightning:textarea label="If other, please describe:" value="{!v.wbProjectObj.If_other_please_describe__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:select aura:id="projectapproved" name="projectapproved" required="true" label="Is your project approved?">
+                                    <aura:iteration items="Yes,No" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Approved__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input type="date" label="If no,what is the expected approval date?" value="{!v.wbProjectObj.If_no_expected_approval_date__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3"/>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:select aura:id="projectfunded" name="projectfunded" required="true" label="Is your project funded?"-->
+                                <lightning:select aura:id="projectfunded" name="projectfunded" label="Is your project funded?">
+                                    <aura:iteration items="--None--,Yes,No" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Funded__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input type="date" label="If no,what is the expected funding date?" value="{!v.wbProjectObj.If_no_expected_funding_date__c}"/>
+                            </div>
+                        </aura:renderIf>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-section__title-action">
+                            <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showWBTProjectObjectiveBackground }"/>
+                            <div class="slds-m-left_small slds-text-heading_medium">
+                                Project Objective/Background
+                            </div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.wbtProjectObjectiveBackgroundSection }">
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3" style="height:264px">
+                                <lightning:textarea label="What business or technology problems are you trying to solve?" value="{!v.wbProjectObj.Business_or_Technology_Problems__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                                <lightning:dualListbox aura:id="whatservicesarerequired"
+                                                       name="whatservicesarerequired"  
+                                                       label= "What services are required?"
+                                                       required="true"
+                                                       sourceLabel="Available" 
+                                                       selectedLabel="Selected" 
+                                                       options="{!v.Required_Services}"
+                                                       value="{!v.valuesRequired_Services}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:select aura:id="userslevel" name="userslevel" label="If you require training, what level are your users:">
+                                    <aura:iteration items="{!v.Users_Level}" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Users_Level__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:input aura:id='wbtInput' label="Number of impacted users:" required="true" value="{!v.wbProjectObj.Number_of_impacted_user__c}"/-->
+                                <lightning:input label="Number of impacted users:" value="{!v.wbProjectObj.Number_of_impacted_user__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:input label="Impacted user groups:" required="true" value="{!v.wbProjectObj.Impacted_user_groups__c}"/>
+                            </div>
+                            <!--div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:select aura:id="locationofimpactedusers" name="locationofimpactedusers" label="Location(s) of impacted users:" required="true">
+                                    <aura:iteration items="{!v.Locations_of_impacted_users}" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Locations_of_impacted_users__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div-->
+                            <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                                <lightning:dualListbox aura:id="locationofimpactedusers"
+                                                       name="locationofimpactedusers"  
+                                                       label= "Location(s) of impacted users:"
+                                                       required="true"
+                                                       sourceLabel="Available" 
+                                                       selectedLabel="Selected" 
+                                                       options="{!v.Locations_of_impacted_users}"
+                                                       value="{!v.valuesLocations_of_impacted_users}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:textarea aura:id='wbtInput' label="If known, how many users are in each location?" required="true" value="{!v.wbProjectObj.Users_are_in_each_location__c}"/-->
+                                <lightning:textarea label="If known, how many users are in each location?" value="{!v.wbProjectObj.Users_are_in_each_location__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:select aura:id="projectaligntospecificbusiness" name="projectaligntospecificbusiness" required="true" label="Does this project align to specific business priority or policy requirement?"-->
+                                <lightning:select aura:id="projectaligntospecificbusiness" name="projectaligntospecificbusiness" label="Does this project align to specific business priority or policy requirements?">
+                                    <aura:iteration items="--None--,Yes,No" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_align_to_specific_business__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                        </aura:renderIf>
+                    </div>
+                </div>
+                <div class="slds-align_absolute-center slds-m-top_small" >
+                    <!--lightning:button variant="brand" label="Save" title="Save" onclick="{! c.handleClickNext }" /-->
+                    <lightning:button variant="brand" label="Next" title="Next" onclick="{! c.handleClickWBTNext }" />
+                </div>
+            </div>
+        </lightning:card>
+    </div>
+    
+    <div aura:id="gwsDisplay" class="slds-show slds-m-bottom_small">
+        <lightning:card class="slds-p-left_large slds-p-right_medium" title="">
+            <div class="slds-section__title-action">
+                <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="GWS Section" onclick="{! c.showGWS }"/>
+                <div class="slds-text-heading_small slds-m-left_small">
+                    GWS Project Impact Assessment
+                </div>
+            </div>
+            <div class="slds-m-top_medium slds-p-left_large slds-p-right_medium">
+                <aura:renderIf isTrue="{!v.gwsSection}">
+                    <!--lightning:recordForm
+                                          recordId="{!v.recordId}"
+                                          objectApiName="WB_Project__c"
+                                          layoutType="Compact"
+                                          fields="{!v.gwsFields}"
+                                          columns="3"
+                                          mode="readonly" /-->
+                    <lightning:recordViewForm recordId="{!v.recordId}" objectApiName="WB_Project__c">
+                        <div class="slds-box slds-grid slds-gutters slds-wrap">
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Project Details
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Name" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Name__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Requester__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Project_Owner__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Requesting_DivisionDepartment__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Executive_Sponsor__c" />
+                            </div>
+                            <div class="slds-text-heading_medium slds-section__title-action">
+                                Assessment Details
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="GSW_Review_Date__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Reviewed_By__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="GWS_Project_Type__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="High_Level_Project_Activities__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Impacted_Teams__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Application_Other_Team_Checked__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Other_Potential_Impacts__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="If_other_please_explain__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Cost_Delivery_Estimate__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Complexity__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Describe_any_Risks__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Estimated_1X_Cost__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Estimated_Ongoing_OPEX_Costs__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Funding_Source__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Estimated_Start_Date__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Estimated_Delivery_Date__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Next_Steps__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="If_you_selected_other_please_explain__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="GWS_Director_Approval__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Date_of_GWS_Director_Approval__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="GWS_VP_Approval__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Date_of_GWS_VP_Approval__c" />
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <lightning:outputField fieldName="Any_other_Considerations__c" />
+                            </div>
+                            
+                        </div>
+                    </lightning:recordViewForm>
+                </aura:renderIf>
+            </div>
+        </lightning:card>
+    </div>
+    
+    <div aura:id="gwsEdit" class="slds-show slds-m-bottom_small">
+        <lightning:card class="slds-p-left_large slds-p-right_medium" title="GWS Project Impact Assessment">
+            <div class="slds-m-left_small slds-p-horizontal_small">
+                Please complete this form and respond to the requester within 10 days of recieving the intial request. Request time to review in person with the requestor if needed.
+            </div>
+            <div class="slds-m-top_small slds-box">
+                <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                    <div class="slds-section__title-action">
+                        <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showGWSProjectDetails }"/>
+                        <div class="slds-m-left_small slds-text-heading_medium">
+                            Project Details
+                        </div>
+                    </div>
+                    <aura:renderIf isTrue="{!v.gwsProjectDetailsSection }">
+                        
+                        <div class="slds-col slds-size_1-of-2">
+                            <label class="slds-form-element__label">Project Name: </label>
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Project_Name__c}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <!--label class="slds-form-element__label">Name: </label-->
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Name}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <label class="slds-form-element__label">Project Requestor: </label>
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Project_Requester__c}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <label class="slds-form-element__label">Project Owner: </label>
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Project_Owner__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <label class="slds-form-element__label">Requesting Division/Department: </label>
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Requesting_DivisionDepartment__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <label class="slds-form-element__label">Executive Sponsor: </label>
+                            <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Executive_Sponsor__c}"/>
+                        </div>
+                    </aura:renderIf>
+                </div>
+                <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                    <div class="slds-section__title-action">
+                        <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showGWSAssessmentDetails }"/>
+                        <div class="slds-m-left_small slds-text-heading_medium">
+                            Assessment Details
+                        </div>
+                    </div>
+                    <aura:renderIf isTrue="{!v.gwsAssessmentDetailsSection }">
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' type="date" label="GWS Review Date:" required="true" value="{!v.wbProjectObj.GSW_Review_Date__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' label="Reviewed By:" required="true" value="{!v.wbProjectObj.Reviewed_By__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:select aura:id="gwsprojecttype" name="gwsprojecttype" label="Project Type: What is to be delivered?" required="true">
+                                <aura:iteration items="{!v.GWS_Project_Type}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.GWS_Project_Type__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2"/>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:dualListbox aura:id="highlevelprojectactivities"
+                                                   name="highlevelprojectactivities"  
+                                                   label= "High Level Project Activities: What's involved in delivering the service/product"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.High_Level_Project_Activities}"
+                                                   value="{!v.valuesHigh_Level_Project_Activities}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2"/>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:dualListbox aura:id="impactedteams"
+                                                   name="impactedteams"
+                                                   label= "Impacted Teams:"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Impacted_Teams}"
+                                                   value="{!v.valuesImpacted_Teams}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2" style="margin-top:7rem">
+                            <lightning:textarea label="If you checked Applications Teams or Other, please specify:" value="{!v.wbProjectObj.Application_Other_Team_Checked__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:dualListbox aura:id="otherpotentialimpacts"
+                                                   name="otherpotentialimpacts"  
+                                                   label= "Other Potential Impacts: People, Process, Policy, Technology, Operations:" 
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Other_Potential_Impacts}"
+                                                   value="{!v.valuesOther_Potential_Impacts}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2" style="margin-top:7rem">
+                            <lightning:textarea label="If other, please explain:" value="{!v.wbProjectObj.If_other_please_explain__c}"/>
+                        </div>
+                    </aura:renderIf>
+                </div>
+                <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                    <div class="slds-section__title-action">
+                        <lightning:buttonIcon iconName="utility:down" size="x-small" alternativeText="WBT Section" onclick="{! c.showGWSCostAndDeliveryEstimate }"/>
+                        <div class="slds-m-left_small slds-text-heading_medium">
+                            Cost &amp; Delivery Estimate
+                        </div>
+                    </div>
+                    <aura:renderIf isTrue="{!v.gwsAssessmentCostAndDeliveryEstimate }">
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                        	<lightning:select aura:id="costanddeliveryestimate" name="costanddeliveryestimate" label="Level of Effort:">
+                                <aura:iteration items="{!v.Cost_Delivery_Estimate}" var="pt" >
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Cost_Delivery_Estimate__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+						</div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <!--lightning:input aura:id='gwsInput' label="Funding Source:" required="true" value="{!v.wbProjectObj.Funding_Source__c}"/-->
+                            <lightning:input label="Funding Source:" value="{!v.wbProjectObj.Funding_Source__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:select aura:id="complexity" name="complexity" label="Complexity(5-High):">
+                                <aura:iteration items="{!v.Complexity}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Complexity__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input label="Describe any Risks:" value="{!v.wbProjectObj.Describe_any_Risks__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' label="Estimated 1X Cost:" required="true" value="{!v.wbProjectObj.Estimated_1X_Cost__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <!--lightning:input aura:id='gwsInput' label="Estimated Ongoing OPEX Costs:" required="true" value="{!v.wbProjectObj.Estimated_Ongoing_OPEX_Costs__c	}"/-->
+                            <lightning:input label="Estimated Ongoing OPEX Costs:" value="{!v.wbProjectObj.Estimated_Ongoing_OPEX_Costs__c	}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <!--lightning:input aura:id='gwsInput' type="date" label="Estimated Start Date:" required="true" value="{!v.wbProjectObj.Estimated_Start_Date__c}"/-->
+                            <lightning:input type="date" label="Estimated Start Date:" value="{!v.wbProjectObj.Estimated_Start_Date__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' type="date" label="Estimated Delivery Date:" required="true" value="{!v.wbProjectObj.Estimated_Delivery_Date__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:select aura:id="nextsteps" name="nextsteps" label="Next Steps:">
+                                <aura:iteration items="{!v.Next_Steps}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Next_Steps__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:textarea label="If you selected other, please explain:" value="{!v.wbProjectObj.If_you_selected_other_please_explain__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' label="GWS Director Approval:" required="true" value="{!v.wbProjectObj.GWS_Director_Approval__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' type="date" label="Date of GWS Director Approval:" required="true" value="{!v.wbProjectObj.Date_of_GWS_Director_Approval__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' label="GWS VP Approval:" required="true" value="{!v.wbProjectObj.GWS_VP_Approval__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-2">
+                            <lightning:input aura:id='gwsInput' type="date" label="Date of GWS VP Approval:" required="true" value="{!v.wbProjectObj.Date_of_GWS_VP_Approval__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:textarea aura:id='gwsInput' label="Any other Considerations:" required="true" value="{!v.wbProjectObj.Any_other_Considerations__c}"/>
+                        </div>
+                    </aura:renderIf>
+                </div>
+            </div>
+            <div class="slds-align_absolute-center slds-m-top_small">
+                <lightning:button variant="brand" label="Back" onclick="{! c.handleClickGWSBack }" />
+                <lightning:button variant="brand" label="Save" onclick="{! c.handleClickGWSSave }"/>
+                <lightning:button variant="brand" label="Send for Approval" onclick="{! c.handleClickGWSSendForApproval }"/>
+            </div>
+        </lightning:card>
+    </div>
+	<aura:if isTrue="{!v.isProfileAccess}">
+        <div aura:id="ApprovalEdit" class="slds-show slds-m-bottom_small">	
+            <lightning:card  class="slds-p-left_large slds-p-right_medium" title="Approval Page">
+                <!--c:DependentPicklist objDetail="{!v.wbProjectObj}" controllingFieldAPI="Approval_Stage__c" dependingFieldAPI="Reason__c" stage="Rejected"/-->
+                <!--Controller Field-->
+                <lightning:layoutItem size="12" padding="around-small">    
+                    <lightning:select name="controllerFld"
+                                      value="{!v.wbProjectObj.Approval_Stage__c}"
+                                      label="Approve/Reject"
+                                      onchange="{!c.onControllerFieldChange}">
+                        <aura:iteration items="{!v.listControllingValues}" var="val">
+                            <option value="{!val}" selected="{!val==v.wbProjectObj.Approval_Stage__c}">{!val}</option>
+                        </aura:iteration>
+                    </lightning:select>
+                </lightning:layoutItem>
+                
+                <!--Dependent Field-->
+                <lightning:layoutItem size="12" padding="around-small">
+                    <lightning:select name="dependentFld"
+                                      value="{!v.wbProjectObj.Reason__c}"
+                                      label="Reason"
+                                      disabled="{!v.bDisabledDependentFld}">
+                        <aura:iteration items="{!v.listDependingValues}" var="val">
+                            <option value="{!val}" selected="{!val==v.wbProjectObj.Reason__c}">{!val}</option>
+                        </aura:iteration>
+                    </lightning:select>
+                </lightning:layoutItem>
+                <div class="slds-align_absolute-center slds-m-top_small">
+                    <lightning:button variant="brand" label="Back" onclick="{! c.handleClickApprovalBack }" />
+                    <lightning:button variant="brand" label="Submit" onclick="{! c.handleClickApprovalSubmit }"/>
+                </div>
+            </lightning:card>
+        </div>
+    </aura:if>
+</aura:component>

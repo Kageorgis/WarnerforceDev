@@ -1,0 +1,156 @@
+<apex:page controller="WB_MPMSearchController" sidebar="false" >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<apex:form >
+    
+<apex:includeLightning />
+<div id="lightning" />
+<script  type="text/javascript">
+    var mpmList = new Set();
+    function redirectTolightning(){
+        mpmList = new Set();
+        ($(".pageBlockTable table input[type=checkbox]:checked")).each(function(index){
+            var tdvalues = $(this).closest("td").siblings("td")[0];
+            if(tdvalues && tdvalues.childNodes && tdvalues.childNodes[0]){
+                var mpm = tdvalues.childNodes[0].innerHTML;
+                mpmList.add(mpm);
+            }else{
+                mpmList = new Set();
+            }
+        });
+       
+        if(mpmList.size != 0){
+            if(mpmList.size === 1){
+                document.getElementById("demo").style.display = 'none';
+                var selectedVal = document.getElementsByClassName('pickVal')[0].value;
+                var mpmNumber = Array.from(mpmList)[0];    
+                $Lightning.use("c:WB_MPMSearch_App", function() {
+                $Lightning.createComponent("c:WB_MPMSearch_LightningComp",
+                                            {"mpmNum" : mpmNumber,"selectedRecordType" : selectedVal},
+                                           "lightning",
+                                           function(cmp){
+                                                                                            
+                                           });
+                });
+            }else{
+                var err = document.getElementById("demo");
+                err.innerHTML = "<font size='2'><h4 style='color:#cc0000;'>Error : </h4><br\> Please pick only one MPM to create a EC Tracker</font>";
+                err.style.backgroundColor = '#ffc';
+                err.style.border = "1px solid #c00";   
+                err.style.borderRadius = "4px";       
+                err.style.padding = "5px";             
+                document.getElementById("demo").style.display = "block";
+            }
+        }
+        
+        if(mpmList.size == 0){
+         document.getElementById("demo").style.display = 'none';   
+        }
+    }
+</script>  
+<style>
+   
+</style>
+  <p id="demo" style="color:black;"></p> 
+  <apex:pageMessages id="errors" />
+  <apex:pageBlock title="Search for a MPM" mode="edit">
+  <apex:outputText ><span style="color:red">Please select a MPM to create EC Tracker</span></apex:outputText>
+  <table width="100%" border="0">
+  <tr>  
+    <td width="200" valign="top">
+      <apex:pageBlock title="Parameters" mode="edit" id="criteria">
+      <script type="text/javascript">
+      function doSearch() {
+        searchServer(
+          document.getElementById("Sdesc").value,
+          document.getElementById("mpmnumber").value
+        );
+      }
+      </script> 
+
+      <apex:actionFunction name="searchServer" action="{!runSearch}" rerender="results,debug,errors">
+          <apex:param name="Sdesc" value="" />
+          <apex:param name="mpmnumber" value="" />
+      </apex:actionFunction>
+
+      <table cellpadding="2" cellspacing="2">
+      <tr>
+        <td style="font-weight:bold;">Short Description<br/>
+        <input type="text" id="Sdesc" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">MPM<br/>
+        <input type="text" id="mpmnumber" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+       <!-- ** If User is using Salesforce Classic Environment **   -->
+      <apex:outputPanel rendered="{!$User.UIThemeDisplayed == 'Theme3'}">       
+      <tr>
+        <td style="font-weight:bold;">EC Tracker Record Type<br/>
+        <apex:selectList value="{!selectedtype}" multiselect="false" size="1">
+                <apex:selectOption itemValue="TNR_TCAT_Record_Type" itemLabel="TNR TCAT Record Type"/>
+                <apex:selectOption itemValue="Franchise_Record_Type" itemLabel="Franchise Record Type"/>
+        </apex:selectList>
+        </td>
+      </tr>
+      <tr>
+          <td>
+          <apex:commandbutton value="Create EC Tracker" id="ectbutton" action="{!createECT}" disabled="{!showbutton}"/>
+          </td>
+      </tr>
+      </apex:outputPanel>
+      
+      <!-- ** If User is using Lightning Experience Environment **   -->
+      <apex:outputPanel rendered="{!$User.UIThemeDisplayed == 'Theme4d'}"> 
+      <tr>
+        <td style="font-weight:bold;">EC Tracker Record Type<br/>
+          <apex:selectList styleClass="pickVal" value="{!selectedtype1}" multiselect="false" size="1">
+                <apex:selectOption itemValue="TNR_TCAT_Record_Type" itemLabel="TNR TCAT Record Type"/>
+                <apex:selectOption itemValue="Franchise_Record_Type" itemLabel="Franchise Record Type"/>
+          </apex:selectList>
+        </td>
+      </tr>
+      <tr>
+          <td>
+            <input type="button" value="Create EC Tracker" id="ectbutton1" onclick="redirectTolightning();"/>
+          </td>
+      </tr>
+      </apex:outputPanel> 
+      </table>
+      </apex:pageBlock>
+
+    </td>
+    <td valign="top">
+    <apex:pageBlock mode="edit" id="results">
+     <div style="overflow: scroll; height: 600px;" class="pageBlockTable">  
+        <apex:pageBlockTable value="{!cMPMs}" var="title" >
+            <apex:column >
+                  <apex:inputCheckbox value="{!title.selected}"  id="chk">
+                    <apex:actionSupport event="onchange" rerender="ECTbutton"/>
+                   </apex:inputCheckbox>
+            </apex:column>
+             <apex:column >
+                 <apex:facet name="header">
+                   <apex:commandLink value="MPM" action="{!toggleSort}" rerender="results,debug"> 
+                        <apex:param name="sortField" value="Name" assignTo="{!sortField}"/> 
+                    </apex:commandLink>
+                </apex:facet> 
+                    <apex:outputLink value="/{!title.mpm.id}">{!title.mpm.Name}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                 <apex:facet name="header">
+                     <apex:commandLink value="Short Description" action="{!toggleSort}" rerender="results,debug"> 
+                        <apex:param name="sortField" value="MPM_Short_Desc__c" assignTo="{!sortField}"/>  
+                     </apex:commandLink> 
+                </apex:facet> 
+                    <apex:outputText >{!title.mpm.MPM_Short_Desc__c}</apex:outputText>
+            </apex:column>
+         </apex:pageBlockTable> 
+      </div>
+     </apex:pageBlock>
+    </td>
+   </tr>
+   </table>
+  </apex:pageBlock>
+  </apex:form>  
+</apex:page>

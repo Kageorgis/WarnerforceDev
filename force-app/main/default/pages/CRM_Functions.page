@@ -1,0 +1,47 @@
+<apex:page standardController="Functional_Group__c" recordSetVar="fgroup" sidebar="false" lightningStylesheets="true" title="Functional Matrix">
+
+    <script type="text/javascript">
+        function navigateToURL(url,newWindow){
+            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));            
+            if (isLightningExperienceOrSf1){
+                //window.open('/lightning/r/'+'Functional_Group__c'+url+'/view','_blank');
+                sforce.one.navigateToURL(url);
+            }else{
+                var winMod = newWindow ? '_blank' : '_parent';
+                if(!newWindow){url += '/e?retURL=%2Fapex%2FCRM_Functions';}
+                window.open(url,winMod);
+            }
+        }
+    </script>    
+    
+    <apex:pageBlock title="Key">
+        <!--<apex:image url="/servlet/servlet.ImageServer?id=0153J00000097Ot&oid=00D3J0000000Rzi" width="129" height="102"/>-->
+        <apex:image url="{!$Setup.Function_Matrix_Image_URL__c.KeyWithOrgID__c}" width="129" height="102"/>
+    </apex:pageBlock>
+    <apex:form >
+        <apex:repeat value="{!fgroup}" var="group">
+            <apex:pageBlock title="{!group.Name}" >
+                <apex:pageBlockButtons location="top" onclick="return false;">
+                    <!--<apex:commandButton value="View" onclick="window.open('/{!group.Id}')"/>-->
+                    <apex:commandButton value="View" onclick="navigateToURL('/{!group.Id}',true)"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockTable value="{!group.Functions__r}" var="f">
+                    <apex:column width="200">
+                        <!--<apex:outputLink value="/{!f.Id}/e?retURL=%2Fapex%2FCRM_Functions">{!f.Name}</apex:outputLink>-->
+                        <!--<apex:outputLink value="#" onclick="navigateToURL('/{!f.Id}/e?retURL=%2Fapex%2FCRM_Functions',false)">{!f.Name}</apex:outputLink>-->
+                        <apex:outputLink value="#" onclick="navigateToURL('/{!f.Id}',false)">{!f.Name}</apex:outputLink>
+                    </apex:column>
+                    <apex:column value="{!f.LastModifiedDate}"/>
+                    <apex:column value="{!f.UK__c}"/>
+                    <apex:column value="{!f.France__c}"/>
+                    <apex:column value="{!f.Benelux__c}"/>
+                    <apex:column value="{!f.Japan__c}"/>
+                    <apex:column value="{!f.Germany__c}"/>
+                    <apex:column value="{!f.Spain__c}"/>
+                    <apex:column value="{!f.Italy__c}"/>
+                    <apex:column value="{!f.US__c}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:repeat>
+    </apex:form>
+</apex:page>

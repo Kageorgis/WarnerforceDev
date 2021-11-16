@@ -1,0 +1,44 @@
+<!--
+  Name - WB_CAS_VFMiddleWare_List_CA
+  CreateDate 22 July 2019
+  Description- This visualforce page is created for list view button 'Re_Price_Client_Avails' available on Client Avail object.
+  Author- Shubham Agrawal (Cognizant)
+  
+-->
+<apex:page StandardController="Client_Avail__c" recordSetVar="clientAvails" extensions="WB_PriceWizardController">
+<apex:includeScript value="/soap/ajax/30.0/connection.js"/>    
+<apex:includeScript value="/soap/ajax/30.0/apex.js"/>    
+
+<script type = "text/javascript">
+    function pageLoad(){
+        var selectedRecs = ('{!selectedAvails}').split(",");
+        
+        if(selectedRecs.length>600){
+            alert("The maximum number of Client Avails that can be selected is 600");
+        }else{
+            
+            var ids = selectedRecs.join(',');
+            ids = ids.replace(/\s|\[|\]/g,"");
+            
+            if(selectedRecs.length<=50){
+                window.open('apex/WB_PriceWizard?action=rePrice&ID='+ids,'_blank');
+                //window.history.go(-1)
+                history.back();
+            }
+            else{
+                sforce.connection.sessionId = "{!$Api.Session_ID}";
+                var uniqueId = sforce.connection.getUserInfo().userId + '' + new Date().getTime(); 
+                var ClientAvailIdStore = new sforce.SObject("Client_Avail_Id_Store__c"); 
+                ClientAvailIdStore.Key__c = uniqueId; 
+                ClientAvailIdStore.ID_Store__c = ids; 
+                ClientAvailIdStore.Re_Price_User__c = sforce.connection.getUserInfo().userId; 
+                sforce.connection.create([ClientAvailIdStore]); 
+                window.open('/apex/WB_PriceWizard?UNIQUEID='+uniqueId,'_blank');
+                //window.history.go(-1)
+                history.back();
+            }
+        }
+    }
+    window.onload = pageLoad;
+</script> 
+</apex:page>

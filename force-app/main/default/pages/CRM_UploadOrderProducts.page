@@ -1,0 +1,849 @@
+<apex:page standardController="Order" extensions="CRM_UploadOrderProductsController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+          
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.full.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.full.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'ngHandsontable.min.js')}" />
+            
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.full.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.full.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'handsontable.min.css')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_HandsonTable_Pro_Library, 'moment/moment.js')}"/>
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+        
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+            
+            
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <style>
+                .handsontable thead th {
+                    background-color: #4F6A92 !important;
+                    color: white !important;
+                }
+                .handsontableInputHolder .handsontableInput{
+                    background-color: white !important;
+                }
+            </style>
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            
+            <script>
+                //Added for US 989 
+                angular.module("appConfig", [])
+                    .service("appConfig", function() {
+                         return {
+                            apexController: CRM_UploadOrderProductsController,
+                            handsontableProLicenseKey : '{!HandsonTable_Pro_Licencekey}',
+                            OrderNumber : '{!Order.OrderNumber}',
+                            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', '')
+                         };
+                     });
+                     
+                angular.module("UploadOrderProducts",['appConfig','ngHandsontable','crm-components'])
+                .controller("UploadOrderProductsController", ['$scope','appConfig','$timeout','hotRegisterer',function($scope,appConfig, $timeout, hotRegisterer) {
+                    
+                    //Added For US : 994
+                    $scope.resultFilterValues = [{label:'{!$Label.CRM_All_Value_For_Content_Type}', value:"all"},{label:'{!$Label.CRM_Clone_Deal_Error}',value:"error"},{label:'{!$Label.CRM_Success_Message}',value:"success"}];
+                    $scope.resultFilter = [];
+                    $scope.nonProcessedRecrods = [];
+                    $scope.sucessRecords = [];
+                    $scope.errorRecords = [];
+                    $scope.previouslySelectedFilterValue;
+                    $scope.sortObj = {column:0,order:"none"};
+                    $scope.filterdColIndex = [];
+                    var hot;    
+                        
+                    $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    $scope.msgText;
+                    $scope.msgSeverity;
+                    $scope.counter = 0;
+                    $scope.showSpinner = false;
+                    $scope.UserLocal = '{!UserLocale}'; <!--req#791-->
+                    $scope.sort_By = '{!sort_By}';
+                    
+                    //Defect#4743 - DE date format for release date column to be in DD.MM.YYYY
+                    $scope.options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+   
+                    //Added For US : 820
+                    $scope.allKesyOfcolHeadersLabelObject;
+    
+                    $scope.init = function() {
+                        $scope.showSpinner = true;
+                        $.when(
+                            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                            $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+                        ).then(function() {
+                            //Added For US : 994
+                            hot = hotRegisterer.getInstance('my-handsontable');
+                            
+                            var locale = '{!UserLocale}';
+                            var de = Globalize.locale(locale);
+                            $scope.GetLineItems('{!Order.Id}');
+                            
+                            //Added For US : 820
+                            $scope.allKesyOfcolHeadersLabelObject = getKeys($scope.tableOptions.colHeadersLabels);
+                            $scope.allKesyOfcolHeadersLabelObject.push("isRowModified");
+                            $scope.allKesyOfcolHeadersLabelObject.push("isRowRemoved");
+                            $scope.allKesyOfcolHeadersLabelObject.push("previouslySelectedForRemoval");
+                            //Added For US : 820
+                       });
+                    }
+
+                    // You can pass options by attributes..
+                    $scope.tableOptions = {
+                        colHeaders : true,
+                        allowInsertColumn : false,
+                        items : [],
+                        removedItems:[],
+                        itemsMinusRemoved:[],
+                        cleanedData:[],
+                        colHeadersLabels :{
+                            lineItemRecord:{
+                                PricebookEntry:{
+                                    Product2 :{
+                                        ProductCode: '{!$ObjectType.Product2.fields.ProductCode.Label}', 
+                                        Universal_Picture_Code__c: '{!$ObjectType.Product2.fields.Universal_Picture_Code__c.Label}', 
+                                        Name:'{!$ObjectType.Product2.fields.Name.Label}',
+                                        Street_Date__c: '{!$ObjectType.Product2.fields.Street_Date__c.Label}'    
+                                    }
+                                },
+                                UnitPrice : '{!$Label.CRM_Deal_Entry_Edit_Promoted_Price}',
+                                Quantity: '{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}',
+                                Total_Quantity__c: '{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}'
+                            },
+                            validation:'{!$Label.CRM_Upload_Field_Validation}',
+                            StreetDate:'{!$ObjectType.Product2.fields.Street_Date__c.Label}' 
+                        }
+                    }
+                    <!-- req#791-->
+
+                    //Added For US : 820
+                    function getKeys(obj) {
+                        var all = {};
+                        var seen = [];
+                        checkValue(obj, all, seen);
+                        return Object.keys(all);
+                    }
+                    
+                    function checkValue(value, all, seen) {
+                        if (Array.isArray(value)) return checkArray(value, all, seen);
+                        if (value instanceof Object) return checkObject(value, all, seen);
+                    }
+                    function checkArray(array, all, seen) {
+                        if (seen.indexOf(array) >= 0) return;
+                        seen.push(array);
+                        for (var i = 0, l = array.length; i < l; i++) {
+                            checkValue(array[i], all, seen);
+                        }
+                    }
+                    function checkObject(obj, all, seen) {
+                        if (seen.indexOf(obj) >= 0) return;
+                        seen.push(obj);
+                        var keys = Object.keys(obj);
+                        for (var i = 0, l = keys.length; i < l; i++) {
+                            var key = keys[i];
+                            all[key] = true;
+                            checkValue(obj[key], all, seen);
+                        }
+                    }
+                    //Added For US : 820
+        
+                    $scope.GetLineItems = function(orderId) {
+                        $scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                        CRM_UploadOrderProductsController.getOrderLineItems(orderId,$scope.sort_By,
+                            function(result, event) {
+                                if (event.status) {
+                                    $scope.tableOptions.items=result;
+                                    $.each($scope.tableOptions.items, function( rowKey, object) {
+                                        if (typeof object.lineItemRecord.Quantity != undefined && object.lineItemRecord.Quantity != null) {
+                                            object.lineItemRecord.Quantity = $scope.formatter(object.lineItemRecord.Quantity);
+                                        }
+                                        
+                                        <!--req#791-->
+                                        if (object.lineItemRecord.PricebookEntry.Product2.Street_Date__c){
+                                            $scope.DateObj = new Date(object.lineItemRecord.PricebookEntry.Product2.Street_Date__c);
+                                            //Defect#4743 - added date format option for DE - DE date format for release date column to be in DD.MM.YYYY
+                                            if($scope.UserLocal == 'de-DE'){
+                                                object.StreetDate = ($scope.DateObj).toLocaleDateString($scope.UserLocal,$scope.options);
+                                            }else{
+                                                object.StreetDate = ($scope.DateObj).toLocaleDateString($scope.UserLocal);
+                                            }
+                                        }
+                                    });
+                                    
+                                    if($scope.sort_By.includes('Pricebookentry.Product2.Street_Date__c')){
+                                        $scope.tableOptions.items.sort(sorters.byStreetDate);
+                                    }else{
+                                        $scope.tableOptions.items.sort(sorters.byName);
+                                    }
+                                    // US : 994
+                                    $scope.nonProcessedRecrods = $scope.tableOptions.items;
+                                    if($scope.tableOptions.items.length === 0){
+                                        hot.loadData($scope.tableOptions.items);
+                                    }
+                                }else {
+                                    $scope.msgText =event.message;
+                                    $scope.msgSeverity='error';
+                                }
+                                $scope.showSpinner = false;
+                                $scope.$apply();
+                            },
+                            {escape: false, timeout: 120000}
+                        );
+                    };
+    
+                    $scope.mySettings = {
+                        contextMenu: {
+                            items: {
+                                "remove_row": {
+                                    name:'{!$Label.CRM_Upload_Message_RemoveRow}',
+                                    disabled: function () {
+                                        //disable this option
+                                        if(this.getSelected()) {
+                                            var start_row = this.getSelected()[0];
+                                            var end_row = this.getSelected()[2];
+                                            //if(start_row===0 || end_row===0) return true; // if header is selected
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        minSpareRows:0,
+                        stretchH: 'all',
+                        manualColumnResize: false,
+                        copyRowsLimit:2500,
+                        colHeaders: true,
+                        columnSorting: true,
+                        wordWrap: true,
+                        cells: function (row, col, prop) {
+                            var cellProperties = {};
+                            //if(row==0) {cellProperties.readOnly=true;} // first row should not be editable but user should able to copy
+                            cellProperties.renderer = $scope.myRenderer;
+                            var item = $scope.tableOptions.items[row];
+                            if(typeof item!='undefined'){
+                                if(item.existingId && typeof item.existingId!='undefined' && (prop == 'lineItemRecord.PricebookEntry.Product2.ProductCode' ||
+                                prop == 'lineItemRecord.PricebookEntry.Product2.Universal_Picture_Code__c')){
+                                    cellProperties.readOnly=true;
+                                }
+                            }
+                            return cellProperties;
+                        },
+                        beforeChange: function (changes, source)  { 
+                            var ele = this;
+                            $.each(changes, function (index, element) {
+                                // changes is a 2d array like [[row, prop, oldVal, newVal], ...]
+                                if(changes[index][3]=="") {
+                                    changes[index][3]=null;
+                                }
+                                if(changes[index][2] != changes[index][3]) {
+                                    ele.getCellMeta(element[0],ele.propToCol(element[1])).change=true;
+                                }
+                            });
+                        },
+                        afterChange: function(changes, source) {
+                            var ele = this;
+
+                            if (changes && changes.length > 0) {
+                                $.each(changes, function(index, element) {
+                                    //element is object {
+                                    // 0: rowIndex, 1: prop, 2: oldValue 3: New Value 
+                                    //}
+                                    if(element){
+                                        var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                        // check if previous and new value of the cell is difference and 
+                                        // cell is not the last column i.e. validation error/message
+                                        if (changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                                            // update the row at the given index 
+                                            //Added For US : 820
+                                            var item = $scope.tableOptions.items[ele.toPhysicalRow(changes[index][0])];
+                                            if(item){
+                                                if(changes[index][1] != 'previouslySelectedForRemoval' && changes[index][1] != 'isRowModified' && changes[index][1] != 'isRowRemoved'){ 
+                                                	//Defect#4703-Nilesh - Highlight Changes in the grid through via Quick Save button
+                                                	if(!(!changes[index][2] && changes[index][3] == "")) {
+                                                		document.getElementById("quickSaveBtn").style.background ='#c23934';
+                										document.getElementById("quickSaveBtn").style.color = 'white';
+                                                	}
+                                                	
+                                                    item.isRowModified = true;
+                                                    item.isRowRemoved = false;
+                                                    item.previouslySelectedForRemoval = false;
+                                                }
+                                            }
+                                        }
+                                    }
+            
+                                });
+                            }
+                        },
+                        beforeRemoveRow: function(index, amount, visualRows){
+                            var ele = this;
+                            if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')){
+                                return false;
+                            }
+                            //Added For US : 989
+                            var visualIndex = 0;
+                                
+                            for(i=index;i<index+amount;i++) {
+                                //Added For US : 989
+                                if(visualRows[visualIndex] && $scope.tableOptions.items[visualRows[visualIndex]]){
+                                    $scope.tableOptions.items[visualRows[visualIndex]].isRowRemoved = true;
+                                }else if($scope.tableOptions.items[i]){
+                                    $scope.tableOptions.items[i].isRowRemoved = true;
+                                }
+                                visualIndex++;
+                            }
+                            document.getElementById("quickSaveBtn").style.background ='#c23934';
+                            document.getElementById("quickSaveBtn").style.color = 'white';
+                            $scope.$apply();
+                            return false;
+                        },
+                        beforeKeyDown: function (e) {
+                            if (e.keyCode == 191) {
+                                e.stopImmediatePropagation();
+                                e.preventDefault();
+                                this.selectCell(this.countRows()-1,1);
+                            }
+                        },
+                        // US : 989
+                        dropdownMenu: ['clear_column','alignment','filter_by_condition','filter_operators','filter_by_condition2','filter_by_value','filter_action_bar'],
+                        filters: true,
+                        licenseKey: appConfig.handsontableProLicenseKey,
+                        afterColumnSort: function(column,order){
+                            $scope.sortObj.column = column;
+                            $scope.sortObj.order = order;
+                        },
+                        afterLoadData: function(firstTime){
+                            if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                hot.updateSettings({minSpareRows: 0});
+                                if(hot.countEmptyRows(true)){
+                                    hot.getPlugin('trimRows').trimRows([($scope.tableOptions.items.length - 1)]);
+                                    hot.render();
+                                }
+                            }else if(hot){
+                                hot.updateSettings({minSpareRows: 1});
+                            }
+                        },
+                        afterFilter: function(conditionsStack){
+                            $scope.filterdColIndex = [];
+                            if(conditionsStack.length > 0){
+                                $.each(conditionsStack, function(rowKey, object) {
+                                    if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                        $.each(object.conditions, function(rowKey,conditions) {
+                                            if(conditions.name == 'by_value'){
+                                                $.each(conditions.args[0], function(rowKey,arg) {
+                                                    if(arg == "" && hot.countEmptyRows(true) === 0){
+                                                        hot.alter('insert_row',($scope.tableOptions.items.length));
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                    $scope.filterdColIndex.push(object.column);
+                                });
+                            }else{
+                                if($scope.resultFilter.length === 0 || ($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'all')){
+                                    if(hot.countEmptyRows(true) === 0){
+                                        hot.alter('insert_row',($scope.tableOptions.items.length));
+                                    }
+                                }
+                            }
+                        },
+                        afterCreateRow: function(index, amount, source){
+                            if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                if(hot && hot.isEmptyRow($scope.tableOptions.items.length - 1)){
+                                    hot.getPlugin('trimRows').trimRows([($scope.tableOptions.items.length - 1)]);
+                                    hot.render();
+                                }
+                            }
+                        }
+                    };
+                    $scope.myRenderer=function(instance, td, row, col, prop, value, cellProperties) {
+                        
+                        if(prop == 'lineItemRecord.PricebookEntry.Product2.Name' && value != null){
+                            //IF Condition addded for ER-004334
+                   			   var orderItemId = instance.getDataAtRowProp(row,'lineItemRecord.Id');
+	                           var productId = orderItemId != null ? orderItemId : instance.getDataAtRowProp(row,'lineItemRecord.PricebookEntry.Product2.Id');
+                               Handsontable.renderers.HtmlRenderer.apply(this, arguments);
+                               td.innerHTML = "<a href='/"+productId+"' target='_blank'>"+value+"</a>";
+                            
+                        }else{
+                             // Mark changed items with a different class
+                       		 Handsontable.renderers.TextRenderer.apply(this, arguments);                         
+                        }
+                       
+                        //US : 989
+                        var item = $scope.tableOptions.items[cellProperties.row];  
+                        var cell = instance.getCell(cellProperties.row, col);
+                        if (item) {
+                            if(item.isRowRemoved){
+                                td.style.backgroundColor = 'grey';
+                                td.style.color = 'white';
+                                item.isRowModified = false;
+                                item.previouslySelectedForRemoval=true;
+                            }else if (item.validation != '{!$Label.CRM_Upload_Message_Updated}' && item.validation != '{!$Label.CRM_Upload_Message_Created}' && item.validation != '' && item.validation != null) {
+                                td.style.backgroundColor = 'red';
+                                td.style.color = 'white';
+                                
+                                if(typeof item.previouslySelectedForRemoval != 'undefined' && !item.previouslySelectedForRemoval) {
+                                    console.log(row+'='+item.previouslySelectedForRemoval);
+                                    item.isRowModified = true;
+                                }
+                            }else{ //Added For US : 820
+                                td.style.backgroundColor = null;
+                                td.style.color = null;
+                            }
+                            
+                            if(cellProperties.change  && prop != 'validation') {
+                                $(cell).addClass('has-changed');
+                                if(item){
+                                    item.isRowModified = true;
+                                    item.isRowRemoved = false;
+                                    item.previouslySelectedForRemoval=false;
+                                }
+                            }
+                        }
+                    };
+    
+        
+                    $scope.BackToOrder= function(url) {
+                       $scope.navigateToURL(url); 
+                    };
+    
+    
+                    $scope.navigateToURL = function(url) {
+                        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                        if ($scope.isLightningExperienceOrSf1)
+                            sforce.one.navigateToURL(url);
+                        else
+                            document.location.href = url;
+                    };
+
+                    $scope.isEmpty = function(objectjson){
+                        var dataExists = true;
+                        $.each(objectjson, function(i,d) {
+                            if(d!=null && d!='' && typeof d!= 'object') {
+                                dataExists = false;
+                            }
+                        });
+                        return dataExists;
+                    };
+    
+                    // list of sorting functions
+                    var sorters = {
+                        byStreetDate : function(a,b) {
+                            return (b.lineItemRecord.PricebookEntry.Product2.Street_Date__c - a.lineItemRecord.PricebookEntry.Product2.Street_Date__c);
+                        },
+                        byName : function(a,b) {
+                            if(a.lineItemRecord.PricebookEntry.Product2.Name && b.lineItemRecord.PricebookEntry.Product2.Name){
+                            	var nameA = a.lineItemRecord.PricebookEntry.Product2.Name.toUpperCase(); // ignore upper and lowercase
+                            	var nameB = b.lineItemRecord.PricebookEntry.Product2.Name.toUpperCase(); // ignore upper and lowercase
+                            
+                            	if (nameA < nameB) {
+                               		return -1;
+                            	}
+                            	if (nameA > nameB) {
+                                	return 1;
+                            	}
+                            }
+                            // names must be equal
+                            return 0;
+                        }
+                    };
+    
+    
+                    $scope.SaveRecords= function(orderId) {
+                        $scope.showSpinner = true;
+                        var inputData = [];
+                        
+                        // Start ---------US : 994--------------------
+                        if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'error'){
+                            $scope.errorRecords = $scope.tableOptions.items;
+                        }else if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'success'){
+                            $scope.sucessRecords = $scope.tableOptions.items;
+                        }else{
+                            $scope.errorRecords = [];
+                            $scope.sucessRecords = [];
+                            $scope.nonProcessedRecrods = [];
+                            $scope.nonProcessedRecrods = $scope.tableOptions.items;
+                        }
+                    
+                        if($scope.errorRecords && $scope.errorRecords.length > 0)
+                            inputData = inputData.concat($scope.errorRecords);
+                        if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                            inputData = inputData.concat($scope.sucessRecords);
+                        if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                            inputData = inputData.concat($scope.nonProcessedRecrods);
+                        
+                        $scope.errorRecords = [];
+                        $scope.sucessRecords = [];
+                        $scope.nonProcessedRecrods = [];
+                        // End ---------US : 994--------------------
+                        
+                        $scope.msgText ='';
+                        $scope.msgSeverity='';
+                        var cleanedGridData = [];
+                        $scope.parser = Globalize.numberParser();
+                        $scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                
+                        inputDataToSave = angular.copy(inputData);
+
+                        $.each( inputDataToSave, function( rowKey, object) {
+                            if(object && object.lineItemRecord){
+                                if (object.lineItemRecord.PricebookEntry &&  object.lineItemRecord.PricebookEntry.Product2 && typeof object.lineItemRecord.PricebookEntry != 'undefined' && !($scope.isEmpty(object.lineItemRecord.PricebookEntry.Product2) && $scope.isEmpty(object.lineItemRecord) ))  {
+                                    var productCode = object.lineItemRecord.PricebookEntry.Product2.ProductCode;
+                                    var upcEanNum = object.lineItemRecord.PricebookEntry.Product2.Universal_Picture_Code__c;
+                                    if(productCode != 'undefined' && productCode != null && productCode != ''){
+                	                    productCode = productCode.trim();
+                	                    object.lineItemRecord.PricebookEntry.Product2.ProductCode = productCode;
+                                    }
+                                    if(upcEanNum != 'undefined' && upcEanNum != null && upcEanNum != ''){
+                	                    upcEanNum = upcEanNum.trim();
+                	                    object.lineItemRecord.PricebookEntry.Product2.Universal_Picture_Code__c = upcEanNum;
+                                    }
+                                    
+                                    //Added For US : 820
+                                    if(!object.existingId){
+                                        var jsonString = JSON.stringify(object,$scope.allKesyOfcolHeadersLabelObject);
+                                        console.log('jsonString --> ',jsonString);
+                                        object = JSON.parse(jsonString);
+                                        console.log('object --> ',object);
+                                    }
+                                    //Added For US : 820
+                                    
+                                    cleanedGridData.push(object);
+                                    
+                                    <!--req#791-->
+                                    if(typeof object.lineItemRecord.PricebookEntry.Product2.Street_Date__c === 'object' && object.lineItemRecord.PricebookEntry.Product2.Street_Date__c == null){
+                                    	object.lineItemRecord.PricebookEntry.Product2.Street_Date__c = Number(object.lineItemRecord.PricebookEntry.Product2.Street_Date__c);
+                            		}
+                                }
+                            	if (typeof object.lineItemRecord.Quantity != undefined && object.lineItemRecord.Quantity != null) {
+                                	object.lineItemRecord.Quantity = $scope.parser((object.lineItemRecord.Quantity).replace(/\s/g, ""));
+                            	}
+                            
+                            	<!--req#791-->
+                            	if(!object.StreetDate){
+                               		object.StreetDate = '';
+                            	}
+                            }
+                        });
+                        /**
+                        * rowsToProcess - Array of records to save back to salesforce
+                        * returnedResults - Rows already saved to Salesforce
+                        */
+                        (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                        	console.log(rowsToProcess.length, returnedResults.length);
+                        	if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                $scope.showSpinner = false;
+                                return;
+                            }
+                            var chunkSize = 50, // Recursive batch size
+                            chunkedData = rowsToProcess.splice(0, chunkSize);
+                
+                            var saveStartTime = new Date();
+                			CRM_UploadOrderProductsController.setOrderLineItems(chunkedData,orderId,function(result, event) {
+                			    if (!event.status) {
+                                    $scope.$apply(function() {
+                                        $scope.msgText = event.message;
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                    });
+                                } else if (cleanedGridData.length > 0) {
+                                	// If successful add results to the main array
+                                    returnedResults = returnedResults.concat(result);
+                                    var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                    failedRecCount += failedCount;
+                
+                                    // Update progress text for user
+                                    $scope.$apply(function() {
+                                        $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                                    });
+                					
+                                    // Call salesforce again with remaining rows
+                                    runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                }else{
+                                	$scope.$apply(function() {
+                                		
+                                        // US : 994
+                                        $scope.tableOptions.items = []; 
+                                        $scope.sortObj.column = 0;
+                                        $scope.sortObj.order = "none";
+                                        
+                                		$.each(returnedResults.concat(result), function( rowKey, object) {
+                	          				if (typeof object.lineItemRecord.Quantity != undefined && object.lineItemRecord.Quantity != null) {
+                	             				object.lineItemRecord.Quantity = $scope.formatter(object.lineItemRecord.Quantity);
+                	          				}
+                                            <!--req#791-->
+                	                        if(object.lineItemRecord.PricebookEntry.Product2.Street_Date__c != null && object.lineItemRecord.PricebookEntry.Product2.Street_Date__c != undefined){
+                	                            $scope.DateObj = new Date(object.lineItemRecord.PricebookEntry.Product2.Street_Date__c);
+                	                            //Defect#4743 - added date format option for DE - DE date format for release date column to be in DD.MM.YYYY
+                                                if($scope.UserLocal == 'de-DE'){
+                                                    object.StreetDate = ($scope.DateObj).toLocaleDateString($scope.UserLocal,$scope.options);
+                                                }else{
+                    	                            object.StreetDate = ($scope.DateObj).toLocaleDateString($scope.UserLocal);
+                                                }
+                	                            //object.StreetDate = ($scope.DateObj).toLocaleDateString($scope.UserLocal);
+                	                        }
+                	                        
+                	                        // US : 994
+                                            if(object.recrodStatus == 'error'){
+                                                $scope.errorRecords.push(object);
+                                            }else if(object.recrodStatus == 'success'){
+                                                $scope.sucessRecords.push(object);
+                                            }else{
+                                                $scope.nonProcessedRecrods.push(object);
+                                            }
+                	        			});
+                	        			
+                                        // US : 994
+                                        if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                            $scope.filterRecords(false);
+                                        }else{
+                                            $scope.tableOptions.items = returnedResults.concat(result);
+                                            if($scope.sort_By.includes('Pricebookentry.Product2.Street_Date__c')){
+                                               $scope.tableOptions.items.sort(sorters.byStreetDate);
+                                            }else{
+                                                $scope.tableOptions.items.sort(sorters.byName);
+                                            }
+                                            hot.loadData($scope.tableOptions.items);
+                                            hot.getPlugin('filters').filter();
+                                        }
+                                            
+                                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                        failedRecCount += failedCount;
+                
+                                        // add column headers in first row
+                                        //$scope.tableOptions.items.splice(0, 0, $scope.tableOptions.colHeadersLabels);
+                                        
+                                        if (failedRecCount > 0) {
+                                            $scope.msgText = failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                            $scope.msgSeverity = 'error';
+                                        } else {
+                                            console.log("set success message****");
+                                            $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                            //Defect#4703-Nilesh - Highlight Changes in the grid through via Quick Save button
+                                            document.getElementById("quickSaveBtn").style.background ='white';
+                							document.getElementById("quickSaveBtn").style.color = 'rgb(0, 134, 222)';
+                                            $scope.msgSeverity = 'success';
+                                        }
+                
+                                        $scope.spinnerText = '';
+                                        $scope.showSpinner = false;
+                                	});
+                                }
+                			},{
+                				escape: false, 
+                				timeout: 120000
+                			});
+                        })(cleanedGridData, [], 0);
+                    };
+    
+                    //Added For US : 820
+                    $scope.exportCSVFile = function(){
+                        hot.getPlugin('exportFile').downloadFile('csv', {
+                            filename: appConfig.OrderNumber+' {!$Label.CRM_Export_File_Label}',
+                            columnHeaders: true       // default false, exports the column headers
+                        });
+                    };
+                    
+                    <!-------- Us 989 ------------>
+                    $scope.refreshPage = function(){
+                        window.location.reload(); 
+                    }
+                        
+                    <!-------- Us 994 ------------>
+                    $scope.filterRecords = function(falg){
+                        hot.getPlugin('trimRows').untrimAll();
+                        $scope.currentFilterValue = $scope.resultFilter[0] ? $scope.resultFilter[0].value : $scope.resultFilter[0];
+                        if(($scope.previouslySelectedFilterValue != $scope.currentFilterValue && 
+                           !((!$scope.previouslySelectedFilterValue && $scope.currentFilterValue == 'all') || 
+                           (!$scope.currentFilterValue && $scope.previouslySelectedFilterValue == 'all'))) || !falg
+                          ){
+                            if(falg){
+                                if($scope.previouslySelectedFilterValue == 'error'){
+                                    $scope.errorRecords = [];
+                                    $.each($scope.tableOptions.items, function(rowKey, dealProd) {  
+                                         if(!hot.isEmptyRow(rowKey)){
+                                              $scope.errorRecords.push(dealProd);
+                                         }
+                                    });
+                                }else if($scope.previouslySelectedFilterValue == 'success'){
+                                    $scope.sucessRecords = [];
+                                    $.each($scope.tableOptions.items, function(rowKey, dealProd) {  
+                                         if(!hot.isEmptyRow(rowKey)){
+                                              $scope.sucessRecords.push(dealProd);
+                                         }
+                                    });
+                                }else{
+                                     $scope.nonProcessedRecrods = [];
+                                     $.each($scope.tableOptions.items, function(rowKey, dealProd) {  
+                                         if(!hot.isEmptyRow(rowKey) && dealProd.recrodStatus != 'error' && dealProd.recrodStatus != 'success'){
+                                              $scope.nonProcessedRecrods.push(dealProd);
+                                         }
+                                     });
+                                }
+                            }
+                            $scope.tableOptions.items = [];
+                            if($scope.resultFilter.length > 0){
+                                if($scope.currentFilterValue == 'error'){
+                                    $scope.tableOptions.items =  $scope.errorRecords;
+                                    hot.updateSettings({minSpareRows: 0});
+                                }else if($scope.currentFilterValue == 'success'){
+                                    $scope.tableOptions.items =  $scope.sucessRecords;
+                                    hot.updateSettings({minSpareRows: 0});
+                                }else{
+                                    if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                        $scope.concatArray($scope.errorRecords);
+                                    if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                        $scope.concatArray($scope.sucessRecords);
+                                    if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                        $scope.concatArray($scope.nonProcessedRecrods);
+                                }
+                            }else{
+                                if($scope.errorRecords && $scope.errorRecords.length > 0)
+                                    $scope.concatArray($scope.errorRecords);
+                                if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                                    $scope.concatArray($scope.sucessRecords);
+                                if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                                    $scope.concatArray($scope.nonProcessedRecrods);
+                            }
+                            hot.loadData($scope.tableOptions.items);
+                            hot.getPlugin('columnSorting').sort($scope.sortObj.column,$scope.sortObj.order);
+                            if($scope.filterdColIndex.length > 0 && falg){
+                                hot.getPlugin('filters').removeConditions($scope.filterdColIndex);
+                            }
+                            hot.getPlugin('filters').filter();  
+                        }
+                        $scope.previouslySelectedFilterValue = $scope.currentFilterValue;
+                    }
+                    $scope.concatArray = function(items){
+                        var lastIndex = $scope.tableOptions.items.length > 0 ? ($scope.tableOptions.items.length) : 0;
+                        $scope.tempArray = $scope.tableOptions.items.slice();
+                        [].splice.apply($scope.tempArray, [lastIndex, 0].concat(items));
+                        $scope.tableOptions.items = $scope.tempArray;
+                    }
+                }]);
+            </script>
+        </head>
+        <body style="padding:0px" ng-app="UploadOrderProducts">
+            <div class="slds" ng-controller="UploadOrderProductsController" ng-init="init()">
+                <!-- ===========================Spinner================================= -->   
+                <div class="spinnerModel" ng-show="showSpinner">
+                    <div class="spinnerContent slds-spinner--large">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                        <div style="font-size: 18px !important;width:300px;">{{spinnerText}}</div>
+                    </div>
+                </div>
+            
+                <!-- =========================== HEADER BANNER ================================-->     
+                <div class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <nav class="slds-m-bottom--xx-small" role="navigation">
+                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.Tab, $ObjectType.Order)}'">{!$ObjectType.Order.labelPlural}</a></li>
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.View,Id)}">{!Order.OrderNumber}</a></li>
+                                </ol>
+                            </nav>
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Upload_UploadProducts}">{!$Label.CRM_Upload_UploadProducts}</h1>
+                            </div>
+                        </div>
+                        
+                        <!----------------------------US : 994------------------------->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                            <div class="slds-form-element" style="Width:80%">
+                                <div class="slds-form-element__control picklistClass">
+                                    <crm-multiselect-picklist options="resultFilterValues" selectedOpts="resultFilter" multiple="false" placeholder="{!$Label.CRM_Result_Filter_PlaceHolder}" ng-click="filterRecords(true)"/>
+                                </div>
+                            </div>
+                        </div>
+                        <!----------------------------US : 994------------------------->
+                              
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <!-- US 994 ------->
+                                        <button class="slds-button slds-button--neutral" ng-click="refreshPage()">{!$Label.CRM_Reset_button_label}</button>
+                                        <!-- US 994 ------->
+                                        <button class="slds-button slds-button--neutral" ng-click="exportCSVFile()">{!$Label.CRM_Export_File_Button_Label}</button>
+                                        <!--Defect#4703-Nilesh - Added Id attribute to Highlight Changes in the grid through via Quick Save button-->
+                                        <button id="quickSaveBtn" ng-click="SaveRecords('{!Order.Id}')" class="slds-button slds-button--neutral">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                        <button class="slds-button slds-button--neutral" ng-click="BackToOrder('{!URLFOR($Action.Order.View,Id)}')">{!$Label.CRM_UploadProducts_Button_Back_To_Order}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-button-group" role="group"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===========================Exception================================= -->
+                <div class="slds-grid" ng-show="msgText">
+                    <div class="slds-col slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                        <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                            </svg>
+                            <div class="notify__content slds-grid">
+                                <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- =========================== Table ================================-->
+                <div class="slds-m-around--x-small">
+                    <hot-table 
+                        hot-id="my-handsontable"
+                        settings="mySettings"
+                        col-headers="tableOptions.colHeaders"
+                        datarows="tableOptions.items"
+                        afterRender="firstRowRenderer"
+                        >
+                        <hot-column data="lineItemRecord.PricebookEntry.Product2.ProductCode" title="'{!$ObjectType.Product2.fields.ProductCode.Label}'"></hot-column>
+                        <hot-column data="lineItemRecord.PricebookEntry.Product2.Universal_Picture_Code__c" title="'{!$ObjectType.Product2.fields.Universal_Picture_Code__c.Label}'"></hot-column>
+                        <hot-column data="lineItemRecord.PricebookEntry.Product2.Name" title="'{!$ObjectType.Product2.fields.Name.Label}'" read-only="true"></hot-column>
+                        <apex:outputPanel rendered="{!!totalQuantityFlag}">
+                            <hot-column data="lineItemRecord.Quantity" title="'{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}'"></hot-column>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!totalQuantityFlag}">
+                            <hot-column data="lineItemRecord.Total_Quantity__c" title="'{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}'" read-only="true"></hot-column>
+                        </apex:outputPanel>
+                        <hot-column data="StreetDate" title="'{!$ObjectType.Product2.fields.Street_Date__c.Label}'" read-only="true"></hot-column><!-- req#791 -->
+                        <hot-column data="validation" title="'{!$Label.CRM_Upload_Field_Validation}'" read-only="true"></hot-column>
+                    </hot-table>
+                </div>
+                <c:CRM_SLDSPicklist />
+            </div>
+        </body>
+    </html>
+</apex:page>

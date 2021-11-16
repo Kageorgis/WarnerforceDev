@@ -1,0 +1,14 @@
+<apex:page showHeader="false" lightningStylesheets="true">
+    <!--flow:interview name="Workplace_Tech_Architecture_Project_Requests"/-->
+    <apex:includeLightning />
+    <div id="lightning" />
+    <script>
+    $Lightning.use("c:FlowOutApp", function() {
+        $Lightning.createComponent("c:FlowComponent",
+                                   {},
+                                   "lightning",
+                                   function(cmp) {}
+                                  );
+    });
+    </script>
+</apex:page>

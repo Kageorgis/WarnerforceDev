@@ -1,0 +1,118 @@
+<apex:page standardController="Opportunity" extensions="CRM_CreateCreditNoteCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        
+        <apex:includeScript value="../../soap/ajax/35.0/connection.js" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+        
+        <script>
+            /* Login to sforce proxy service */
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            
+            angular.module('createCreditNoteApp', [])
+            .controller('CreateCreditNoteCtrl', function($scope){
+                $scope.showSpinner = true;
+                $scope.errorMsg;
+                $scope.dealId = '{!Opportunity.Id}';
+                $scope.accountId = '{!Opportunity.AccountId}';
+                $scope.isValidDealStage = {!isValidDealStage};
+                
+                var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                 $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                            if ($scope.isLightningExperienceOrSf1)
+                                sforce.one.navigateToURL(url);
+                            else
+                                document.location.href = url;
+                        };
+                        
+                $scope.createCreditNote = function(){
+                    if($scope.isValidDealStage){
+                        CRM_CreateCreditNoteCtrl.createCreditNote($scope.dealId,$scope.accountId,function(result, event) {
+                            console.log(result);
+                            console.log(event);
+                            if (event.type === 'exception') {
+                                $scope.errorMsg = event.message; 
+                            }
+                            else if(event.status) {
+                                setTimeout(
+                                    function(){
+                                        $scope.navigateToURL('/'+result.Id);
+                                    },
+                                    3000
+                                );
+                            }
+                            
+                            $scope.showSpinner = false;
+                            $scope.$apply();
+                        });
+                    }else{
+                        $scope.errorMsg = '{!$Label.CRM_Create_CN_Invalid_DealStage}';
+                        $scope.showSpinner = false;
+                    }
+                }
+                
+            });
+        </script>
+    </head>
+
+    <body style="padding:0">
+        <div class="slds" ng-app="createCreditNoteApp" ng-controller="CreateCreditNoteCtrl" ng-init="createCreditNote()">
+            <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$ObjectType.Opportunity.labelPlural}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Opportunity.View,Id)}">{!Opportunity.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="Create Credit Note">{!$Label.CRM_Create_Credit_Note_from_Opportunity}</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slds-grid">
+                <div class="slds-col slds-spinner--small" ng-show="showSpinner">
+                    <div class="slds-text-heading--small">
+                       <img style="height:36px" src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" />
+                       {!$Label.CRM_CreditNote_Creation_InProgress}
+                    </div> 
+                </div>
+                
+              <div ng-hide="showSpinner" class="slds-col slds-notify slds-notify--toast slds-box--x-small" ng-class="{'slds-theme--error':errorMsg, 'slds-theme--success': !errorMsg}" role="alert">
+                <div class="notify__content slds-grid">
+                  <svg ng-hide="errorMsg" aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                  </svg>
+                  
+                  <svg ng-show="errorMsg" aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                  </svg>
+                  
+                  <div class="slds-col ">
+                      <h2 class="slds-text-heading--small" ng-hide="errorMsg">{!$Label.CRM_Credit_Note_Created_Message}</h2>
+                      <h2 class="slds-text-heading--small" ng-show="errorMsg">{{errorMsg}}</h2>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+        </div>
+    </body>
+</html>
+</apex:page>

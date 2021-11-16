@@ -1,0 +1,77 @@
+<apex:page standardController="Client_Avail__c" tabStyle="Client_Avail__c" extensions="WB_RePriceClientAvail_Redirect_Con">
+<html>
+<body>
+<apex:sectionHeader title="RePrice Wizard" subtitle="Client AvailRecords records"/>
+     <apex:form >     
+        <!-- ER-15: start -->
+         <apex:pageMessage rendered="{!showMessage}" severity="Warning" >
+         <p>Repricing of 'Confirmed' old Client Avails would have created new Client Avails with 'Tentative' Status, because EITHER
+         <br/>1. Pricing Code is not on Local Title OR
+         <br/>2. Price tier not on Pricing Table for the price code
+         </p>
+
+         <p>If any of the expected client avail has not created, it could be due to
+        <br/>1. Local Data record doesnt exist OR
+         <br/>2. Price Tier of new client avail about to be created and the price tier of old client avail may have same value OR
+         <br/>2. Client Avail start date and Client avail end date may not qualify for repricing
+        </p>     
+        
+        </apex:pageMessage>
+        <!--ER-15: END -->
+        <apex:pageBlock >
+            <apex:pageBlockSection title="Client avails with old Price" columns="1" collapsible="false" > 
+                
+                    <apex:pageBlockTable value="{!clientAvailException_listold}" var="cavl_lst1">
+          
+                        <apex:column value="{!cavl_lst1.Client_Avail_ID__c}"/>
+                        <apex:column value="{!cavl_lst1.Title__c}" />
+                        <apex:column value="{!cavl_lst1.Account__c}" />
+                        <apex:column value="{!cavl_lst1.Country__c}"/>
+                        <apex:column value="{!cavl_lst1.Language__c}"/>                                                
+                        <apex:column value="{!cavl_lst1.Channel__c}"/>
+                        <apex:column value="{!cavl_lst1.Format__c}"/>
+                        <apex:column value="{!cavl_lst1.ClientAvail_Start_Date__c}"/>
+                        <apex:column value="{!cavl_lst1.ClientAvail_End_Date__c}"/>
+                        <apex:column value="{!cavl_lst1.Status__c}"/>
+                        <apex:column value="{!cavl_lst1.Price_Tier__c}"/>
+                        <apex:column value="{!cavl_lst1.SR_Price__c}"/>
+                        <apex:column value="{!cavl_lst1.WS_Price__c}"/>
+                        <apex:column value="{!cavl_lst1.Episode_Price__c}"/>
+                        <apex:column value="{!cavl_lst1.SR_Per_Episode__c}"/>
+                        
+                    
+                    </apex:pageBlockTable>                            
+            </apex:pageBlockSection>           
+        </apex:pageBlock>
+        <apex:pageBlock >
+            <apex:pageBlockSection title="Client avails with new Price" columns="1" collapsible="false" > 
+                
+                    <apex:pageBlockTable value="{!clientAvailException_listnew}" var="cavl_lst2">
+          
+                        <apex:column value="{!cavl_lst2.Client_Avail_ID__c}"/>
+                        <apex:column value="{!cavl_lst2.Title__c}" />
+                        <apex:column value="{!cavl_lst2.Account__c}" />
+                        <apex:column value="{!cavl_lst2.Country__c}"/>
+                        <apex:column value="{!cavl_lst2.Language__c}"/>                                                
+                        <apex:column value="{!cavl_lst2.Channel__c}"/>
+                        <apex:column value="{!cavl_lst2.Format__c}"/>
+                        <apex:column value="{!cavl_lst2.ClientAvail_Start_Date__c}"/>
+                        <apex:column value="{!cavl_lst2.ClientAvail_End_Date__c}"/>
+                        <apex:column value="{!cavl_lst2.Status__c}"/>
+                        <apex:column value="{!cavl_lst2.Price_Tier__c}"/>
+                        <apex:column value="{!cavl_lst2.SR_Price__c}"/>
+                        <apex:column value="{!cavl_lst2.WS_Price__c}"/>
+                        <apex:column value="{!cavl_lst2.Episode_Price__c}"/>
+                        <apex:column value="{!cavl_lst2.SR_Per_Episode__c}"/>
+                        
+                    
+                    </apex:pageBlockTable>                            
+            </apex:pageBlockSection>           
+        </apex:pageBlock>
+        <apex:pageBlock >
+            <apex:commandButton value="OK" style="margin:1em; margin-left:35em; " id="create_button2" action="{!okbutton}"  />
+        </apex:pageBlock>
+    </apex:form>   
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,170 @@
+<apex:page standardController="Credit_Note__c" extensions="CRM_CreditNoteApprovalCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false" title="{!$ObjectType.Credit_Note__c.Label}">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+    
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.CRM_DealApproval, 'DealApproval.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+    <apex:includeScript value="../../soap/ajax/35.0/connection.js" />
+    
+    <head>
+        <script>
+            /* Login to sforce proxy service */
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+    
+            angular.module('creditNoteApp', [])
+                .controller('creditNoteController', function($scope) {
+                    $scope.msgText;
+                    $scope.msgSeverity;
+                    $scope.errorMsg;
+                    $scope.showSpinner = false;
+                    $scope.CreditNoteWrapper = [];
+                    $scope.msg;
+                    $scope.creditNoteWrap;
+                    $scope.dealCreditNotes;
+                    $scope.BackToCreditNote = function(url) {
+                        $scope.navigateToURL(url);
+                    };
+    
+                    $scope.navigateToURL = function(url) {
+                        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+    
+                        if (isLightningExperienceOrSf1) {
+                            //sforce.one.navigateToURL(url);
+                            window.open('/lightning/r/Credit_Note__c/'+'{!Credit_Note__c.Id}'+'/view?c__fr=1','_parent');
+                        } else {
+                            document.location.href = url;
+                        }
+                    };
+     
+                    $scope.sendForApproval = function(creditNoteId, url) {
+                        $scope.showSpinner = true;
+                        CRM_CreditNoteApprovalCtrl.getRelatedDeals(creditNoteId, function(result, event) {
+                                if (event.status) {
+                                    $scope.creditNoteWrap = result;
+                                    console.log('result ',result);
+                                    $scope.$apply(function(){
+                                        if($scope.creditNoteWrap.lstOfReveisedDCN.length > 0){
+                                            $scope.dealCreditNotes = $scope.creditNoteWrap.lstOfReveisedDCN;
+                                            $scope.msgText = "{!$Label.CRM_Credit_Note_Revised_Deal_Msg}";
+                                            $scope.msgSeverity = 'error';
+                                        }else{
+                                            if($scope.creditNoteWrap.isValidForAutoApprove){
+                                                $scope.msgText = "{!$Label.CRM_CN_Approval_AutoApproved}";
+                                            }else{
+                                                $scope.msgText = "{!$Label.CRM_CN_Approval_SentForApproval}";
+                                            }
+                                            $scope.msgSeverity = 'success';
+                                            $scope.navigateToURL(url);
+                                        }
+                                        $scope.showSpinner = false;
+                                    });
+                                } else {
+                                    $scope.$apply(function(){
+                                        $scope.msgText = event.message;
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                    });
+                                }
+                        });
+                    };
+                });
+        </script>
+    </head>
+
+    <body style="padding:0px">
+        <div class="slds" ng-app="creditNoteApp" ng-controller="creditNoteController" ng-init="sendForApproval('{!Credit_Note__c.id}','{!URLFOR($Action.Credit_Note__c.View,Id)}');">
+            
+            <!-- =========================== Header Starts =========================== -->
+            <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text">Credit Note</p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Credit_Note__c.Tab, $ObjectType.Credit_Note__c)}'">{!$ObjectType.Credit_Note__c.labelPlural}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a ng-click="BackToCreditNote('{!URLFOR($Action.Credit_Note__c.View,Id)}')" href="#">{!Credit_Note__c.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="Edit Products">{!$Label.CRM_CN_Approval_Header}</h1>
+                            
+                        </div>
+                    </div>
+                    <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                        <div class="slds-form-element">
+                            <div class="slds-form-element__control">
+                                <div class="slds-button-group slds-button-space-left" role="group">
+                                    <button class="slds-button slds-button--neutral" ng-click="BackToCreditNote('{!URLFOR($Action.Credit_Note__c.View,Id)}')">{!$Label.CRM_CN_Approval_Back_Button}</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-button-group" role="group">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- =========================== Header Ends =========================== -->
+            
+            <!-- ===========================Spinner================================= -->
+            <div class="spinnerModel" ng-show="showSpinner">
+                <div class="spinnerContent slds-spinner--large">
+                    <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                </div>
+            </div>
+    
+            <!---------------Error Message Section Start--------------------------->
+            <div class="slds-grid" ng-show="msgText">
+                <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                    <span class="slds-assistive-text">Info</span>
+                    <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                            <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <div class="notify__content slds-grid">
+                        <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+                    </div>
+                </div>
+            </div>
+            <!---------------Error Message Section End----------------------------->
+            
+            <!---------------------Deal Table Start ---------------------->
+            <div class="slds-m-around--small" ng-show="dealCreditNotes">
+                <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                    <thead>
+                        <tr class="slds-text-heading--label">
+                            <th class="slds-cell-shrink" scope="col">
+                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Name.label}</span>
+                            </th>
+                             <th class="slds-cell-shrink" scope="col">
+                                <span class="slds-truncate">{!$ObjectType.Opportunity.fields.Deal_Code__c.label}</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in dealCreditNotes track by $index">
+                            <td data-label="{!$ObjectType.Opportunity.fields.Name.label}">
+                                <span class="slds-truncate"><a href="/{{item.Opportunity__c}}" target="_blank" tabindex="-1" role="presentation">{{item.Opportunity__r.Name}}</a></span>
+                            </td>
+                            <td data-label="{!$ObjectType.Opportunity.fields.Deal_Code__c.label}">
+                                <span class="slds-truncate">{{item.Opportunity__r.Deal_Code__c}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!---------------------Deal Table End---------------------->
+        </div>
+    </body>
+    </html>
+</apex:page>

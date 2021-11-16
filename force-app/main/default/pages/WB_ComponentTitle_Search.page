@@ -1,0 +1,96 @@
+<apex:page standardController="Title__c" tabStyle="Title__c" recordSetVar="Title__c" extensions="WB_ComponentTitle_Search_Controller">  
+
+<apex:sectionHeader title="Collection Title: {!collectionTitle.name}" />
+
+ <apex:form id="TheForm">  
+ <apex:pageMessages id="errMsg"/>
+   <apex:pageBlock id="SearchBlock" rendered="{!OR(collectionTitle.Content_Type__c == 'Collection Features',collectionTitle.Content_Type__c == 'Collection TV')}"> 
+    <br/>
+    <div align="center">
+         <br/> <br/>
+        <apex:outputLabel > <b> Search By: </b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Video Version :</apex:outputLabel> &nbsp;
+        <apex:inputText value="{!searchByVideoVersion}" label="Video Version" id="videoVersionId"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <apex:outputLabel ><b>OR</b></apex:outputLabel> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <apex:outputLabel >Title Name :</apex:outputLabel> &nbsp;
+        <apex:inputText value="{!searchByTitleName}" label="Title Name" id="titleNameId"/>  <br/> <br/> 
+    </div>
+    <div align="center">
+        <apex:commandButton value="Search" onclick="checkSearchInfo()" action="{!search}"/>  &nbsp;&nbsp;
+        <apex:commandButton value="Return" action="{!cancel}" /> &nbsp;&nbsp;
+        <apex:commandButton value="Refresh" action="{!reset}" />  &nbsp;&nbsp;
+    </div>
+    <script language="javascript">
+    function checkSearchInfo(){
+        try{
+            var videoVersionJS = document.getElementById("{!$Component.searchBlock.videoVersionId}");
+            var titleNameJS = document.getElementById("{!$Component.searchBlock.titleNameId}");
+            if(videoVersionJS.value == "" && titleNameJS.value == ""){
+                alert("Please input either Video Version OR Title Name!");
+            }
+            else if(videoVersionJS.value != "" && titleNameJS.value != ""){
+                alert("You can not search by both Video Version and Title Name. Please key in either of the fields.");
+                videoVersionJS.value = "";
+                titleNameJS.value = "";
+            }
+            if((videoVersionJS.value != "" && videoVersionJS.value.length < 3) || (titleNameJS.value != "" && titleNameJS.value.length < 3)){
+                alert("Please input at least 3 letters for better search results!");
+            }
+        }
+        catch(e){
+            alert(e);
+        }
+    }
+    </script> 
+   </apex:pageBlock>   
+   
+   <div align="center"> <br/>
+   <apex:commandButton value="Cancel" action="{!cancel}" rendered="{!AND(collectionTitle.Content_Type__c != 'Collection Features',collectionTitle.Content_Type__c != 'Collection TV')}" /> 
+   </div>
+   
+   <apex:pageBlock title="Select Component Titles" id="resultsBlock" rendered="{!titlesReturned}">  
+       <apex:pageBlockButtons >
+        <apex:commandButton value="Allocate" action="{!save}" />
+       </apex:pageBlockButtons>
+       
+       <apex:pageblockTable value="{!titles}" var="t">  
+         <apex:column >
+         <apex:facet name="header">
+             <apex:inputCheckbox value="{!selectAll}">
+                 <apex:actionSupport event="onchange" action="{!SelectAllTitles}" reRender="resultsBlock" id="selectionId"/>
+             </apex:inputCheckbox>
+          </apex:facet>
+         <apex:inputCheckbox value="{!t.Selected}"/>
+         </apex:column>
+
+         <apex:column headerValue="Title Name" value="{!t.title.Name}"/>   
+         <apex:column headerValue="Content Type" value="{!t.title.Content_Type__c}"/>
+         <apex:column headerValue="Video Version" value="{!t.title.Video_Version__c}"/>  
+         <apex:column headerValue="MPM" value="{!t.title.MPM__c}"/>
+       </apex:pageBlockTable>
+    </apex:pageBlock>   
+
+    <apex:pageBlock title="Linked component titles" id="resultsBlockExisting" rendered="{!titlesReturnedExisting}">
+       <apex:pageBlockButtons >
+           <apex:commandButton value="Deallocate" action="{!saveExisting}" reRender="TheForm"/>
+       </apex:pageBlockButtons>
+       <apex:pageblockTable value="{!titlesExisting}" var="te">  
+         <apex:column >
+         <apex:facet name="header">
+             <apex:inputCheckbox value="{!selectAllExisting}">
+                 <apex:actionSupport event="onchange" action="{!SelectAllTitlesExisting}" />
+             </apex:inputCheckbox>
+          </apex:facet>
+         <apex:inputCheckbox value="{!te.Selected}"/>
+         </apex:column>
+
+         <apex:column headerValue="Title Name" value="{!te.title.Name}"/>   
+         <apex:column headerValue="Content Type" value="{!te.title.Content_Type__c}"/>
+         <apex:column headerValue="Video Version" value="{!te.title.Video_Version__c}"/>  
+         <apex:column headerValue="MPM" value="{!te.title.MPM__c}"/>
+       </apex:pageBlockTable>
+    </apex:pageBlock>   
+
+
+  </apex:form>  
+
+ </apex:page>

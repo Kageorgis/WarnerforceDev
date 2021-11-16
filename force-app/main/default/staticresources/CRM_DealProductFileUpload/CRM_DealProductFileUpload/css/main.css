@@ -1,0 +1,107 @@
+.handsontable {
+  font-size:11px
+}
+
+.handsontable .relative {
+    text-align: left
+}
+
+.handsontable col.rowHeader {
+    width: 200px !important;
+}
+
+.handsontable thead th {
+    background-color: #4F6A92;
+    color: white
+}
+
+.handsontable tbody th {
+    background-color: #A7B8D1
+}
+
+.handsontable td {
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+
+.has-changed {
+	color: red;
+}
+/*.handsontable tr:first-child td {
+	background-color: #4F6A92 !important;
+    color: white;
+}*/
+
+.total-row {
+    font-weight: bold
+}
+
+.spinnerModel {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 99999;
+    height: 100%;
+    width: 100%;
+}
+
+.spinnerContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+}
+
+.slds-popover {
+	  position: relative;
+	  border-radius: 4px;
+	  width: 300px;
+	  min-height: 0px;
+	  max-height: 500px;
+	  z-index: 6000;
+	  background: #16325c;
+	  display: inline-block;
+	  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.16);
+	  border: 1px solid #d8dde6;
+}
+
+.slds-popover__body {
+	  font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+	  font-size: 13px;
+	  position: relative;
+	  color: white;
+}
+
+.slds-popover[class*="theme--"] {
+  	border: 0;
+}
+
+.slds-popover--tooltip {
+	  width: auto;
+	  max-width: 470px;
+	  background: #16325c;
+	  border: 0;
+}
+
+.slds-popover--tooltip .slds-popover__body {
+	  font-size: 10px;
+	  color: white;
+	  margin-top: 20px;
+}
+.slds-nubbin--left:before {
+	  width: 12px;
+	  height: 12px;
+	  position: absolute;
+	  -webkit-transform: rotate(45deg);
+	  transform: rotate(45deg);
+	  content: '';
+	  background-color: inherit;
+	  left: -6px;
+	  margin-top: -5px;
+	  top:22%;
+}

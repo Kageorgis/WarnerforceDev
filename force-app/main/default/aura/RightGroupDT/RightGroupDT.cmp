@@ -1,0 +1,18 @@
+<aura:component controller="RF_RightGroupController" implements="flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,force:hasRecordId,force:appHostable" access="global">
+ <aura:attribute name="dataTableList" type="List" />
+    <aura:attribute name="mycolumns" type="List"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="recordId" type="Id" />
+    
+     <aura:attribute name="records" type="sObject[]"/>
+     <aura:attribute name="fileName" type="String"/>
+    <!-- <lightning:buttonIcon iconName="utility:download" onclick="{!c.downloadCsv}" alternativeText="Export Data" />-->
+    <div style="margin-left:875px;margin-bottom:5px"> 
+    	<lightning:button label="Export To Excel" onclick="{!c.downloadCsv}" class="slds-button slds-button_brand"/>
+    </div>
+        <lightning:datatable data="{! v.dataTableList }"
+                         columns="{! v.mycolumns }"
+                         keyField="id"
+                         hideCheckboxColumn="true"/>
+    
+</aura:component>

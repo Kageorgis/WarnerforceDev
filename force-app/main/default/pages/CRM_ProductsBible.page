@@ -1,0 +1,835 @@
+<apex:page standardController="Opportunity" lightningStylesheets="true" extensions="CRM_ProductBibleController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true" title="{!$ObjectType.Opportunity.Label}" >
+    <apex:slds />
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+            <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+       
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" /> 
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+            
+    <style> 
+        .wordWrapClass{
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            max-width: 20px !important;
+        }
+        .slds .slds-notify--toast{
+            margin: 8px 8px 5px;   
+        }
+        .slds-picklist .slds-picklist__label span {
+            width: 100%;
+        }
+        <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+        .handsontable thead th {
+            background-color: #4F6A92 !important;
+            color: white !important;
+        }
+        .handsontableInputHolder .handsontableInput{
+            background-color: white !important;
+        }
+        #hot-display-license-info{
+            display: none;
+        }
+        .slds input[type="checkbox"], .slds input[type="radio"] {
+            /*box-sizing: border-box;*/
+            /*transform: scale(1.45);*/
+            height: 16px !important;
+            width: 16px !important;
+        }
+        .wordWrapClass{
+            text-overflow: ellipsis;
+            white-space: nowrap !important;
+            max-width: 40px;
+        }
+        .slds .slds-grid, .slds-text-longform .slds .slds-grid {
+            list-style: none;
+        }
+        
+        .slds .slds-textarea {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 4px;
+            width: 60%;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            resize: vertical;
+            padding: 7px 12px  !important ;
+        } 
+        <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+    </style>
+</head>
+
+<body style="padding:0px" ng-app="DealBible">
+    <div class="slds" id="ng-app"  ng-controller="DealBibleController" ng-init="init()">
+        <!-- ===========================Spinner================================= -->   
+        <div class="spinnerModel" ng-show="showSpinner">
+            <div class="slds-spinner_container">
+                <div id="mySpinner" role="status" class="slds-spinner slds-spinner_brand slds-spinner_medium">
+                    <span class="slds-assistive-text">{{spinnerText}}</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- =========================== HEADER BANNER ================================--> 
+        <div class="slds-page-header" role="banner" id="headerDiv">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <nav role="navigation" aria-label="Breadcrumbs">
+                        <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+                            <li class="slds-breadcrumb__item slds-text-heading--label">
+                                <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$ObjectType.Opportunity.labelPlural}</a>
+                            </li>
+                            <li class="slds-breadcrumb__item slds-text-heading--label">
+                                <a href="#" ng-click="navigateToDealURL('{!URLFOR($Action.Opportunity.View,Id)}')">{!Opportunity.name}</a>
+                            </li>
+                        </ol>
+                    </nav>
+                    <div id="noOfProductsDiv" >
+                        <p class="slds-text-body--small slds-m-top--x-small">{{ dealBibleProductData.length }} {!$Label.CRM_Product_found_Label}</p>
+                    </div>
+                </div>
+                <div class="slds-page-header__col-actions">
+                    <div class="slds-page-header__controls">
+                        <div class="slds-page-header__control">
+                            <div class="slds-button-group" role="group">
+                                <button ng-click="showFilterPanel = !showFilterPanel" ng-class="{'slds-is-selected': showFilterPanel}" class="slds-button slds-button_icon slds-button_icon-border-filled" title="Filters">
+                                    <svg class="slds-button__icon" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#filterList')}"></use>
+                                    </svg>
+                                    <span class="slds-assistive-text">Filters</span>
+                                </button>
+                                <button class="slds-button slds-button--neutral .slds-has-flexi-truncate" ng-click="refreshPage()">{!$Label.CRM_Reset_button_label}</button>
+                                <button class="slds-button slds-button--neutral .slds-has-flexi-truncate" id="quickSaveBtn"  ng-click="saveDealBibleData('{!Opportunity.Id}',false)">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                <button class="slds-button slds-button--neutral"  ng-click="saveDealBibleData('{!Opportunity.Id}',true)">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!----------------------------US : 994------------------------->
+            <c:CRM_SLDSPicklist />
+            <!----------------------------US : 994------------------------->
+            
+        </div>
+        
+        <!-- ===========================Exception================================= -->
+        <div id = "errorDiv" ng-show="msgText || errorMsgForDp"  class="slds-grid">
+            <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid" ng-show="msgText">
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                    </svg>
+                    <div class="slds-col slds-align-middle">
+                        <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                    </div>
+                </div>
+                <div class="notify__content slds-grid" ng-show="errorMsgForDp">
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                        <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                    </svg>
+                    <div class="slds-col slds-align-middle">
+                        <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{errorMsgForDp}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slds-grid">
+            <!-- ===========================Dynamic Div================================= -->
+            <div class="slds-col slds-no-space">
+                <div id="tableDiv" class="hot handsontable htColumnHeaders" ></div>
+            </div>
+            
+            <div class="slds-grid slds-no-flex">
+            <!-- ===========================FILTER PANEL================================= -->
+            <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right {{showFilterPanel? 'slds-is-open' : ''}}" aria-hidden="false">
+                <div class="slds-panel__header">
+                    <h2 class="slds-panel__header-title slds-text-heading_medium slds-truncate" title="Panel Header">Filters</h2>
+                    <button ng-click="showFilterPanel = !showFilterPanel" class="slds-button slds-button_icon slds-button_icon-small slds-panel__close" title="Collapse Panel Header">
+                        <svg class="slds-button__icon" aria-hidden="true">
+                            <use xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Collapse Panel Header</span>
+                    </button>
+                </div>
+                <div class="slds-panel__body">
+                    <div class="slds-form">
+                        
+                        <div class="slds-form-element slds-form-element_stacked">
+                            <label class="slds-form-element__label">{!$Label.CRM_Search_on_Bible}</label>
+                            <div class="slds-form-element__control">
+                                <crm-multiselect-picklist options="picklistWrapForFilter.roleFilter.filterPicklist" selectedOpts="filter.roleFilter" multiple="false" placeholder="{!$Label.CRM_Talent_Role_Bible}" />
+                            </div>
+                        </div>
+                        
+                        <div class="slds-form-element slds-form-element_stacked">
+                            <div class="slds-form-element__control" >
+                                <input id="searchtextarea" class="slds-input slds-picklist__label" type="text" ng-keyup="$event.keyCode == 13 && GetLineItems('{!Opportunity.Id}',false)" ng-model="filter.searchText" placeholder="{!$ObjectType.Talent__c.fields.Name.Label}" rows="1"/>
+                            </div>
+                        </div>
+                       
+                        <div class="slds-form-element slds-form-element_stacked">
+                            <div class="slds-form-element__control" >
+                                <label class="slds-form-element__label" >{!$ObjectType.Product2.fields.Product_Market__c.Label}</label>
+                                <crm-multiselect-picklist  options="picklistWrapForFilter.channelValues.filterPicklist" selectedOpts="filter.channel" multiple="false" placeholder="{!$ObjectType.Product2.fields.Product_Market__c.Label}"/>
+                            </div>
+                        </div> 
+                        <div class="slds-form-element slds-form-element_stacked">
+                            <label class="slds-form-element__label" >{!$ObjectType.Product2.fields.Tittle_Content_Type__c.Label}</label>
+                            <div class="slds-form-element__control">
+                                <crm-multiselect-picklist options="picklistWrapForFilter.contentTypeValues.filterPicklist" selectedOpts="filter.contentType" multiple="false" placeholder="{!$ObjectType.Title__c.fields.Content_Type__c.Label}"/>
+                            </div>
+                        </div>
+                        <div class="slds-form-element  slds-form-element_stacked" >  
+                            <label class="slds-form-element__label" >{!$Label.CRM_Result_Filter_PlaceHolder}</label>
+                            <div class="slds-form-element__control" >
+                                    <crm-multiselect-picklist options="resultFilterValues" selectedOpts="resultFilter" multiple="false" placeholder="{!$Label.CRM_Result_Filter_PlaceHolder}" ng-click="filterRecords(true)"/>
+                            </div>
+                        </div> 
+                        <div>
+                            <button ng-click="GetLineItems('{!Opportunity.Id}',false)" class="slds-button slds-button_brand slds-m-left_x-small">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                    <use xlink:href="{!URLFOR($Asset.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+                                </svg>{!$Label.CRM_Search_Label_on_Add_Product_Page}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+        </div>
+    </div> 
+    <script> 
+    
+    /* Pass a few dynamic parameters */
+    angular.module("appConfig", [])
+    .service("appConfig", function() {
+        return {
+            userLocal: '{!UserLocale}', 
+            userDateFormat: '{!UserDateFormat}',
+            RCEditAccess: {!RCEditAccess},
+            dealId: '{!Opportunity.Id}',
+            isDigital :{!DigitalDeal},  
+            mapColToWrapperLabels : '{!mapColToWrapperLabels}',
+            setProductColumnLabels : '{!setProductColumnLabels}',
+            pickWrapJSONString: '{!pickWrapJSONString}',
+            pickWrapJSONStringFilter: '{!pickWrapJSONStringFilter}',
+            handsontableProLicenseKey: '{!HandsonTable_Pro_Licencekey}', //Added for US 989  
+            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', '')
+        };
+    });
+    angular.module("DealBible", ['appConfig','ngHandsontable','crm-components','ngLocale'])
+    .controller("DealBibleController", ['$scope','$timeout','appConfig','$locale',function($scope,$timeout,appConfig,$locale) {
+        $scope.dealBibleProductData = [];
+        $scope.showFilterPanel = false;
+        $scope.showSpinner = false;
+        $scope.spinnerText;
+        $scope.errorMsgForDp; 
+        $scope.appConfig = appConfig;
+        $scope.UserDateFormat = $scope.appConfig.userDateFormat;
+        $scope.UserDateFormatInUpperCase = $scope.UserDateFormat.toUpperCase();
+        $scope.filterdColIndex = [];
+        $scope.setMpmNumbers;
+        
+        $scope.tableOptions =[];
+        //drop down filter 
+        $scope.picklistWrapForFilter = angular.fromJson(appConfig.pickWrapJSONStringFilter);
+        $scope.contentTypeList = $scope.picklistWrapForFilter.contentTypeValues.picklist; 
+        $scope.channelList = $scope.picklistWrapForFilter.channelValues.picklist;
+        $scope.filter = {
+            searchText:'',
+            roleFilter: [{label: '{!$Label.CRM_AllRoles}' ,value: '{!$Label.CRM_AllRoles}',selected: true}],
+            contentType: [{label: 'Feature',value: 'Feature',selected: true}],
+            channel: [{label: 'EST',value: 'EST',selected: true}]
+        }; 
+        
+        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        var timeDiff = 0;
+        //Define height Start 
+        $scope.$watch('msgText', function() {
+            setTimeout(function(){ 
+                var tableHeight = ($(window).height() - $('#headerDiv').height() - $('#errorDiv').height() - 25);
+                if (hot!==undefined) {
+                    hot.updateSettings({ height: tableHeight });
+                }
+            },100);
+        });
+        //Define height End 
+        $scope.width = ($('#ng-app').width() - 10);
+        
+        //Create the column names start
+        var bibleColumns = [];
+        $scope.bibleColNames = [];
+        appConfig.setProductColumnLabels =appConfig.setProductColumnLabels.replace("[","");
+        appConfig.setProductColumnLabels =appConfig.setProductColumnLabels.replace("]","");
+        $scope.bibleColNames =appConfig.setProductColumnLabels.split(",");
+        bibleColumns.push('{!$Label.CRM_Select_Bible}');
+        $.each($scope.bibleColNames, function( rowKey, accObject) {
+            if(accObject!=='isDealProduct'){
+                bibleColumns.push(accObject);
+            } 
+        }); 
+        
+        //Crate the Result Filter
+        $scope.resultFilterValues = [   {label:'{!$Label.CRM_All_Value_For_Content_Type}', value:"all"},
+                                        {label:'{!$Label.CRM_Clone_Deal_Error}',value:"error"},
+                                        {label:'{!$Label.CRM_Success_Message}',value:"success"}];
+        
+        $scope.UserLocal = '{!UserLocale}';
+        $scope.options = { year: 'numeric', month: 'short', day: 'numeric' };
+        var saveStartTime;  
+        
+        //Set to check the valid data
+        var invalidValueSet = new Set();
+        invalidValueSet.add("");
+        invalidValueSet.add(null);
+        invalidValueSet.add(undefined);
+        
+        //Map wrapper labels to column labels   
+        $scope.mapColumnsToWrapperLabels= new Map();
+        appConfig.mapColToWrapperLabels = appConfig.mapColToWrapperLabels.replace("{","");
+        appConfig.mapColToWrapperLabels = appConfig.mapColToWrapperLabels.replace("}","");
+        $.each(appConfig.mapColToWrapperLabels.split(','), function( rowKey, object) {
+            if(object){
+                var keyValuePair = object.split('=');
+                $scope.mapColumnsToWrapperLabels.set(keyValuePair[0],keyValuePair[1]);
+            }
+        }); 
+        
+        //Create columns to map the data with the wrapper variables
+        var bibleColumnsData = []; 
+        $.each($scope.bibleColNames, function( rowKey, colLabel) { 
+            //Check if column name matches the Custom setting label
+            if($scope.mapColumnsToWrapperLabels.has(colLabel) && !invalidValueSet.has($scope.mapColumnsToWrapperLabels.get(colLabel))){ 
+                var colvalue = $scope.mapColumnsToWrapperLabels.get(colLabel);
+                if(colvalue === 'isDealProduct'){ 
+                    bibleColumnsData.push({data:'isDealProduct',type:'checkbox',className: 'htCenter htMiddle'});
+                }else{
+                    bibleColumnsData.push({data:colvalue,type:'text',readOnly: true});
+                } 
+            }      
+        });   
+        
+        //Variable to filter succes and error records 
+        $scope.resultFilter = [];
+        
+        $scope.nonProcessedRecrods = [];
+        $scope.sucessRecords = [];
+        $scope.errorRecords = [];
+        $scope.previouslySelectedFilterValue;
+        $scope.sortObj = {column:0,order:"none"};
+        $scope.productsToInsertOrDelete =[]; 
+        
+        //Init method to initially load the data
+        $scope.init = function() { 
+            $scope.showSpinner = true;
+            $scope.GetLineItems('{!Opportunity.Id}',true); 
+        }
+        $scope.setIds = new Set();
+        //------------------------------Handontable creation with attributes starts------------------------------------------------
+        var container = document.getElementById('tableDiv');
+        var hot = new Handsontable(container,
+                                   {
+                                       data: $scope.dealBibleProductData,
+                                       // renderAllRows: true,//Added for US : 994
+                                       minSpareRows: 0, 
+                                       colHeaders : bibleColumns,
+                                       licenseKey: '{!HandsonTable_Pro_Licencekey}', //Added for US 989
+                                       cells: function(row, col, prop) {
+                                           var cellProperties = {};
+                                           cellProperties.renderer = $scope.myRenderer;
+                                           return cellProperties;
+                                       },
+                                       columns: bibleColumnsData,
+                                       afterChange: function(changes, source) { 
+                                           var ele = this;
+                                           if (changes && changes.length > 0) {
+                                               $.each(changes, function(index, element) {
+                                                   if (element) { //Added For US : 820
+                                                       var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                                       var sortedRowIndex = changes[index][0];
+                                                       var actualRowIdex = changes[index][0];
+                                                       var col= elem.col;
+                                                       var prop =elem.prop;
+                                                       var oldValue =element[2];
+                                                       var newValue =element[3];
+                                                       var row =elem.row;
+                                                       
+                                                       if(!(!oldValue && oldValue==null && newValue == '') && prop =='isDealProduct' ){
+                                                           var item = $scope.dealBibleProductData[ele.toPhysicalRow(changes[index][0])];
+                                                           
+                                                           if(appConfig.RCEditAccess){
+                                                               document.getElementById("quickSaveBtn").disabled = false;
+                                                               document.getElementById("quickSaveBtn").style.background ='#c23934';
+                                                               document.getElementById("quickSaveBtn").style.color = 'white';
+                                                           }
+                                                           if(item && oldValue!=null ){ 
+                                                               item.isRowModified = true;  
+                                                               if($scope.setIds.has(item.productId) && $scope.productsToInsertOrDelete.length >0){ 
+                                                                   $.each($scope.productsToInsertOrDelete, function( rowKey, object) {
+                                                                       if(item.productId == object.productId){
+                                                                           object.isDealProduct= item.isDealProduct;
+                                                                       }
+                                                                   });
+                                                               }else if($scope.setIds.has(item.productId) && $scope.productsToInsertOrDelete.length ==0){ 
+                                                                   $scope.productsToInsertOrDelete.push(item);
+                                                               }else{
+                                                                   $scope.productsToInsertOrDelete.push(item);
+                                                                   $scope.setIds.add(item.productId);
+                                                               }
+                                                           }
+                                                       } 
+                                                   } 
+                                               });
+                                               var currentEle = this;
+                                               if((source === 'edit' || source === 'loadData ' || source === 'Autofill.fill' || source === 'CopyPaste.paste') ){
+                                                   currentEle.render();
+                                               }
+                                           }
+                                       }, 
+                                       afterLoadData: function(firstTime){
+                                           if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                                               hot.updateSettings({minSpareRows: 0});
+                                               if(hot.countEmptyRows(true)){
+                                                   hot.getPlugin('trimRows').trimRows([($scope.dealBibleProductData.length - 1)]);
+                                                   hot.render();
+                                               }
+                                           }else if(hot){
+                                               hot.updateSettings({minSpareRows: 0});
+                                           }
+                                       },
+                                       afterFilter: function(conditionsStack){
+                                           $scope.filterdColIndex = [];
+                                           if(conditionsStack.length > 0){
+                                               $.each(conditionsStack, function(rowKey, object) { 
+                                                   $scope.filterdColIndex.push(object.column);
+                                               });
+                                           } 
+                                       },
+                                       columnSorting: true, 
+                                       filters: true, 
+                                       manualColumnResize: false,
+                                       dropdownMenu: ['clear_column','alignment','filter_by_condition','filter_operators','filter_by_condition2','filter_by_value','filter_action_bar'],
+                                       licenseKey: appConfig.handsontableProLicenseKey,
+                                       afterColumnSort: function(column,order){
+                                           $scope.sortObj.column = column;
+                                           $scope.sortObj.order = order;
+                                       }
+                                   });
+        //------------------------------Handontable creation with attributes end------------------------------------------------
+        
+        // Filter the records for Success and Error records in Result filter
+        $scope.filterRecords = function(flag){
+            $scope.currentFilterValue = $scope.resultFilter[0] ? $scope.resultFilter[0].value : $scope.resultFilter[0];
+            if(($scope.previouslySelectedFilterValue != $scope.currentFilterValue && 
+                !((!$scope.previouslySelectedFilterValue && $scope.currentFilterValue == 'all') || 
+                  (!$scope.currentFilterValue && $scope.previouslySelectedFilterValue == 'all'))) || !flag
+              ){
+                hot.getPlugin('trimRows').untrimAll();
+                if(flag){
+                    if($scope.previouslySelectedFilterValue == 'error'){
+                        $scope.errorRecords = [];
+                        $.each($scope.dealBibleProductData, function(rowKey, dealProd) {  
+                            if(!hot.isEmptyRow(rowKey)){
+                                $scope.errorRecords.push(dealProd);
+                            }
+                        });
+                    }else if($scope.previouslySelectedFilterValue == 'success'){
+                        $scope.sucessRecords = [];
+                        $.each($scope.dealBibleProductData, function(rowKey, dealProd) {  
+                            if(!hot.isEmptyRow(rowKey)){
+                                $scope.sucessRecords.push(dealProd);
+                            }
+                        });
+                    }else{
+                        $scope.nonProcessedRecrods = [];
+                        $.each($scope.dealBibleProductData, function(rowKey, dealProd) {  
+                            if(!hot.isEmptyRow(rowKey) && dealProd.recrodStatus != 'error' && dealProd.recrodStatus != 'success'){
+                                $scope.nonProcessedRecrods.push(dealProd);
+                            }
+                        });
+                    }
+                }
+                $scope.dealBibleProductData = [];
+                if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                    if($scope.currentFilterValue == 'error'){
+                        $scope.dealBibleProductData =  $scope.errorRecords;
+                        hot.updateSettings({minSpareRows: 0});
+                    }else if($scope.currentFilterValue == 'success'){
+                        $scope.dealBibleProductData =  $scope.sucessRecords;
+                        hot.updateSettings({minSpareRows: 0});
+                    }
+                }else{
+                    if($scope.errorRecords && $scope.errorRecords.length > 0)
+                        $scope.concatArray($scope.errorRecords);
+                    if($scope.sucessRecords && $scope.sucessRecords.length > 0)
+                        $scope.concatArray($scope.sucessRecords);
+                    if($scope.nonProcessedRecrods && $scope.nonProcessedRecrods.length > 0)
+                        $scope.concatArray($scope.nonProcessedRecrods);
+                }
+                hot.loadData($scope.dealBibleProductData);
+                $('#noOfProductsDiv').show();
+                hot.getPlugin('columnSorting').sort($scope.sortObj.column,$scope.sortObj.order);
+                if($scope.filterdColIndex.length > 0 && flag){
+                    hot.getPlugin('filters').removeConditions($scope.filterdColIndex);
+                }
+                hot.render();
+                hot.getPlugin('filters').filter();  
+            }
+            $scope.previouslySelectedFilterValue = $scope.currentFilterValue;
+        };
+        
+        $scope.concatArray = function(items){
+            var lastIndex = $scope.dealBibleProductData.length > 0 ? ($scope.dealBibleProductData.length) : 0;
+            $scope.tempArray = $scope.dealBibleProductData.slice();
+            [].splice.apply($scope.tempArray, [lastIndex, 0].concat(items));
+            $scope.dealBibleProductData = $scope.tempArray;
+        };  
+        
+        (function (Handsontable) { 
+            'use strict';
+            
+            var MaxLengthEditor = Handsontable.editors.TextEditor.prototype.extend();
+            
+            MaxLengthEditor.prototype.prepare = function () {
+                Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
+                this.TEXTAREA.maxLength = this.cellProperties.maxLength;
+            };
+            
+            Handsontable.editors.registerEditor('maxlength', MaxLengthEditor); 
+        })(Handsontable);  
+        
+        //-----------------------Renderer method for the table columns----------------------------------- 
+        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+                
+                //Start - US : 994
+            if(col == 16){
+                Handsontable.renderers.HtmlRenderer.apply(this, arguments);
+            }else{
+                if(cellProperties.type == 'text'){
+                    Handsontable.renderers.TextRenderer.apply(this, arguments);
+                }else if(cellProperties.type == 'numeric'){
+                    Handsontable.renderers.NumericRenderer.apply(this, arguments);
+                }else if(cellProperties.type == 'date'){
+                    Handsontable.renderers.DateRenderer.apply(this, arguments);
+                }else if(cellProperties.type == 'checkbox'){
+                    Handsontable.renderers.CheckboxRenderer.apply(this, arguments);
+                }
+            }
+                if($scope.dealBibleProductData){
+                var item = $scope.dealBibleProductData[cellProperties.row]; 
+                var cell = instance.getCell(cellProperties.row, col);
+                   
+                if(item){
+                        if(item.errorOccured  && item.errorOccured == true){
+                        td.style.backgroundColor = 'red';
+                        td.style.color = 'white';
+                    }
+                    console.log(item);
+                    // 10=Product Genre,14=Topic,16=ProductName,1=Retailer id,4=Local title,17=Title tag
+                    if( col==4 || col==1 || col == 16 ||col==11||col==14||col==17){ 
+                        
+                        cellProperties.type='text';
+                        cellProperties.editor = 'maxlength';
+                        cellProperties.maxLength = 1000;
+                        var tempStr = td.innerHTML.replace(/"/gi, "&quot;"); 
+                        cellProperties.readOnly = true;
+                        if(col == 16){
+                            var productId = (item.existingId == null ? item.productId :item.existingId );
+                            td.innerHTML = "<a href='/"+productId+"' target='_blank' title = '" + tempStr + "' >"+tempStr+"</a>";
+                        }else{
+                            td.innerHTML = '<span title = "' + tempStr + '">' + tempStr + '</span>';
+                        }
+                        $(td).addClass("wordWrapClass"); 
+                    }
+                }
+            }
+        }; 
+        
+        <!-------- Date Conversion Logic------->
+            function convertDate(dateVal){
+                $scope.DateObj = new Date(dateVal);
+                $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                $scope.DateObj.setMinutes($scope.totalMinute);
+                return $scope.DateObj.toLocaleDateString($scope.UserLocal);
+            };  
+        //------------------------------------------------Get products on load-------------------------------------------------------------------
+        $scope.GetLineItems = function(opportunityId,onload) { 
+            $scope.showFilterPanel = false;
+            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Loading}';  
+            $scope.showSpinner = true; 
+            console.time("GET_PRODUCTS_CALL");
+            CRM_ProductBibleController.getProducts(onload,opportunityId,$scope.appConfig.isDigital,$scope.filter,function(result, event) {
+                console.timeEnd("GET_PRODUCTS_CALL");
+                
+                if (!event.status) {
+                    $scope.$apply(function() {
+                        $scope.msgText = event.message;
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false; 
+                    }); 
+                    $scope.tableOptions =[]
+                    $scope.dealBibleProductData = $scope.tableOptions ; 
+                    hot.loadData($scope.dealBibleProductData);  
+                    $('#noOfProductsDiv').show();
+                    hot.render();
+                    $scope.$apply(); 
+                }
+                console.time("Processing_Result");
+                if (event.status) { 
+                    $scope.tableOptions = result; 
+                    $scope.dealBibleProductData = $scope.tableOptions; 
+                    $scope.nonProcessedRecrods = $scope.dealBibleProductData;
+                    console.timeEnd("Processing_Result");
+                    console.time("Handsontable_render");
+                    $('#noOfProductsDiv').show();
+                    hot.loadData($scope.dealBibleProductData);  
+                    hot.render();  
+                    console.timeEnd("Handsontable_render");
+                    $scope.msgText='';  
+                    $scope.showSpinner = false;  
+                    $scope.$apply(); 
+                }
+            },{
+                escape: false,
+                timeout: 120000,
+                buffer: false
+            }); 
+        };
+        
+        //-----------Update the null fields for save----------------------------------------------------- 
+        $scope.updateNullFieldsValue = function(rcObj) {
+            
+            if(invalidValueSet.has(rcObj.quantity)){
+                rcObj.quantity = 1;
+            } 
+            if(invalidValueSet.has(rcObj.mpmName)){
+                rcObj.mpmName = '';
+            } 
+            if(invalidValueSet.has(rcObj.clientAvailStatus)){
+                rcObj.clientAvailStatus = '';
+            }
+            if(typeof rcObj.pbepAccountPrice != 'number'){
+                if(!invalidValueSet.has(rcObj.pbepAccountPrice)){
+                    rcObj.pbepAccountPrice= (rcObj.pbepAccountPrice.replace('$','')).trim();
+                    rcObj.pbepAccountPrice= (rcObj.pbepAccountPrice.replace(',','')).trim(); 
+                }else{
+                    rcObj.pbepAccountPrice = null;
+                }
+            }   
+        }
+        
+        //------------------------------------Save the Bible data------------------------------------------------------
+        $scope.saveDealBibleData = function(oppoId,redirect){
+            
+            $scope.nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+            if($scope.nonEmptyRowCount === 0){ $scope.nonEmptyRowCount = -1; }
+            
+            var cleanedGridData = [];
+            
+            // Start ---------US : 994--------------------
+            if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'error'){
+                $scope.errorRecords = $scope.dealBibleProductData;
+            }else if($scope.resultFilter.length > 0 && $scope.resultFilter[0].value == 'success'){
+                $scope.sucessRecords = $scope.dealBibleProductData;
+            }else{
+                $scope.errorRecords = [];
+                $scope.sucessRecords = [];
+                $scope.nonProcessedRecrods = [];
+                $scope.nonProcessedRecrods = $scope.dealBibleProductData;
+            }
+            cleanedGridData = $scope.productsToInsertOrDelete;
+            $scope.productsToInsertOrDelete=[];
+            $scope.setIds = new Set();
+            var saveStartTime = new Date();
+            var timeDiff = 0;
+            
+            $scope.msgText = '';
+            $scope.msgSeverity = '';
+            $scope.showSpinner = true;
+            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Processing}'; 
+            var chunkTime = new Date();
+            
+            $.each(cleanedGridData, function(rowKey, rcObj) { 
+                $scope.updateNullFieldsValue(rcObj);
+                rcObj.validation = ''; 
+            }); 
+            if(cleanedGridData == null ||cleanedGridData ==""||cleanedGridData ==undefined){
+                if(redirect){
+                    $scope.BackToDeal('{!URLFOR($Page.CRM_EditAllOppProducts,null,[id=Opportunity.Id])}')
+                }
+            }
+            console.log('Time Elapsed for chunk is Validation Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+            
+            /**
+             * rowsToProcess - Array of records to save back to salesforce
+             * returnedResults - Rows already saved to Salesforce
+            */
+            (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                
+                if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                    $scope.showSpinner = false;
+                    return; 
+                }   
+                $scope.chunkSize = 20; // Recursive batch size 
+                chunkedData = rowsToProcess.splice(0, $scope.chunkSize); 
+                CRM_ProductBibleController.saveDealBibleProducts(chunkedData,oppoId,$scope.appConfig.isDigital,function(result, event){ 
+                    if (!event.status) {
+                        $scope.$apply(function() {
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false; 
+                        });
+                        
+                    }else if (cleanedGridData.length > 0){ 
+                        // If successful add results to the main array
+                        returnedResults = returnedResults.concat(result); 
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                        failedRecCount += failedCount;
+                        
+                        // Update progress text for user
+                        $scope.$apply(function() {
+                            $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                        });
+                        $.each(returnedResults, function(rowKey, rcObj) { 
+                            $scope.updateNullFieldsValue(rcObj);
+                        });
+                        var chunkTime = new Date();
+                        console.log('Time Elapsed for chunk is Controller Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                        
+                        // Call salesforce again with remaining rows
+                        runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                    }else{
+                        $scope.sortObj.column = 0;
+                        $scope.sortObj.order = "none"; 
+                        $scope.tableOptionsFinal = returnedResults.concat(result); 
+                        //For all Wrapper Products
+                        $.each($scope.tableOptionsFinal, function( rowKey, prodObject) {  
+                            var indexToRemove=prodObject.rowIndex;  
+                            if(prodObject.rowIndex === $scope.dealBibleProductData[indexToRemove].rowIndex){
+                                $scope.dealBibleProductData[indexToRemove]=prodObject; 
+                            }
+                            if(prodObject.recrodStatus == 'error'){
+                                $scope.errorRecords.push(prodObject);
+                            }else if(prodObject.recrodStatus == 'success'){
+                                $scope.sucessRecords.push(prodObject);
+                            } 
+                        }); 
+                        if($scope.resultFilter.length > 0 && ($scope.resultFilter[0].value == 'success' || $scope.resultFilter[0].value == 'error')){
+                            $scope.filterRecords(false);
+                        }else{
+                            $scope.dealBibleProductData =$scope.tableOptions;
+                            hot.loadData($scope.dealBibleProductData); 
+                            hot.getPlugin('filters').filter();  
+                        }
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 :  result[0].numFailedRecords;
+                        failedRecCount += failedCount; 
+                        
+                        if (failedCount > 0) {
+                            $scope.msgText =    failedCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                            $scope.msgSeverity = 'error';
+                        } else {
+                            $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                            document.getElementById("quickSaveBtn").style.background ='white';
+                            document.getElementById("quickSaveBtn").style.color = 'rgb(0, 134, 222)';
+                            $scope.msgSeverity = 'success';
+                            if(redirect){
+                                $scope.BackToDeal('{!URLFOR($Page.CRM_EditAllOppProducts,null,[id=Opportunity.Id])}')
+                            }
+                        }    
+                        $scope.spinnerText = '';
+                        $scope.showSpinner = false; 
+                        $scope.$apply();  
+                        $('#noOfProductsDiv').show();  
+                    }
+                },{
+                    escape: false,
+                    timeout: 120000,
+                    buffer: false  
+                })
+            })(cleanedGridData, [], 0);  
+            
+        }; 
+                        
+                //-------- Us 989 start------------>
+                $scope.refreshPage = function(){
+                    window.location.reload(); 
+                }
+                
+                $scope.BackToDeal = function(url) {
+                    $scope.navigateToURL(url);
+                }; 
+                
+                $scope.navigateToURL = function(url) {
+                    var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    if ($scope.isLightningExperienceOrSf1)
+                        sforce.one.navigateToURL(url);
+                    else
+                        document.location.href = url;
+                };
+                
+                $scope.navigateToDealURL = function(url) { 
+                    var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    if ($scope.isLightningExperienceOrSf1)
+                        window.open('/lightning/r/Opportunity/'+'{!Opportunity.Id}'+'/view?fr=1','_parent');
+                    else
+                        document.location.href = url;
+                }  
+                
+                $scope.removeMsgBlock= function(){
+                    $scope.msgText = '';
+                    $scope.errorMsgForDp = '';
+                };  
+            }
+        ]);//end 
+    </script> 
+</body>
+</html>
+</apex:page>

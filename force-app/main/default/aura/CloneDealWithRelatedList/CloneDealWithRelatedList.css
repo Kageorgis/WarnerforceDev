@@ -1,0 +1,6 @@
+.THIS {
+}
+
+.THIS .slds-modal__close {
+    visibility: hidden !important;
+}

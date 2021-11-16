@@ -1,0 +1,3 @@
+<apex:page standardController="Promotion__c" sidebar="false" showHeader="false">     
+    <MiniGrid:GridRelatedListByObject obj="Promotion__c" val="{!Promotion__c.Id}" relObj="Promotion_Title__c"/> 
+</apex:page>

@@ -1,0 +1,509 @@
+<apex:page standardController="Credit_Note__c" extensions="CRM_EditAllCreditNoteItemsCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+            
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'css/EditProducts.css')}" /> 
+            
+            <script>
+                window.$Label = window.$Label || {}; 
+                window.$Label.updateSuccessMsg = "{!$Label.CRM_Update_Credit_Note_Item_Message}";
+                window.$Label.selectRecordForAnyOperationMsg = "{!$Label.CRM_Select_Record_For_Any_Operation}";
+            </script>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular-sanitize.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/simplePagination.js')}"/>
+            
+            <!-- to use the picklist component -->
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" />
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/angular-input-masks.js"/>
+             
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+   
+            <style>
+                .Custom-Label-Class{
+                    padding-left: 16px !important;
+                    padding-right: 16px !important;
+                    text-align: center !important;
+                    vertical-align: middle !important;
+                    border: 1px solid #d8dde6 !important;
+                    background-color: white !important;
+                }
+            </style>
+        </head>
+        
+        <script>
+            /* Login to sforce proxy service */
+            
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            /* Pass a few dynamic parameters */
+            angular.module("appConfig", ['ui.utils.masks'])
+                .service("appConfig", function() {
+                     return {
+                        resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                        recordId: "{!$CurrentPage.parameters.cnId}",
+                        breadcrumbObjectName: '{!$ObjectType.Credit_Note__c.labelPlural}',
+                        breadcrumbObjectLink: '{!URLFOR($Action.Credit_Note__c.Tab, $ObjectType.Credit_Note__c)}',           
+                        breadcrumbRecordLink: '{!URLFOR($Action.Credit_Note__c.View,$CurrentPage.parameters.cnId)}',
+                        breadcrumbRecordName: '{!JSENCODE(recordName)}',
+                        userTerritory : '{!TEXT($User.Territory__c)}',           
+                        onSaveSuccessUrl: '{!URLFOR($Action.Credit_Note__c.View, $CurrentPage.parameters.cnId)}',
+                        cnCurrencyCode: '{!cnCurrencyCode}',
+                        MaxCreditNoteItemLimit: '{!MaxCreditNoteItemLimit}',
+                        isReadOnly: {!isReadOnly},
+                        userLocale : '{!UserLocale}'
+                    };
+                });
+            
+            function checkUncheckAll() {
+                var val = $("#select-all").prop("checked");
+                $("input[id^='select-row-']").prop('checked', val);
+            }
+        </script>
+        <body>
+             <div class="mainContainer" xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmEditCreditNoteItems" ng-cloak="ngCloak" ng-controller="crmEditCreditNoteItemsController" ng-init="loadCreditNoteItems()">
+                 
+                 <c:CRM_SLDSPicklist />
+                 <c:CRM_SLDSLookup />
+  
+                 <div class="slds">
+                 
+                    <!------------Page Spinner Section Start-------------------------------->
+                    <div class="spinnerModel" ng-show="showSpinner">
+                        <div class="spinnerContent slds-spinner--large">
+                            <img src="{{appConfig.resourceSlds+'/assets/images/spinners/slds_spinner_brand.gif'}}" alt="Loading..." />
+                        </div>
+                    </div>
+                    <!------------Page Spinner Section End--------------------------------->
+                    
+                    <!---------------Page Header Section Start------------------------------>
+                    <div class="slds-page-header" role="banner">
+                        <div class="slds-grid">
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <nav class="slds-m-bottom--xx-small" role="navigation">
+                                    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                        <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Credit_Note__c.Tab, $ObjectType.Credit_Note__c)}'">{!$ObjectType.Credit_Note__c.labelPlural}</a></li>
+                                        <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Credit_Note__c.View, $CurrentPage.parameters.cnId)}">{!JSENCODE(recordName)}</a></li>
+                                    </ol>
+                                </nav>
+                                <div class="slds-col slds-has-flexi-truncate">
+                                    <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Edit_All_Credit_Note_Items_Header_Label}">{!$Label.CRM_Edit_All_Credit_Note_Items_Header_Label}</h1>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline" ng-show="showCreditNoteItems">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control slds-float--left">
+                                        <crm-multiselect-picklist options="dealOptions" selectedOpts="selectedDeal" multiple="false" placeholder="{!$Label.CRM_Edit_All_Credit_Note_Items_Select_Deal_PlaceHolder}"/>
+                                    </div>
+                                    <div class="slds-button-group slds-button-space-left slds-medium-show slds-float--left" role="group">
+                                        <button class="slds-button slds-button--icon-border slds-is-selected" ng-click="filterCreditNoteItems()" ng-class="{'slds-is-selected': sidebarOn}" title="Filter Credit Note base on Deal">
+                                            <svg aria-hidden="true" class="slds-button__icon">
+                                                <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#filterList'}}"></use>
+                                            </svg>
+                                            <span class="slds-assistive-text">{!$Label.CRM_Search_Label_on_Add_Product_Page}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                                    <div class="slds-form-element__control">
+                                        <input class="slds-input slds-input--small"  ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-change="filter()"/>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">     
+                                        <div class="slds-button-group slds-button-space-left" role="group">
+                                            <button ng-click="saveData(true)" class="slds-button slds-button--neutral" ng-disabled="appConfig.isReadOnly">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                            <button ng-click="saveData(false)" class="slds-button slds-button--neutral" ng-disabled="appConfig.isReadOnly">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-button-group" role="group">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!---------------Page Header Section End------------------------------->
+                    
+                    <!---------------Error Message Section Start--------------------------->
+                    <div class="slds-grid" ng-show="msgText">
+                        <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                            <span class="slds-assistive-text">Info</span>
+                            <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                                <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                                    <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                            <div class="notify__content slds-grid">
+                                <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <!---------------Error Message Section End----------------------------->
+                    
+                    <!---------------Update Credit Note Item Section start----------------->
+                    <div class="slds-grid slds-max-small-hide" ng-show="showCreditNoteItems">
+                        <div class="slds-col--padded slds-m-vertical--small slds-form--inline">
+                            <div class="slds-form-element">
+                                
+                                <label class="slds-form-element__label">{!$Label.CRM_Deal_Entry_Message}</label>
+                                <div class="slds-form-element__control" ng-disabled="appConfig.isReadOnly">
+                                    <!--<crm-multiselect-picklist options="updateRowFieldOptions" selectedOpts="updateRowsField" multiple="false" placeholder="{!$Label.CRM_Deal_Entry_Select_Field_Placeholder}"/>-->
+                                    <label class="slds-button Custom-Label-Class">{{updateRowsField}}</label>
+                                </div>
+                                <div class="slds-form-element__control">
+                                    <input class="slds-form-element slds-input" format-number="2" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-model="updateRowsFieldVal" style="width:150px;" ng-disabled="appConfig.isReadOnly"/>
+                                </div>
+                             
+                                <div class="slds-form-element__control" role="group">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <button class="slds-button slds-button--neutral" ng-click="updateAllRows()" ng-disabled="appConfig.isReadOnly">{!$Label.CRM_Deal_Entry_Update_All_Button}</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- New Pagination Code -->
+                                <div class="slds-form-element__control">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <c:CRM_EditAllProductPagination />
+                                    </div>  
+                                </div>
+                                <!-- End of New Pagination Code -->
+                            </div>
+                        </div>
+                    </div>    
+                    <!---------------Update Credit Note Item Section End------------------->
+                    
+                    <!---------------Related Credit Note Item ListView Section Start------------------>
+                    <div id="wb-listview">
+                        <table id="wb-listtable" class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                            <thead>
+                                <tr class="slds-text-heading--label">
+                                    <th scope="col" ng-hide="appConfig.isActivated">
+                                        <label class="slds-checkbox" for="select-all">
+                                            <input name="checkbox" type="checkbox" id="select-all" ng-model="isMasterChecked" ng-click="checkUncheckAll()" ng-disabled="appConfig.isReadOnly"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select all</span>
+                                        </label>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.Product__c.Label}</span>
+                                    </th>
+                                    
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.ProductCode__c.Label}</span>
+                                    </th>
+                                
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.Amount__c.Label}</span>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.Requested_Co_op_Amount__c.Label}</span>
+                                    </th>
+                                
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.Deal__c.Label}</span>
+                                    </th>
+                    
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Credit_Note_Item__c.fields.Deal_Product_Name__c.Label}</span>
+                                    </th>
+                                
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="slds-hint-parent" ng-repeat="cnItemWrapper in filteredCreditNoteItems = (cnItems | filter:search.text) | startFrom: pagination.page * pagination.perPage | limitTo: pagination.perPage">
+                                    <td class="slds-row-select">
+                                        <label class="slds-checkbox" for="select-row-{{$index}}">
+                                            <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="cnItemWrapper.isSelected"  ng-disabled="appConfig.isReadOnly"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select row-{{$index}}</span>
+                                        </label>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Name.Label}" class="wb-OrderNumber" role="row">{{cnItemWrapper.cnItem.Product__r.Name}}</td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Name.Label}" class="wb-OrderNumber" role="row">{{cnItemWrapper.cnItem.ProductCode__c}}</td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Name.Label}" class="wb-OrderNumber" ng-show="appConfig.isReadOnly" role="row">{{cnItemWrapper.cnItem.Amount__c}}</td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Amount__c.Label}" ng-show="!appConfig.isReadOnly">
+                                        <div class="slds-form-element" >
+                                            <div class="slds-form-element__control">
+                                                <input id="amount-{{cnItemWrapper.cnItem.Id}}" class="slds-input slds-input--small" format-number="2" ng-model="cnItemWrapper.amount" style="width: 75px"  ng-change="cnItemWrapper.isDirtyRow = true;validateFormat(cnItemWrapper, 'amount');"/>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Requested_Co_op_Amount__c.Label}"><span class="slds-truncate">{{cnItemWrapper.cnItem.Requested_Co_op_Amount__c | number : 2}}</span></td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Deal__c.Label}"><a href="/{{cnItemWrapper.cnItem.Deal__c}}" target="_blank" ><span class="slds-truncate">{{cnItemWrapper.cnItem.Deal__r.Name}}</span></a></td>
+                                    <td data-label="{!$ObjectType.Credit_Note_Item__c.fields.Deal_Product_Name__c.Label}"><a href="/{{cnItemWrapper.cnItem.Deal_Product_Id__c}}" target="_blank" ><span class="slds-truncate">{{cnItemWrapper.cnItem.Deal_Product_Name__c}}</span></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!---------------Related Credit Note Item ListView Section End-------------------->
+                 </div>
+            </div>
+            
+            <script>
+                 $(function() {
+                      /**
+                      *Assistive Help
+                      */
+                      $('.wb-help-icon').hover(function(e) {
+                         $(e.currentTarget).next().show();
+                      },
+                      function(e) {
+                         $(e.currentTarget).next().hide();
+                      });
+                });
+                crmApp = angular.module('crmEditCreditNoteItems', ['appConfig', 'crm-components','simplePagination'])
+                    .controller('crmEditCreditNoteItemsController', function($scope, $filter, appConfig, Pagination) {
+                        $scope.appConfig = appConfig;
+                        console.log('$scope.appConfig',$scope.appConfig);
+                        //Added for Pagination
+                        $scope.MaxCreditNoteItemLimit = $scope.appConfig.MaxCreditNoteItemLimit;
+                        $scope.pagination = Pagination.getNew($scope.MaxCreditNoteItemLimit);
+                        console.log('$scope.maxProductLimit',$scope.MaxCreditNoteItemLimit);
+                        console.log('$scope.pagination.numPages',$scope.pagination.numPages);
+                        
+                        $scope.filter = function() {
+                            $scope.pagination = Pagination.getNew($scope.MaxCreditNoteItemLimit);
+                            console.log('$scope.relatedOrders',$scope.cnItems);
+                            $scope.filteredArray = $filter('filter')($scope.cnItems, $scope.search.text);
+                    
+                            console.log('$scope.filteredArray.length',$scope.filteredArray.length);
+                            console.log('$scope.cnItems',$scope.cnItems.length);
+                            if ($scope.filteredArray.length === 0) {
+                                $scope.pagination.numPages = 1;
+                            } else {
+                                $scope.pagination.numPages = Math.ceil($scope.filteredArray.length/$scope.pagination.perPage);
+                            }
+                            $scope.pagination.page = 0;
+                        }
+                        
+                        //Added for Pagination
+                        $scope.dealCNIWrapper;
+                        $scope.cnItems = [];
+                        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                        $scope.search = {};
+                        //$scope.updateRowFieldOptions = [{label:"Amount", value:"Amount"}];
+                        $scope.updateRowsField = "Amount";
+                        $scope.updateRowsFieldVal;
+                        $scope.dealOptions = [];
+                        $scope.selectedDeal = [];
+                        $scope.showSpinner;
+                        $scope.showCreditNoteItems;
+                        $scope.msgText;
+                        $scope.msgSeverity;
+                        $scope.quickSave;
+                        $scope.isMasterChecked = false;
+                        var setOfDeals = new Set();
+                        
+                        $scope.filterCreditNoteItems = function(){
+                            if($scope.selectedDeal[0] != undefined){
+                                $scope.cnItems = $scope.dealCNIWrapper.mapdealCNIWrapper[$scope.selectedDeal[0].value];
+                            }else{
+                                $scope.cnItems = [];
+                                $.each(Array.from(setOfDeals), function(rowIndex, elementP) {
+                                    $scope.cnItems = $scope.cnItems.concat($scope.dealCNIWrapper.mapdealCNIWrapper[elementP]);
+                                });
+                                if($scope.isMasterChecked)
+                                    $scope.checkUncheckAll();
+                            }
+                            //Defect#4646 - Added code for pagination issue for SNOW  : RTASK1405094
+                            $scope.pagination.numPages = Math.ceil($scope.cnItems.length/$scope.pagination.perPage);
+                            //Defect#4646 - End
+                        }
+                        
+                        $scope.updateAllRows = function(){
+                            console.log('Update Function : cnItems : ',$scope.cnItems);
+                            var isAnyRowSelected = false
+                            $scope.msgText = null;
+                            angular.forEach($scope.cnItems, function(item, i) {
+                                if(item.isSelected) {
+                                    isAnyRowSelected = true;
+                                    if ($scope.updateRowsField[0] != null && $scope.updateRowsField[0] != undefined) {
+                                        if (isNaN($scope.updateRowsFieldVal)) {
+                                            $scope.addPageMessage("{!$Label.CRM_Enter_Value_to_Update}", 'error');
+                                        } else {
+                                            item.isDirtyRow = true;
+                                            item.amount = $scope.updateRowsFieldVal; 
+                                            delete item.inValidFormatMap['amount-' + item.cnItem.Id];
+                                            $scope.validateFormat(item, 'amount');
+                                        }
+                                    }
+                                }
+                                //defect 4646 - during this defect fix we found that if you search a product and then apply value to all records. this time it was failing . so remvoed this line as it does not seem correct
+                                /*else {
+                                   $scope.addPageMessage("{!$Label.CRM_Select_Field_To_Update}", 'error');
+                                }*/
+                            });
+                        
+                            // If any row is not selected to update the selected records then show a message
+                            if (!isAnyRowSelected) {
+                                $scope.addPageMessage($Label.selectRecordForAnyOperationMsg, 'error');
+                            }
+                        };
+                        
+
+                        // Method to validate the input number format
+                        $scope.validateFormat = function(lineItem, fieldName) {
+                            var inputElement = document.getElementById(fieldName +'-'+lineItem.cnItem.Id);
+                            if (lineItem.inValidFormatMap[fieldName +'-'+lineItem.cnItem.Id]) {
+                                inputElement.style.borderWidth = "2px";
+                                inputElement.style.borderColor = 'red';
+                            } else {
+                                //Defect#4646 - added null check to avoid errors.
+                                if(inputElement != null & inputElement != 'null' & inputElement != 'undefined'){
+                                    inputElement.style.borderWidth = null;
+                                    inputElement.style.borderColor = null;
+                                }
+                            }
+                        }
+
+                        $scope.checkUncheckAll = function() {
+                            console.log('isChecked--->'+$scope.isMasterChecked);
+                            angular.forEach($filter('filter')($scope.cnItems, $scope.search.text), function(item, i) {
+                                item.isSelected = $scope.isMasterChecked;
+                            });
+                        };
+                        
+                        //Function to initially load the Credit Note Items for a Credit Note
+                        $scope.loadCreditNoteItems = function(){
+                            $.when(
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+                            ).then(function() {
+                                var locale = $scope.appConfig.userLocale; //'de';
+                                console.log('--locale->',locale);
+                                var de = Globalize.locale(locale);
+                                console.log('--Globalize.locale->',de);
+                                $scope.msgText = null;
+                                $scope.showSpinner = true;
+                                $scope.showCreditNoteItems = true;
+                                CRM_EditAllCreditNoteItemsCtrl.getCreditNoteItems($scope.appConfig.recordId,function(result,event){
+                                    if (!event.status) {
+                                        $scope.$apply(function(){
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                    }else {
+                                        console.log('result ',result);
+                                        $scope.dealCNIWrapper = result;
+                                        setOfDeals = new Set();
+                                        $.each(result.lstCNIWrapper, function(rowIndex, elementP) {
+                                            if(!setOfDeals.has(elementP.cnItem.Deal__c)){
+                                                var deal = {label:elementP.cnItem.Deal__r.Name, value:elementP.cnItem.Deal__c};
+                                                $scope.dealOptions.push(deal);
+                                                setOfDeals.add(elementP.cnItem.Deal__c)
+                                            }
+                                        });
+                                        $.each(Array.from(setOfDeals), function(rowIndex, elementP) {
+                                            $scope.cnItems = $scope.cnItems.concat($scope.dealCNIWrapper.mapdealCNIWrapper[elementP]);
+                                        });
+                                        //Defect#4646 - Added code for pagination issue for SNOW  : RTASK1405094
+                                        $scope.pagination.numPages = Math.ceil($scope.cnItems.length/$scope.pagination.perPage);
+                                        //Defect#4646 - End
+                                        console.log('dealOptions : ',$scope.dealOptions);
+                                        $scope.$apply(function(){
+                                            $scope.showSpinner = false;
+                                        });
+                                    }
+                                },{
+                                    escape: false,
+                                    timeout: 120000
+                                });
+                            });
+                        };
+                        
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                            if ($scope.isLightningExperienceOrSf1)
+                                sforce.one.navigateToURL(url);
+                            else
+                                document.location.href = url;
+                        };
+                        
+                        $scope.addPageMessage =  function(msg, sev) {
+                            $scope.msgText = msg;
+                            $scope.msgSeverity = sev;
+                        };
+                        
+                        // Bind the save function to the SFDC controller to commit the records
+                        $scope.saveData = function(qSave) {
+                            $scope.msgText = null;
+                            $scope.showSpinner = true;
+                            $scope.quickSave = qSave;
+                            $scope.tempCNIArray = [];
+                            angular.forEach($scope.cnItems, function(item, i) {
+                                //Internet Explorer compatibility December 2017 Release Defect ID : 4508 Ankita
+                                var arrValues = Object.keys(item.inValidFormatMap).map(function(key) {return item.inValidFormatMap[key];});
+                                if (arrValues.length > 0) {
+                                    $scope.addPageMessage("{!$Label.CRM_Enter_Valid_Value_For_Number}", 'error');
+                                    $scope.showSpinner =  false;
+                                }
+                            });
+                            
+                            if ($scope.msgText == null) {
+
+                                $.each(Array.from(setOfDeals), function(rowIndex, elementP) {
+                                    $scope.tempCNIArray = $scope.tempCNIArray.concat($scope.dealCNIWrapper.mapdealCNIWrapper[elementP]);
+                                });
+                                var json = JSON.stringify( $scope.tempCNIArray, function( key, value ) {
+                                    if( key === "$$hashKey" ) {
+                                        return undefined;
+                                    }
+                                    return value;
+                                });
+                                console.log('JSON.parse(json)',JSON.parse(json));
+                                console.log('lstCNIWrapper',$scope.dealCNIWrapper.lstCNIWrapper);
+                                CRM_EditAllCreditNoteItemsCtrl.saveCreditNoteItems($scope.appConfig.recordId,JSON.parse(json),qSave,function(result,event){
+                                    if (!event.status) {
+                                        $scope.$apply(function(){
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                        });
+                                    }else {
+                                    
+                                        if(qSave) {
+                                            $scope.$apply(function(){
+                                                $scope.dealCNIWrapper = result;
+                                                $scope.filterCreditNoteItems();
+                                                $scope.showSpinner = false;
+                                                $scope.isMasterChecked = false;
+                                                $scope.addPageMessage($Label.updateSuccessMsg, 'success');
+                                            });
+                                        }
+                                        else {
+                                            $scope.navigateToURL(appConfig.onSaveSuccessUrl);
+                                        }
+                                    }
+                                },{
+                                    escape: false,
+                                    timeout: 120000
+                                });
+                            };
+                        }
+                    });    
+            </script> 
+        </body>
+    </html>
+</apex:page>

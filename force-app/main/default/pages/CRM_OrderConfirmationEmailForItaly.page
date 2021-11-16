@@ -1,0 +1,5 @@
+<apex:page standardController="Order" Extensions="CRM_OrderPDFConfirmationForItaly" sidebar="false" showHeader="false" standardStylesheets="false" renderAs="pdf" contentType="application/pdf">
+    <apex:form >
+        <c:CRM_OrderConfirmationEmailForItaly order="{!Order}" />
+    </apex:form>        
+</apex:page>

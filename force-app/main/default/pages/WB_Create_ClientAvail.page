@@ -1,0 +1,340 @@
+<!--
+Page- WB_Create_ClientAvail
+Version- 1.0
+Creation Date- 6thMay2014
+Author- Rashmi Singh
+Last Modified Date - 21 May 2014
+Last Modified by  - Tejas
+Description- Page created while creating Release Plan from title.
+--> 
+
+<!-- <apex:page StandardController="Client_Avail__c" tabStyle="Client_Avail__c" recordSetVar="Commercial_Avail__c" action="{!deleteExceptionedRecords}" extensions="WB_CreateClientAvail_Controller"> -->
+
+<apex:page controller="WB_CreateClientAvail_Controller" tabStyle="Client_Avail__c" action="{!deleteExceptionedRecords}">
+<apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+<link rel="stylesheet" href="/resources/demos/style.css"/>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+<html>
+    <script type="text/javascript">
+        function pageLoad(){
+            var selRPCount = {!selectedCommercialCount};  
+            if (selRPCount == 0) {
+                alert('{!$Label.Create_Client_Avail_release_plan_status}') ; 
+                window.top.location.href ='{!$Label.Cancle}';
+            }
+        }
+        
+        function messageVal()       
+        {    
+            var val = document.getElementById('{!$Component.form1.showmessage}').innerText;
+            console.log('VAL',val);
+            
+            if (val!= undefined && val!="" ) {
+               
+                $('#bundleValidate').css('display','block');
+            } else {
+               
+                $('#bundleValidate').css('display','none');
+            }
+        }  
+        
+        window.onload = pageLoad;
+    </script>
+    <style>
+        .bPageBlock .detailList .dataCol{width: 17%;} /*ER-000323 : Mahesh : To align three fields in a single line -- */
+    </style>
+<body>
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+    <apex:outputPanel rendered="{!selectedCommercialCount !=0}">
+    <apex:sectionHeader title="Client Avail Wizard" subtitle="Batch Client Avails Generation" />
+    <apex:form id="form1">
+        
+            <apex:pageMessages id="showmessage"></apex:pageMessages>
+            <div id= "bundleValidate" style="display:none;">
+                <apex:commandLink rendered="{!IF(contentTypeValue,true,false)}" style="padding-bottom: 1%;padding-left: 40%;padding-top: 1%;float: left;font-size: 18px;color: blue;" action="{!validateComponents}" value="Bundle Validation" id="theCommandLink"/>
+            </div>
+         <!--<apex:pageMessage summary="{!count}" severity="normal" strength="3" />-->
+        <apex:inputHidden id="hiddnField" value="{!theValue}" />
+        <apex:pageBlock id="blockid">
+            <apex:pageBlockSection title="List of Selected Release Plans" columns="1" collapsible="false" rendered="{!commercialScroller}">
+                <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;" layout="block">
+                    <apex:pageBlockTable value="{!commercial_avallst}" var="cavl_lst">
+                        <apex:column title="Release Plan Number" headerValue="Release Plan Number">
+                            <apex:outputLink value="/{!cavl_lst.Id}">{!cavl_lst.name}</apex:outputLink>
+                        </apex:column>
+                        <apex:column value="{!cavl_lst.Title__c}" />
+                        <apex:column value="{!cavl_lst.Title__r.Content_Type__c}" />
+                        <apex:column value="{!cavl_lst.Country_Lookup__c}" />
+                        <apex:column value="{!cavl_lst.Languages__c}" />
+                        <apex:column value="{!cavl_lst.Language_Type__c}" />
+                        <apex:column value="{!cavl_lst.Channel__c}" />
+                        <apex:column value="{!cavl_lst.Format__c}" />
+                        <apex:column value="{!cavl_lst.Start_Date__c}" />
+                        <apex:column value="{!cavl_lst.End_Date__c}" />
+                        <apex:column value="{!cavl_lst.Status__c}" />
+                    </apex:pageBlockTable>
+                    </apex:outputPanel>
+            </apex:pageBlockSection>
+            <br></br>
+
+            <apex:pageBlockSection title="List of Selected Release Plans"
+                columns="1" collapsible="false" rendered="{!!commercialScroller}">
+                <apex:pageBlockTable value="{!commercial_avallst}" var="cavl_lst">
+                    <apex:column title="Release Plan Number"
+                        headerValue="Release Plan Number">
+                        <apex:outputLink value="/{!cavl_lst.Id}">{!cavl_lst.name}</apex:outputLink>
+                    </apex:column>
+                    <apex:column value="{!cavl_lst.Title__c}" />
+                    <apex:column value="{!cavl_lst.Title__r.Content_Type__c}" />
+                    <apex:column value="{!cavl_lst.Country_Lookup__c}" />
+                    <apex:column value="{!cavl_lst.Languages__c}" />
+                    <apex:column value="{!cavl_lst.Language_Type__c}" />
+                    <apex:column value="{!cavl_lst.Channel__c}" />
+                    <apex:column value="{!cavl_lst.Format__c}" />
+                    <apex:column value="{!cavl_lst.Start_Date__c}" />
+                    <apex:column value="{!cavl_lst.End_Date__c}" />
+                    <apex:column value="{!cavl_lst.Status__c}" />
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <br></br>
+            
+            <apex:pageBlockSection title="Local Data" columns="1" collapsible="false" id="localDataId">
+                <apex:outputPanel id="localID">
+                <apex:pageBlockTable value="{!selectedlocalDataMapWrap}" var="key">
+                
+                    <apex:column title="Video Version" headerValue="Video Version" value="{!selectedlocalDataMapWrap[key].releaseplan.Title__r.Video_Version__c}"></apex:column>
+                    <apex:column value="{!selectedlocalDataMapWrap[key].releaseplan.Local_Title__c}"/>
+                    <apex:column value="{!selectedlocalDataMapWrap[key].releaseplan.Country_Lookup__c}" />
+                    <apex:column value="{!selectedlocalDataMapWrap[key].releaseplan.Languages__c}" />
+                    <apex:column value="{!selectedlocalDataMapWrap[key].releaseplan.Local_Title__r.Price_Code__c}" >
+                        
+                    </apex:column>
+                        
+                    <apex:column headerValue="New Price Code">
+                        <apex:inputText value="{!selectedlocalDataMapWrap[key].newPriceCode}">
+                        	<apex:actionSupport event="onchange" action="{!validateManualPriceCode}" rerender="noPriceCOdeId,form1">
+                        		<!--<apex:param name="pricingKey" value="{!key}" assignTo="{!pricingKey}"/>  -->
+                        		<apex:param name="paramValue" value="{!selectedlocalDataMapWrap[key].releaseplan.Id}" assignTo="{!paramValue}"/>
+                            	<apex:param name="priceCodekey" value="{!key}" assignTo="{!priceCodekey}"/>
+                        	</apex:actionSupport>
+                        </apex:inputText>
+                  </apex:column> 
+                    <apex:column >
+                        <apex:commandButton action="{!getPriceCode}" value="Select" reRender="localDataId">
+                            <apex:param name="paramValue" value="{!selectedlocalDataMapWrap[key].releaseplan.Id}" assignTo="{!paramValue}"/>
+                            <apex:param name="priceCodekey" value="{!key}" assignTo="{!priceCodekey}"/>
+                            <apex:param name="priceCOde_Value" value="{!selectedlocalDataMapWrap[key].releaseplan.Local_Title__r.Price_Code__c}" assignTo="{!priceCOde_Value}"/>
+                        </apex:commandButton>
+                    </apex:column>
+                
+                    <apex:column value="{!selectedlocalDataMapWrap[key].releaseplan.Local_Title__r.Local_Category__c}" />
+                    <apex:column headerValue="Category Override" id="catId">
+                    	<apex:selectList value="{!selectedlocalDataMapWrap[key].ca.Local_Data_Category_Picklist__c}" multiselect="false" size="1">
+		            		<apex:selectOptions value="{!categories}"/>
+		            		<apex:actionSupport event="onchange" action="{!changeCategory}" reRender="noPriceCOdeId,form1" > 
+                                 <apex:param name="keyVal" value="{!key}" assignTo="{!keyVal}"/>
+                                <apex:param name="contentType" value="{!selectedlocalDataMapWrap[key].releaseplan.Title__r.Content_Type__c}" assignTo="{!contentType}"/>
+                            </apex:actionSupport>
+        				</apex:selectList>
+                    </apex:column>
+                    <apex:column style="font-size: 12px;color: blue;" id="noPriceCOdeId" value="{!selectedlocalDataMapWrap[key].error}"/>
+                </apex:pageBlockTable>
+                <apex:outputPanel id="emptyID"/>
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" rendered="{!displayPopUp}" styleClass="custPopup" id="showPriceCodePopUp1" >
+                     <apex:actionFunction name="callByRadio" action="{!selectcon}" reRender="callId" >
+                            <apex:param value="{!selectedValue}" name="pId" assignTo="{!pId}"/>
+                        </apex:actionFunction>	
+                
+                <apex:repeat value="{!selectedPriceCode_Map}" var="key">
+                    <apex:pageBlock id="priceblock" >
+                        <apex:outputPanel id="teop" style="overflow: auto; " layout="block">
+                            <apex:pageBlockSection id="priceblocksec" title="List of Pricing"  collapsible="false">
+                                <apex:outputPanel layout="block" id="priceblockId">
+                                    <div  class="one">   
+                                        <apex:selectRadio html-name="opt" layout="pageDirection" value="{!selectedValue}" onclick="callByRadio(this.value)">
+                                            <apex:selectOptions id="opts" html-name="opts" value="{!selectedPriceCode_Map[key]}" >
+                                            </apex:selectOptions>
+                                        </apex:selectRadio>
+                                    </div>
+                                    <apex:outputPanel id="callId"/>
+                   <!-- <apex:pageBlockTable value="{!selectedPriceCOdeMap[key]}" var="list_pricing" style="100%" styleClass="opp-table" >       
+                        <apex:column headervalue="Select" rendered="{!if(list_pricing=flag, true, false)}"> 
+                            <apex:actionsupport action="{!selectcon}" event="onclick" reRender="priceTableId">
+                                <input type="radio" name="<strong>selectRadio</strong>"  id="selPriceCode" checked='true'/>                    
+                                 <apex:param name="conid" value="{!list_pricing}" id="RadioButtonValue1">
+                                 </apex:param>
+                            </apex:actionsupport>
+                            
+                        </apex:column>
+                        <apex:column headervalue="Select" rendered="{!if(list_pricing !=flag, true, false)}" >                    
+                     <apex:actionsupport action="{!selectcon}" event="onclick" reRender="priceTableId">
+                      
+                         <input type="radio" name="<strong>selectRadio</strong>"  id="selPriceCode" />                    
+                                 <apex:param name="conid" value="{!list_pricing}" id="RadioButtonValue2">
+                                 </apex:param>
+                                 
+                      </apex:actionsupport>                            
+                    </apex:column>
+                    <apex:column value="{!list_pricing}" headerValue="Price Code"/>
+                    
+                    </apex:pageBlockTable>-->
+                    </apex:outputPanel>
+                    <apex:outputPanel id="priceTableId"/>
+                </apex:pageBlockSection>
+				</apex:outputPanel>
+                
+                <apex:commandButton value="OK"  action="{!updatePriceCode}" rerender="form1"><!-- rerender="form1,showPriceCodePopUp" -->
+                    <apex:param name="currentSelPriceCode" value="{!key}" assignTo="{!currentSelPriceCode}"/>
+                 </apex:commandButton>
+                <apex:commandButton value="Cancel"  action="{!cancelPopUp}"/>
+                </apex:pageBlock>
+                </apex:repeat>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlock id="hiddenBlock" rendered="false" ></apex:pageBlock>
+            
+            
+            <apex:pageBlocksection title="Select Parameters to Create Client Avails" collapsible="false" id="sectid" columns="3">
+                <apex:inputfield value="{!obj.Status__c}" required="true" id="CA_StatusId" >
+                    <apex:actionSupport event="onchange" action="{!displayCAMessage}" rerender="confirmCAID"/>
+                </apex:inputField>
+                <apex:inputField value="{!obj.Change_Context__c}" id="ChangeContextId"/><!-- added by shalini -- ER-323  -->
+                <apex:inputCheckbox id="forceBatchProcessChk" value="{!forceBatchProcessChk}" label="Force Batch Process"  Id="forceBatchProcessId" styleClass="white-space: nowrap"/>
+                <apex:inputfield value="{!obj.Client_Start_Ovver__c}" required="false" id="CA_isOverride" /><!-- added by Akash -- ER-529  -->
+                <apex:inputfield label="Client End Override" value="{!obj.End_Date__c}" required="false" id="endDate_override" />
+               <apex:outputText style="padding-left: 30%;font-size: 12px;color: blue;" value="{!CAMessage}" id="confirmCAID" />
+               
+            </apex:pageBlocksection>
+        </apex:pageBlock>
+        <apex:outputPanel >
+                <apex:pageBlock >
+                    <apex:pageBlockSection title="Select parameters for Client Avail Pricing" collapsible="false" id="capSectId">
+                        <apex:outputpanel id="myPanel"  layout="block">
+                            <apex:pageBlockTable value="{!selectedPricingMapwrap}" var="pw" id="pricingDetailsId">
+                                <apex:column headerValue="Channel" value="{!selectedPricingMapwrap[pw].channel}"/>
+                                <apex:column headerValue="Format" value="{!selectedPricingMapwrap[pw].format}"/>
+                                <apex:column headerValue="WSP">
+                                     <apex:inputText value="{!selectedPricingMapwrap[pw].wsp}">
+                                         <apex:actionSupport event="onchange" action="{!pricingError}" rerender="priceErr,form1" >
+                                         	 <apex:param name="key" value="{!pw}" assignTo="{!key}" />
+                                             </apex:actionSupport>
+                                     </apex:inputText>
+                                </apex:column>
+                                <apex:column headerValue="Episode WSP">
+                                   <apex:inputText value="{!selectedPricingMapwrap[pw].episodeWSP}">
+                                       <apex:actionSupport event="onchange" action="{!pricingEpisodeWSPError}" rerender="priceErr,form1" >
+                                       		<apex:param name="key" value="{!pw}" assignTo="{!key}" />
+                                             
+                                           </apex:actionSupport>
+                                   </apex:inputText>
+                                </apex:column>
+                                <apex:column style="font-size: 12px;color: blue;" id="priceErr" value="{!selectedPricingMapwrap[pw].errorMsg}"/>
+                                
+                            </apex:pageBlockTable>
+                            <apex:outputPanel id="errorId" layout="block">
+                                <br>
+                                    <apex:outputText style="text-align: center;font-size: 12px;color: blue;" value="{!errorPricingMsg}"  />
+                                </br>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            
+        </apex:outputPanel>
+
+       <apex:pageBlock id="accnt_pgblock">
+            <apex:pageBlockSection title="List of Available Accounts" columns="1" collapsible="false" id="accnt_sect">
+                <apex:pageBlockTable value="{!selectedAccountslistwrap}" var="all__Accounts" id="account_pgtable">
+                    <apex:column >
+                        <apex:facet name="header" > 
+                            <apex:inputCheckbox id="allCheck" styleClass="AllcheckClass" >
+                                <apex:actionSupport event="onclick" action="{!GetSelected}" onsubmit="checkAll(this)" rerender=""/>
+                            </apex:inputCheckbox>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!all__Accounts.selected}" id="checkedone">
+                            <apex:actionSupport event="onclick" action="{!GetSelected}" rerender=""   />
+                        </apex:inputCheckbox>
+                    </apex:column>
+                    <apex:column value="{!all__Accounts.acc.name}" /> 
+                    <apex:column value="{!all__Accounts.acc.Type}" />
+                    <apex:column value="{!all__Accounts.acc.Territory__c}" />
+                    <apex:column value="{!all__Accounts.acc.Platform__c }" />
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <!--<apex:commandButton value="Check Storefront" action="{!checkMismatch}" style="margin:1em; margin-left:35em;" id="create_button" reRender="noMatchCommercial" />-->
+           
+            <apex:actionStatus id="CAButtonStatus">
+                <apex:facet name="stop">
+                    <apex:outputPanel >
+                        <apex:commandButton value="Create Client Avails" style="margin:1em; margin-left:35em;" id="create_button3" action="{!bulksave}" 
+                        status="CAButtonStatus" oncomplete="messageVal()" rerender="showmessage"/>
+                        <!--<apex:commandButton value="Check Mismatch" action="{!checkMismatch}" style="margin:1em; margin-left:35em;" id="create_button" /> -->
+                        <apex:commandButton value="Cancel" action="{!bulkcancel}" style="align:middle;" immediate="true"/>
+                    </apex:outputPanel>
+                </apex:facet>
+                <apex:facet name="start">
+                    <apex:outputPanel >
+                        <apex:commandButton value="Create Client Avails" disabled="true" style="margin:1em; margin-left:35em;" status="CAButtonStatus"/>
+                        <apex:commandButton value="Cancel" disabled="false" style="align:middle;" status="CAButtonStatus" action="{!bulkcancel}"/>
+                    </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+        </apex:pageBlock>
+
+</apex:form>
+</apex:outputPanel>
+</body>
+</html>
+<script>
+    function checkAll(cb){
+        var inputElem = document.getElementsByTagName("input");
+        docType="html-5.0" 
+        for(var i=0; i<inputElem.length; i++){
+            if(inputElem[i].id.indexOf("checkedone")!=-1){
+                inputElem[i].checked = cb.checked;
+            }
+        }
+    }
+</script>
+<style type="text/css">
+        .custPopup{
+            background-color: grey;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 9999;
+            left: 20%;
+            padding:10px;
+            position: absolute;
+            top:100px;
+            width :30%;
+            height : 50%;
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.5;
+            filter: alpha(opacity = 100);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+        .custom1 {
+    background-color: red !important;
+}
+.one{
+	height: 350px;
+	width: 145%;
+	overflow-y :auto;
+	overflow-x: hidden;
+   
+}
+    </style>
+</apex:page>

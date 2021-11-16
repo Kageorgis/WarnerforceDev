@@ -1,0 +1,14 @@
+<aura:component controller="CP_NewForecastVersionController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+	<center><b>Creating another version...</b></center>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <!--<aura:attribute name="fields"
+                    type="String[]"
+                    default="['Licensee_Name__c', 'Forecast_Cycle__c', 'Forecast_Status__c', 'Forecast_version__c']"/>
+    <lightning:recordForm recordId = "{!v.recordId}" 
+                          objectApiName="CP_Forecast__c"
+                          fields="{!v.fields}"
+                          mode = "readonly"/>
+    <center>
+    	<lightning:button variant="brand" label="Create Version" title="Create Version" onclick="{!c.createVersionHandler}" />
+    </center>-->
+</aura:component>

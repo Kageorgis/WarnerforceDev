@@ -1,0 +1,61 @@
+<apex:page standardcontroller="Announcement_Rule__c"
+    extensions="WB_AnnouncementFormatController" action="{!defaultTemp}">
+    <apex:form >
+    <!--<apex:pageMessage summary="{!$Label.Email_and_Report_Temp_Reqd}" severity="normal" strength="3" /> -->
+        <apex:pageBlock mode="maindetail">
+            <apex:inlineEditSupport >
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem helpText="{!$ObjectType.Announcement_Rule__c.fields.Email_Template__c.InlineHelpText}">
+                        <apex:outputLabel value="Email Template" />
+                        <apex:selectList label="EmailTemplate" size="1" id="tempId"
+                            value="{!selectedEmailTemplate}">
+                            <apex:selectOptions value="{!eTemplateList}"></apex:selectOptions>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem helpText="{!$ObjectType.Announcement_Rule__c.fields.Report_Template__c.InlineHelpText}">
+                        <apex:outputLabel value="Report Template" />
+                        <apex:selectList label="ReportTemplate" size="1"
+                            value="{!selectedRepTemplate}">
+                            <apex:selectOptions value="{!rTemplateList}"></apex:selectOptions>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>                  
+
+                    <apex:outputPanel id="saveMessage" >    
+                    <apex:pageMessages ></apex:pageMessages>                    
+                        <apex:outputPanel rendered="{!saveMessageFlag}" >
+                            <div align="center">
+                        <apex:actionstatus id="status" startText="Updating...">
+                            <apex:facet name="stop">
+                            <p>{!$Label.SelectedEmailMessage}</p>                           
+                            </apex:facet>
+                        </apex:actionstatus>
+                        </div>  
+                        </apex:outputPanel>
+                        
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel >
+                    <div align="center">
+                    <apex:commandButton value="Save" action="{!saveSelection}"  rerender="saveMessage" status="status" oncomplete="timeout_init('{!annTypeIds}')"/>
+                    </div>
+                    </apex:outputPanel>
+                    
+                </apex:pageBlockSection>
+            </apex:inlineEditSupport>
+        </apex:pageBlock>
+    </apex:form>
+<script type="text/javascript">
+    function timeout_init(id){
+         var idVal = id;
+        // alert('idVal:'+idVal);
+        setTimeout(reloadFunc(idVal), 1500);
+
+    }
+    
+    function reloadFunc(idVal){
+      // alert('2. idVal:'+idVal);
+        window.top.location.href = '/' + idVal;
+    }
+</script>
+</apex:page>

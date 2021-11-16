@@ -1,0 +1,226 @@
+<apex:page standardController="Target_Split_Template__c" extensions="CRM_CloneAccountSplitTemplateController" showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body style="margin:0">
+            <div class="slds" ng-app="CloneASTApp" ng-controller="CloneASTCtrl" ng-init="cloneASTRedirect()" ng-cloak="ngCloak">
+                <!-- MASTHEAD -->
+                <div class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <nav class="slds-m-bottom--xx-small" role="navigation">
+                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                    <li class="slds-list__item slds-text-heading--label">
+                                        <a href="{!URLFOR($Action.Target_Split_Template__c.Tab, $ObjectType.Target_Split_Template__c)}">{!$ObjectType.Target_Split_Template__c.labelPlural}</a>
+                                    </li>
+                                    <li class="slds-list__item slds-text-heading--label">
+                                        <a href="{!URLFOR($Action.Target_Split_Template__c.View, Id)}">{!Target_Split_Template__c.Name}</a>
+                                    </li>
+                                </ol>
+                            </nav>
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <h1 class="slds-text-heading--medium slds-truncate" title="">{!$label.CRM_Clone_AccountSplitTemplate_Heading}</h1>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col slds-no-flex slds-align-bottom">
+                            <div class="slds-button-group" role="group">
+                                <button class="slds-button slds-button--neutral" ng-disabled="showSpinner" ng-click="navigateToAST(currASTId)">{!$Label.CRM_Clone_AST_Back_Button}</button>
+                                <button class="slds-button slds-button--neutral" ng-disabled="showSpinner" ng-click="navigateToAST(newASTId)" ng-show="showClonedDeal">{!$Label.CRM_Clone_AST_New_AST_Open_Button}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- / MASTHEAD -->
+                <!-- PRIMARY CONTENT WRAPPER -->
+                <div class="slds-grid">
+                    <!-- ================== SPINNER MODAL ================ -->
+                    <div class="slds-col slds-grid" ng-show="showSpinner">
+                        <div class="slds-spinner--medium">
+                          <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}"/>
+                        </div>
+                        <div class="slds-col slds-text-heading--small slds-m-top--small" ng-bind="spinnerText"></div>
+                    </div>
+                    
+                    <!-- SUCCESS/ERROR MESSAGE -->
+                    <div ng-show="msgText" class="slds-col slds-notify slds-notify--toast slds-box--x-small slds-theme--{{msgSeverity}}" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="msgText = '';">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <h2 class="slds-text-heading--small" ng-show="msgText">{{msgText}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid">
+                    <div ng-show="errorRecords.length > 0" class="slds-size--1-of-1">
+                        <table class="slds-table slds-table--bordered"> 
+                            <tr class="slds-text-heading--label">
+                                <th class="slds-cell-shrink">Account Splits</th>
+                                <th class="slds-cell-shrink">Error</th>
+                            </tr>
+                            <tr class="slds-hint-parent" ng-repeat="err in errorRecords">
+                                <td class="slds-truncate" data-label="Decay Curve Items">{{err.decayCurveItem}}</td>
+                                <td class="slds-truncate" data-label="Error">{{err.error}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </body>
+        
+        <head>
+            <title>Clone Account Split Template with Account Splits</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}"/>
+            <script src="/soap/ajax/35.0/connection.js" type="text/javascript"/>
+            <script src="/soap/ajax/35.0/apex.js" type="text/javascript"/>
+            <script type="text/javascript">
+                sforce.connection.sessionId = '{!$Api.Session_ID}';
+                angular
+                .module('CloneASTApp', [])
+                .controller('CloneASTCtrl', function($scope){
+                        $scope.currASTId = '{!Target_Split_Template__c.Id}';
+                        $scope.currASTName = '{!Target_Split_Template__c.Name}';
+                        $scope.currASTCurrency = '{!Target_Split_Template__c.CurrencyIsoCode}';
+                        $scope.newASTId;
+                        $scope.errorRecords = [];
+                        $scope.showClonedDeal = false;
+                        $scope.showSpinner = false;
+                        $scope.msgText;
+                        $scope.msgSeverity;
+                        <!--New Scope Variable to Check Only Deal is Cloned.-->
+                        $scope.onlyAST = false; 
+                        
+                        $scope.navigateToAST = function(astId) {
+                            $scope.navigateToURL('/'+astId);
+                        };   
+                        
+                        /* Function to redirect user back to Config Detail page */
+                        $scope.navigateToURL = function(url) {
+                          var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    
+                          if (isLightningExperienceOrSf1)
+                              //sforce.one.navigateToURL(url);
+                              window.open('/lightning/r/Target_Split_Template__c'+url+'/view','_parent');
+                          else
+                              document.location.href = url;
+                        };
+                        
+                        $scope.cloneASTRedirect = function() {
+                            $scope.cloneAST();
+                        }
+                        $scope.cloneAST = function(){
+                            $scope.showSpinner = true;
+                            $scope.spinnerText = "{!$Label.CRM_Clone_AST_CloningMsg}";
+                            CRM_CloneAccountSplitTemplateController.cloneAccountSplitTemplate($scope.currASTId,$scope.currASTName,$scope.currASTCurrency, function(result, event){
+                                if (!event.status) {
+                                      $scope.$apply(function(){
+                                        $scope.msgText = event.message;
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                      });
+                                }
+                                else {
+                                    console.log('result', result);
+                                    var clonedASTId = result;
+                                    $scope.createAccountSplits(clonedASTId);
+                                }
+                            });
+                        };
+
+                        $scope.createAccountSplits = function(clonedASTId) {
+                            $scope.$apply(function(){
+                                $scope.newASTId = clonedASTId;
+                                $scope.spinnerText =  "{!$Label.CRM_Clone_AST_CloningWithAccountSplitsMsg}";
+                            });
+                            var query_result = sforce.connection.query("SELECT ID FROM Account_Split__c WHERE Target_Split_Template__c ='{!Target_Split_Template__c.Id}' ");
+                            var accountSplits = query_result.getArray("records");
+                            var accountSplitIds = [];
+                            
+                            for (var i=0; i< accountSplits.length; i++) {
+                                accountSplitIds.push(accountSplits[i].Id);
+                            }
+                            console.log('accountSplits', accountSplits);
+                            console.log('accountSplitIds', accountSplitIds);
+                            //console.log('rowsToProcess', rowsToProcess.length);
+                            var totalASCount = accountSplitIds.length;
+                            (function cloneAccountSplitsRemote(rowsToProcess, errorRecords){
+                                if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                    console.log('rowsToProcess');
+                                     <!--Code modified, apply was not introduced due to which spinner was rotating infinite-->
+                                     $scope.$apply(function(){
+                                        $scope.showSpinner = false;
+                                        $scope.onlyAST = true; 
+                                        return;
+                                     });
+                                     <!--Code modified, apply was not introduced due to which spinner was rotating infinite-->
+                                }
+                                console.log('$scope.onlyAST', $scope.onlyAST);
+                                var chunkSize = 50; // Recursive batch size
+                                chunkedData = rowsToProcess.splice(0, chunkSize);
+                                CRM_CloneAccountSplitTemplateController.cloneAccountSplits(clonedASTId, chunkedData, function(result, event)
+                                { 
+                                    if (!event.status) {
+                                          $scope.$apply(function(){
+                                            console.log('Inside if');  
+                                            $scope.msgText = event.message;
+                                            $scope.msgSeverity = 'error';
+                                            $scope.showSpinner = false;
+                                          });
+                                    }
+                                    else if (accountSplitIds.length > 0) {
+                                        console.log('Inside Else if');
+                                        $scope.errorRecords = errorRecords.concat(result);
+                                        $scope.$apply(function(){
+                                            $scope.spinnerText = "{!$Label.CRM_Clone_AST_CloningWithAccountSplitsMsg}"  + (totalDCICount - decayCurveItemIds.length) + ' / ' + totalDCICount;
+                                        });
+                                        cloneAccountSplitsRemote(rowsToProcess, errorRecords);
+                                    }
+                                    else {
+                                        console.log('Inside else');
+                                        $scope.errorRecords = errorRecords.concat(result);
+                                        
+                                        console.log('clone Account Splits result', result);
+                                        console.log('clone Account Splits errors', $scope.errorRecords);
+                                        
+                                        $scope.$apply(function(){
+                                            if ($scope.errorRecords.length > 0) {
+                                                $scope.msgText = "{!$Label.CRM_Clone_AST_ErrorMsg}";
+                                                $scope.msgSeverity = 'error';
+                                                $scope.showClonedDeal = true;
+                                            } else {
+                                               <!--Message modified for different scenarios-->
+                                               if(!$scope.onlyDeal){
+                                                    $scope.msgText = "{!$Label.CRM_Clone_AST_SuccessMsg_WithItems}";
+                                                }
+                                                else{
+                                                   $scope.msgText = "{!$Label.CRM_Clone_AST_SuccessMsg_WithoutItems}"; 
+                                                }
+                                                <!--Message modified for different scenarios-->
+                                                $scope.msgSeverity = 'success';
+                                                $scope.navigateToURL('/'+clonedASTId);
+                                            }
+                                            $scope.spinnerText = '';
+                                            $scope.showSpinner = false;
+                                        });
+                                    }
+                                });
+                            })(accountSplitIds, []);
+                        };                        
+                });
+            </script>    
+        </head>
+    </html>    
+</apex:page>

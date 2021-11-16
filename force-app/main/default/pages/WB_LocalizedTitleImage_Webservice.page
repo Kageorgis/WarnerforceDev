@@ -1,0 +1,14 @@
+<apex:page standardcontroller="Local_Title__c" extensions="WB_LocalTitleImage_Webservice_controller" action="{!WB_Image_Webservice_response}">
+<style type="text/css">
+ table.exceptionText td {
+                 
+                 font-size:13px;
+                 font-weight:bold;
+                 text-align:center;
+                 color:red;}
+</style>
+
+<apex:messages layout="table" styleClass="exceptionText"/>
+<apex:image id="theImage" value="{!TitleImage1}"  rendered="{!imageRender}" />
+
+</apex:page>

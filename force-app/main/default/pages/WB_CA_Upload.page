@@ -1,0 +1,138 @@
+<!--
+/*******************************************************************************************************************************************
+* File Name     :   WB_CA_Upload
+* Description   :   Page to generate Unique Id for Batch of records to be imported
+* @author       :   CTS
+* Modification Log
+===================================================================================================
+* Ver.    Date              Author              Modification
+---------------------------------------------------------------------------------------------------
+* 1.0     21 Oct.2015       CTS                 ER-000069 : Created the class.
+* 2.0     04 Nov.2015       CTS                 Removed Generate CSV Tab
+********************************************************************************************************************************************/
+-->
+
+<apex:page Controller="WB_CA_UploadController">
+    
+    <style>
+        .activeTab {background-color: #236FBD; color:white; width: 120px; height: 20px; padding-top: 5px; font-size: 16px; font-style: bold; background-image:none; }
+        .inactiveTab { background-color: lightgrey; color:black; width: 120px; height: 20px; padding-top: 5px; font-size: 16px; font-style: bold; background-image: none}
+    </style>
+    
+    <style type="text/css">
+        .blink {
+        -webkit-animation: blink .3s linear infinite;
+        -moz-animation: blink .3s linear infinite;
+        -ms-animation: blink .3s linear infinite;
+        -o-animation: blink .3s linear infinite;
+        animation: blink .3s linear infinite;
+        }
+        @-webkit-keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 1; }
+        50.01% { opacity: 0; }
+        100% { opacity: 0; }
+        }
+        @-moz-keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 1; }
+        50.01% { opacity: 0; }
+        100% { opacity: 0; }
+        }
+        @-ms-keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 1; }
+        50.01% { opacity: 0; }
+        100% { opacity: 0; }
+        }
+        @-o-keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 1; }
+        50.01% { opacity: 0; }
+        100% { opacity: 0; }
+        }
+        @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 1; }
+        50.01% { opacity: 0; }
+        100% { opacity: 0; }
+        }
+        
+    </style>
+    
+    <script type="text/javascript">
+        function ValidateExtension(fileN) {
+            var allowedFiles = [".xlsx"];
+            var fileUpload = document.getElementById(fileN).value;
+            var n = fileUpload.search(/.xlsx/i);
+            if (n < 0 && fileUpload != '') {
+                window.alert("Please upload file having extension: " + allowedFiles.join(', ') + " only.");
+                window.location.reload();
+            }
+        }
+        function callApxExport(reportId,name,status){
+            var res = name.replace("-","%2D");
+            var url = '/'+reportId+'?pv0='+res+'&pv1='+status+'&isdtp=p1&export=1&enc=UTF-8&xf=csv';
+            window.open(url);         	
+        }  
+    </script>
+    
+    <apex:form >
+        
+        <apex:sectionHeader subtitle="Client Avail Upload" title="Home"/>
+        <apex:pageMessages id="pgmsg"/>
+        
+        <apex:tabPanel switchType="client" value="{!activeTab}"  id="theTabPanel" tabClass="activeTab" inactiveTabClass="inactiveTab" contentStyle="font-size: 13px;">            
+            <apex:tab label="Upload XLSX" name="tab1" >                
+                <!-- <center><b><p style="color:green;">!!! Attention !!!</p>Please note that we have enhanced this process to let you upload an XLSX file. Please download the new template using the link below.</b></center><br/> -->                
+                <apex:pageBlock >
+                    <apex:pageBlockButtons location="Top">
+                        <apex:commandButton action="{!ReadFile}" value="Upload" id="theButton" style="width:70px;" status="loadingStatus"/> <br/>
+                    </apex:pageBlockButtons>
+                    <left>
+                        <apex:inputfile value="{!objAttachment.body}" filename="{!objAttachment.name}" onChange="ValidateExtension('{!$Component.theFile}');" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" id="theFile"></apex:inputfile>
+                        <br/> <br/> <font color="red"> 
+                        <b>Note: Please use the standard template to upload Client Avails. <a href="/servlet/servlet.FileDownload?file=015U0000004Iit3"> Click here </a> to download the template. </b> </font>
+                    </left>  
+                </apex:pageBlock>
+                <apex:actionstatus id="loadingStatus">
+                    <apex:facet name="start">
+                        <div class="waitingSearchDiv"  style="background-color: #fbfbfb;height: 100%;opacity:0.65;width:100%;filter: alpha(opacity=50);">
+                            <div class="waitingHolder" style="top:200px; width: 100px;">
+                                <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                                <span class="waitingDescription">Please Wait...</span>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionstatus>
+            </apex:tab>
+            <apex:tab label="Upload Results" name="tab2" id="tabTwo">                
+                <apex:outputPanel rendered="{!!activeTab}">                    
+                    <apex:pageBlock id="block2" title="CA Uploads">                        
+                        <apex:pageBlockTable value="{!CAUploadList}" var="cau" align="center" width="100%">
+                            <apex:column headerValue="CA Upload ID" style="width: 100px">
+                                <a href="/{!cau.Id}">{!cau.Name}</a>
+                            </apex:column>
+                            <apex:column value="{!cau.Requested_User__c}" style="width: 100px"/>
+                            <apex:column value="{!cau.Upload_Time__c}" style="width: 150px"/>
+                            <apex:column value="{!cau.Upload_Status__c}"/>
+                            <apex:column value="{!cau.Number_of_Records_Uploaded__c}" style="text-align:center"/>
+                            <apex:column value="{!cau.Number_of_Records_Processed__c}" style="text-align:center"/>                            
+                            <apex:column headerValue="Generate Success File" >                                
+                                <apex:outputLink rendered="{!IF($User.UIThemeDisplayed == 'Theme3',true,false)}"  value="/{!$Label.WB_Success_Report_Id_ER_69}?pv0={!cau.Name}&pv1=Successful&isdtp=p1&export=1&enc=UTF-8&xf=csv" target="_blank">{!cau.Name}-Success</apex:outputLink>                                
+                                <apex:commandLink onclick="callApxExport('{!$Label.WB_Success_Report_Id_ER_69}','{!cau.Name}','Successful');  return false;"  rendered="{!IF(CONTAINS(ChkMapKey,cau.id),false,IF($User.UIThemeDisplayed == 'Theme4d',true,false))}" >{!cau.Name}-Success </apex:commandLink>                                
+                            </apex:column>
+                            <apex:column value="{!cau.Number_of_Records_Failed__c}" style="text-align:center"/>                            
+                            <apex:column headerValue="Generate Failure File" >
+							    <apex:outputLink rendered="{!IF(CONTAINS(ChkMapKey,cau.id),true,false)}" value="/servlet/servlet.FileDownload?file={!mapCAUploadAttachementIds[cau.id]}" target="_blank">{!cau.Name}-Error</apex:outputLink>
+                                <apex:outputLink rendered="{!IF(CONTAINS(ChkMapKey,cau.id),false,IF($User.UIThemeDisplayed == 'Theme3',true,false))}" value="/{!$Label.WB_Report_Id_ER_69}?pv0={!cau.Name}&pv1=Failed&isdtp=p1&export=1&enc=UTF-8&xf=csv" target="_blank">{!cau.Name}-Error</apex:outputLink>										
+                                <apex:commandLink onclick="callApxExport('{!$Label.WB_Report_Id_ER_69}','{!cau.Name}','Failed');return false;"  rendered="{!IF(CONTAINS(ChkMapKey,cau.id),false,IF($User.UIThemeDisplayed == 'Theme4d',true,false))}" >{!cau.Name}-Error </apex:commandLink>
+                                <!--apex:outputLink rendered="" value="/servlet/PrintableViewDownloadServlet?isdtp=p1&reportId={!$Label.WB_Report_Id_ER_69}&fv0={!cau.Name}&fv1=Failed" target="_blank">{!cau.Name}-Error</apex:outputLink-->
+                            </apex:column>                            
+                        </apex:pageBlockTable>                        
+                    </apex:pageBlock>                      
+                </apex:outputPanel>                
+            </apex:tab>                
+        </apex:tabPanel>                
+    </apex:form>    
+</apex:page>

@@ -1,0 +1,79 @@
+<apex:page standardController="Local_Title__c" tabStyle="Local_Title__c">
+<script>
+function DMDM_alert(){    
+    alert("The DMDM team will be notified of the change in Rating. Please note that it may take up to 48 hrs before this change is confirmed and permanently updated in MSB/CAS.");
+}
+ </script>
+<apex:sectionHeader title="Local Data Edit" subtitle="{!Local_Title__c.Name}" help="https://c.cs9.visual.force.com/resource/1439245765000/HelpLocalData"  />
+  <apex:form >
+      <apex:pageBlock title="Local Data Edit" mode="edit">
+          <apex:pageblockButtons >
+              <!--apex:commandButton value="Save" action="{!doSave}" onclick="if(!confirm('The DMDM team will be notified of the change in Rating. Please note that it may take up to 48 hrs before this change is confirmed and permanently updated in MSB/CAS.')){return false;}" /-->
+              <apex:commandButton value="Save" action="{!Save}" />
+              <apex:commandButton action="{!cancel}" value="Cancel"/>
+          </apex:pageblockButtons>
+          <apex:pageblockSection title="Information" columns="2">
+              <apex:inputField value="{!Local_Title__c.Title__c}"/>
+              <apex:inputField value="{!Local_Title__c.Country__c}"/>
+              <apex:inputField value="{!Local_Title__c.Name}"/>
+              <apex:inputField value="{!Local_Title__c.Language__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Title__c}"/>
+              <apex:inputField value="{!Local_Title__c.Status__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Edit_Required__c}"/>
+              <apex:inputField value="{!Local_Title__c.Readiness__c}"/>
+              <apex:inputField value="{!Local_Title__c.Category__c}"/>
+              <apex:inputField value="{!Local_Title__c.Rights_Group__c}"/>
+              <apex:inputField value="{!Local_Title__c.Price_Code__c}"/>
+          </apex:pageblockSection>
+          
+          <apex:pageBlockSection title="Other Details" columns="2">
+              <apex:inputField value="{!Local_Title__c.Local_Synopsis__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Run_Time__c}"/>
+              <!--apex:inputField value="{!Local_Title__c.Version_EIDR__c}"/--><br/>
+              <apex:inputField value="{!Local_Title__c.Local_Episodes__c}"/>
+              <apex:inputField value="{!Local_Title__c.Num_Local_Episodes__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Rating__c}" onchange="DMDM_alert();" />
+              <apex:inputField value="{!Local_Title__c.Local_Rating_System__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Label__c}"/><br/>
+              <apex:inputField value="{!Local_Title__c.ADS__c}"/>
+              <apex:inputField value="{!Local_Title__c.ALID__c}"/>
+              <apex:inputField value="{!Local_Title__c.Caption_Required__c}"/>
+              <apex:inputField value="{!Local_Title__c.CID__c}"/>
+              <apex:inputField value="{!Local_Title__c.Caption_Included_picklist__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Licensor__c}"/>
+              <apex:inputField value="{!Local_Title__c.Caption_Exclusion_Reason__c}"/><br/>
+              <apex:inputField value="{!Local_Title__c.Local_Season__c}"/>
+          </apex:pageBlockSection>
+          
+          <apex:pageBlockSection title="Key Dates">
+              <apex:inputField value="{!Local_Title__c.Local_Theatrical_Release_Date__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Box_Office__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_BD_Release_Date__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_DVD_Release_Date__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_TV_Air_Date__c}"/>
+              <apex:inputField value="{!Local_Title__c.Local_Pay_TV_Start_Date__c}"/>
+              <apex:inputField value="{!Local_Title__c.UV_Published_Date__c}"/><br/>
+              <apex:outputField value="{!Local_Title__c.Owner.Name}" label="Owner"/>
+              <apex:inputField value="{!Local_Title__c.Key__c}"/>
+          </apex:pageBlockSection>
+      </apex:pageBlock>
+  </apex:form>
+  <!--<script>
+  function ShowPopUp(){
+        
+        
+       var UserClick = confirm("The DMDM team will be notified of the change in Rating. Please note that it may take up to 48 hrs before this change is confirmed and permanently updated in MSB/CAS.");
+       if (UserClick == true) 
+           { 
+                doSaveRecord();
+           }
+       else{
+             alert("Record was not saved");
+           }
+       
+       }
+
+   
+  </script>-->
+  <!--Dialog Box Script-->
+</apex:page>

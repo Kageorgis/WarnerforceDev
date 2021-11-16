@@ -1,0 +1,98 @@
+<apex:page standardController="Opportunity" extensions="CRM_ConvertDealToPhysicalDealsCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+        <head>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+
+            <script type="text/javascript">
+                angular.module('DealConversionApp', [])
+                .controller('DealConversionCtrl', function($scope) {                    
+                    $scope.showSpinner = false;
+                    $scope.spinnerText;
+                    $scope.msgText;
+                    $scope.msgSeverity;
+                    
+                    $scope.ConvertToPhysicalDeal = function() {
+                    
+                        $scope.showSpinner = true;
+                        var dealId = '{!deal.id}';
+                        CRM_ConvertDealToPhysicalDealsCtrl.convertDealToPhysical(dealId,function(result, event){
+                            if (!event.status) {
+                                    $scope.msgText = event.message;
+                                    $scope.msgSeverity = 'error';
+                                    $scope.showSpinner = false;
+                            } 
+                            if(event.status){
+                                $scope.showSpinner = false;
+                                $scope.msgText = '{!$Label.CRM_Record_type_of_deal_Updated_successfully}';
+                                $scope.msgSeverity = 'success';
+                            } 
+                            $scope.$apply();      
+                        });
+                    
+                    };
+                    
+                    $scope.backToDeal = function(){
+                       window.location.href="/{!deal.Id}"; 
+                    };
+
+                });     
+            </script>
+        </head>
+         
+        <body>
+        
+        <div class="slds" xmlns:ng="http://angularjs.org" id="ng-app" ng-init="ConvertToPhysicalDeal();" ng-app="DealConversionApp" ng-controller="DealConversionCtrl" ng-cloak="ngCloak">
+            <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($ObjectType.Opportunity)}">{!$ObjectType.Opportunity.label}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label" ng-hide="{!ISNULL(Opportunity)}">
+                                    <a href="/{!Deal.Id}">{!Deal.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="Change RecordType">Change RecordType</h1>
+                        </div>
+                    </div>  
+                    
+                    <div class="slds-col slds-no-flex slds-align-bottom">
+                        <div class="slds-button-group" role="group">
+                            <button class="slds-button slds-button--neutral" ng-click="backToDeal()" >Back</button>
+                        </div>
+                    </div>   
+                </div>
+                
+            </div> 
+            <div class="slds-size--1-of-1 slds-spinner--small" ng-show="showSpinner">
+                <div class="slds-text-heading--small">
+                    <img style="height:36px" src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" /> Processing {{spinnerText}} ...
+                </div>
+            </div>
+            <div ng-hide="showSpinner" class="slds-size--1-of-1 slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert" rendered="display">
+                 <div class="notify__content slds-grid">
+                     <svg aria-hidden="true" class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex">
+                         <use xlink:href="{!URLFOR($Resource.SLDS0120)}/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+                     </svg>
+                     <div class="slds-col slds-align-middle">
+                         <h2 class="slds-text-heading--small">{{msgText}}</h2>
+                     </div>
+                </div>
+           </div>    
+                    
+        </div>
+        
+        </body>
+           
+    </html>
+    
+</apex:page>

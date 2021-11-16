@@ -1,0 +1,10 @@
+Required,Required,Required,Required,Required,Required,Required,Required,Required,Required,"Required, if WS cost is null","Required, if Price Tier is null",Optional,Optional,Optional,Optional,Optional,Optional,Required,Optional,Optional,Optional - Formula,Optional - Formula,Optional - Formula
+Video Version,Country,Language,Language Type,Channel,Format,Account Name,Start Date,End Date,Status,Price Tier,WS Cost,SR Price,Episode Price Tier,Episode Price,Episode SR Price,Pre-Order Date,Suppression End Date,Category,Notes,Retailer Product ID,Local Data Rating,Local Data # of Episodes,Local Edit Required
+6000085935,France,French - Parisian,Sub & Audio,EST,SD,VOD Factory/FNACPLA,11/18/2015,12/31/2049,Draft,,,,,1.83,,,,,,,,,
+6000085935,France,French - Parisian,Sub & Audio,EST,HD,VOD Factory/FNACPLAY,11/18/2015,12/31/2049,Draft,1,1,,,2.2,,,,TV New Release,,,,,
+6000091078,France,French,Sub & Audio,EST,SD,VOD Factory/FNACPLAY,11/18/2015,12/31/2049,Draft,,,,,1.83,,,,TV New Release,,,,,
+6000091078,France,French - Parisian,Sub & Audio,EST,HD,VOD Factory/FNACPLAY,11/18/2015,12/31/2049,Tentative,,,,,2.2,,,,TV New Release,,,,,
+6000084495,France,French - Parisian,Sub & Audio,EST,SD,VOD Factory/FNACPLAY,11/18/2015,12/31/2049,Draft,,,,,1.83,,,,TV New Release,,,,20,
+6000084495,France,French - Parisian,Sub & Audio,EST,HD,VOD Factory/FNACPLAY,11/18/2015,12/31/2049,Draft,,,,,2.2,,,,TV New Release,,,,19,No
+6000092900,France,French - Parisian,Sub & Audio,EST,SD,VOD Factory/FNACPLAY,12/2/2015,12/31/2049,Draft,,,,,1.83,,,,TV New Release,,,Test,,
+600009290,France,French - Parisian,Sub & Audio,EST,HD,VOD Factory/FNACPLAY,12/2/2015,12/31/2049,Draft,,,,,2.2,,,,TV New Release,,,,,

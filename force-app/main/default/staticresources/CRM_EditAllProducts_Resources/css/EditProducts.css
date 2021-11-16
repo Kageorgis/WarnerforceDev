@@ -1,0 +1,79 @@
+input[type="number"].slds-input::-webkit-inner-spin-button, input[type="number"].slds-input::-webkit-outer-spin-button,
+input[type="number"].slds-input--small, input[type="number"].slds-input--small::-webkit-outer-spin-button,
+input[type="number"].slds-input--medium, input[type="number"].slds-input--medium::-webkit-outer-spin-button,
+input[type="number"].slds-input--large, input[type="number"].slds-input--large::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.spinnerModel {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 99999;
+    height: 100%;
+    width: 100%;
+}
+
+.spinnerContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+}
+
+#bodyTable {
+  table-layout: fixed;
+  overflow: hidden; 
+  white-space: nowrap; 
+}
+
+#wb-listview {
+  overflow-x: scroll;
+  padding-bottom: 150px; /* Needed as the field pick is absolute positioned */
+}
+
+.slds ol li {
+  margin-left: 0;
+}
+
+.wb-help-text {
+  position: absolute !important;
+  white-space: normal !important;
+  text-transform: none !important;
+}
+
+#productMoreInfoPopup .slds-modal__content {
+	height: 80%;
+	padding: 0px;
+	overflow:hidden;
+}
+
+#wb-moreInfo {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+.percent-input {
+    position: relative;
+}
+.percent-input:before {
+    position: absolute;
+    top: 0;
+    content:"%";
+    right: 5px;
+    color: gray;
+}
+
+.span-input-percentage {
+    /*position: relative;*/
+    /* right: 28px; */
+    background-color: #FFF;
+    padding: 5px 1px 5px 3px;
+    border-radius: 50%;
+    color: gray;
+} 

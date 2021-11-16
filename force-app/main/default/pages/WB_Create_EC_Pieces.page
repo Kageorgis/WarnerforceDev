@@ -1,0 +1,33 @@
+<apex:page standardController="EC_Tracker__c" sidebar="false" showHeader="false" extensions="WB_Sequence_Running_Order">  
+<script>
+if(!window.sldsPath){
+ window.sldsPath = '{!URLFOR($Asset.SLDS, 'assets/icons')}';
+}
+</script>       
+        <MiniGrid:GridRelatedListByObject obj="EC_Tracker__c" val="{!EC_Tracker__c.Id}" relObj="EC_Piece__c" defaultTemplateName="Create EC Piece"/> 
+        <apex:form >
+            <apex:actionFunction name="updateSequenceRunnigOrder" action="{!updateSequence_Running_Order}">
+            </apex:actionFunction>  
+        </apex:form> 
+        
+         <script>        
+            function postProcessToolbar(toolbar, objType, grid_var) {
+            var ObjrecordtypeId = '{!$Label.ECTracker_Type}'; 
+            if (objType == 'EC_Piece__c' &&  '{!EC_Tracker__c.Type__c}' == ObjrecordtypeId)  { 
+                 
+                toolbar.push( 
+                   {
+                       type: "button",
+                       id: "Sequence_Running_Order",
+                       img: "{!$Resource.UpdatePriceTier}",  // you can replace this with any image you like
+                       tooltip: 'Sequence Running Order',  // put in whatever tooltip you want here
+                       onClick: function(grid) {
+                            updateSequenceRunnigOrder();
+                       }
+                   }
+               );
+            }
+        } 
+    </script>
+     
+</apex:page>

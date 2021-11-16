@@ -1,0 +1,61 @@
+<apex:page standardController="Account" extensions="WB_Display_AnnouncementType_Controller" tabstyle="Account" showHeader="true">
+<script>
+function checkAll(cb){
+var inputElem = document.getElementsByTagName("input");  
+    for(var i=0; i<inputElem.length; i++){
+        if(inputElem[i].id.indexOf("checkedone")!=-1){
+            inputElem[i].checked = cb.checked;
+       } 
+    }
+} 
+function redirectfunc(param){  
+    window.top.location.href ='{!$Label.Announcement_Type_Re_direct}'+param;    
+}
+
+</script>
+    <apex:form >
+        <apex:pageBlock >
+            <div align="center">
+                <apex:commandButton action="{!generateAnnouncements}" value="Generate Announcements" id="theButton" style="align:center"/>
+                    <apex:outputPanel id="redirectPanel" >
+                        <apex:outputText rendered="{!shouldRedirect}">
+                            <script type="text/javascript">
+                            window.top.location.href = '{!redirectUrl}';
+                        </script>
+                        </apex:outputText>
+                    </apex:outputPanel>
+            </div>
+            <apex:panelGrid columns="4" rendered="{!displayPagination}">
+            <apex:commandLink action="{!first}" >First</apex:commandlink>
+            <apex:commandLink action="{!previous}" rendered="{!hasPrevious}">Previous</apex:commandlink>
+            <apex:commandLink action="{!next}" rendered="{!hasNext}">Next</apex:commandlink>
+            <apex:commandLink action="{!last}" >Last</apex:commandlink>
+            </apex:panelGrid>
+               
+            <br/>   
+            <apex:pageBlockTable value="{!announcementTypesDisplayed}" var="annTypeRec" width="100%">                                   
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:inputCheckbox onclick="checkAll(this)" styleClass="customSelectedAll" />
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!annTypeRec.isSelected}" id="checkedone" />
+                </apex:column>
+                <apex:column headerValue="Action" >
+                    <apex:commandLink action="{!URLFOR($Action.Announcement_Rule__c.Edit,annTypeRec.announcementTypeRec.id)}" value="Edit"/>
+                    |
+                    <apex:commandLink styleClass="actionLink" value="Del" onclick="return confirm('{!$Label.Confim_Msg_before_Delete}');" action="{!deleteAnnouncementType}" target="_parent" >
+                        <apex:param name="announcementTypeIdId" value="{!annTypeRec.announcementTypeRec.id}"/>
+                    </apex:commandLink>
+                </apex:column>              
+                <apex:column value="{!annTypeRec.announcementTypeRec.Announcement_Type__c}" headerValue="Announcement Type" /> 
+                <apex:column value="{!annTypeRec.announcementTypeRec.Selection_Criteria__c}" headerValue="Selection Criteria" /> 
+                <apex:column value="{!annTypeRec.announcementTypeRec.Report_Format__c}" headerValue="Report Format" /> 
+                <apex:column value="{!annTypeRec.announcementTypeRec.Date_Last_Run__c}" headerValue="Date Last Run" />  
+                <apex:column headerValue="Announcement Type Id" > 
+                <apex:outputLink value="/{!annTypeRec.announcementTypeRec.id}" onclick="redirectfunc('{!annTypeRec.announcementTypeRec.id}')" id="CommLink">{!annTypeRec.announcementTypeRec.name}</apex:outputLink>
+                </apex:column> 
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

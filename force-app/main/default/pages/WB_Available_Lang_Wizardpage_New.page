@@ -1,0 +1,168 @@
+<!--
+Page- WB_Available_Lang_Wizardpage_New
+Version- 1.0
+Creation Date- 28 AUG 2015
+Author- Prachi Gadewar
+Last Modified Date - 
+Last Modified by  - 
+Description- Create available langauages for title.
+-->
+
+<apex:page tabStyle="Title__c" StandardController="Available_Languages__c" recordSetVar="Available_Languages__c" extensions="WB_Available_Lang_Wizardcontroller_New" sidebar="false">
+
+<!-- DataTables CSS -->
+<!--<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.css" />  -->
+
+
+<!-- Added in static resource
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css" /> 
+<!-- jQuery
+<script type="text/javascript" charset="utf8" src="//code.jquery.com/jquery-1.10.2.min.js"></script>  
+<!-- DataTables
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/fixedheader/3.0.0/js/dataTables.fixedHeader.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.0.0/css/fixedHeader.dataTables.min.css" /> 
+-->
+
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/jquery-1.10.2.min.js')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/CSS/fixedHeader.dataTables.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/CSS/jquery.dataTables.min.css')}" />
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/jquery.dataTables.min.js')}"/>
+
+
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/dataTables.fixedHeader.min.js')}"/>
+
+<!--<apex:includeScript value="{!$Resource.Test_JS}"/>-->
+<style>
+    .fixedHeader-floating{
+        table-layout: fixed;
+        border-bottom: 0px !important;
+    }
+    .fixedHeader-floating thead th {
+        background: #f2f3f3;
+        border-width: 0 0 1px 1px;
+        border-color: #e0e3e5;
+        color: #000;
+        font-size: .9em;
+        font-weight: bold;
+        padding: 5px 0px 5px 15px!important
+    }
+</style>
+<script>
+ j$= jQuery.noConflict();
+ 
+ j$(document).ready(function(){
+  var table = j$('[id $=ptable]').DataTable({
+       paging: false,
+       bFilter: false,
+       bInfo: false
+ });
+
+  new j$.fn.dataTable.FixedHeader( table );
+   
+  j$('[id $=id_search]').keyup(function()
+    {
+        searchTable(j$(this).val());
+    });
+});
+
+
+function searchTable(inputVal)
+{
+    var table = j$('[id $=ptable]');
+    table.find('tr').each(function(index, row)
+    {
+        var allCells =j$(row).find('td');
+        if(allCells.length > 0)
+        {
+            var found = false;
+            allCells.each(function(index, td)
+            {
+                var regExp = new RegExp(inputVal, 'i');
+                if(regExp.test(j$(td).text()))
+                {
+                    found = true;
+                    return false;
+                }
+            });
+            if(found == true)j$(row).show();else j$(row).hide();
+        }
+    });
+}
+  
+    
+</script>
+
+ <apex:form >
+  <apex:pageMessages id="errMsg"></apex:pageMessages> 
+  <apex:sectionHeader title="Available Languages Wizard" subtitle="{!titleName}" help="http://urltohelp/" />
+   <apex:pageBlock >
+       <apex:pageBlockButtons location="top">
+        <apex:commandButton value="Update"  action="{!SaveRecords}"/>
+        <apex:commandButton value="Cancel" action="{!Cancel}" /> 
+        </apex:pageBlockButtons>
+ 
+     <div align= "right" > Search Language: &nbsp;&nbsp; <apex:inputText id="id_search"> 
+     
+      </apex:inputText>
+     </div>
+    <!--apex:pageBlockSection title="Adding Languages to {!titleName}" columns="1"-->
+        <!--<apex:outputpanel layout="block" style="overflow:auto;height:265px;">-->
+       
+            <apex:pageBlockTable value="{!availableLangDispLst}" var="avlLangWrap" styleclass="floatingHeaderTable" id="ptable"> <!--rules="rows"-->
+                 <apex:column title="Language" headerValue="Languages ">
+                    <apex:outputLink value="/{!avlLangWrap.langId}">{!avlLangWrap.langName }</apex:outputLink>
+                 </apex:column>
+                 <apex:column title="LanguageType" headerValue="Language Type" id="testF1">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Language_Types__c }" id="ParentPicklist" style="display:none"/>
+                     <apex:outputText value="{!avlLangWrap.avlLang.Language_Types__c }"/>
+                 </apex:column>
+                 <apex:column title="Provisional" headerValue="Provisional">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Provisional__c}" style="position: relative;margin-left: 20px;"/>
+                 </apex:column> 
+                 <apex:column title="ClearToAvail" headerValue="Clear To Avail">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Clear_to_Avail__c }" style="position: relative;margin-left: 20px;"/>
+                 </apex:column>                 
+                 <apex:column title="GPPStatus" headerValue="GPP Status">
+                     <apex:inputField value="{!avlLangWrap.avlLang.GPP_status__c}" style="position: relative;width: 131px;"/>
+                 </apex:column>
+                 <apex:column title="MasteringCost" headerValue="Mastering/IDS Cost">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Mastering_Cost__c}" style="width: 80px;"/>
+                 </apex:column>
+                 <apex:column title="MasteringReason" headerValue="Mastering/IDS Reason">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Mastering_Reason_Code__c}" />
+                 </apex:column>
+                 <apex:column title="GPP Notes" headerValue="GPP Notes">
+                     <apex:inputField value="{!avlLangWrap.avlLang.GPP_Notes__c}" style="width: 150px; height: 15px;" />
+                 </apex:column> 
+                 <apex:column title="Mastering/IDS Notes" headerValue="Mastering/IDS Notes">
+                     <apex:inputField value="{!avlLangWrap.avlLang.Mastering_IDS_Notes__c}" style="width: 150px; height: 15px;" />
+                 </apex:column> 
+             </apex:pageBlockTable>    
+      
+    <!--/apex:pageBlockSection-->
+    
+   </apex:pageBlock> 
+ </apex:form>      
+ <!-- Added in CRRT Phase 7 -->
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+ <script>
+    $('tr').find(":checkbox:checked").each(function () {
+        $(this).closest("tr").find(":checkbox:not(:checked)").attr("disabled", true);
+    })
+    
+    $(':checkbox').on('change', function() {
+        if ($(this).prop('checked')==true){ 
+            $(this).closest('tr').find(':checkbox').attr("disabled", true);
+            $(this).attr("disabled", false);
+        }
+        else if ($(this).prop('checked')==false){
+            $(this).closest('tr').find(':checkbox').attr("disabled", false);
+        }
+    });
+</script>
+</apex:page>

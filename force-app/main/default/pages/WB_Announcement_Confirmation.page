@@ -1,0 +1,68 @@
+<!--
+Page- WB_Create_Announcements
+Version- 1.0
+Creation Date- 11 Feb 2015
+Author- Imran Hussain
+Last Modified Date - 
+Last Modified by  - 
+Description- Generate and Send Announcement:  Confirmation Screen.
+-->
+<apex:page StandardController="Announcement_Rule__c" tabStyle="Announcement_Rule__c" recordSetVar="Announcement__c" extensions="WB_Announcement_Confirmation_Controller" docType="html-5.0" showHeader="true" sidebar="false">
+  
+  <apex:pageMessage summary="{!announcementRuleMessage}" severity="normal" strength="3" rendered="{!announcementRuleRendered}"/>
+  <apex:outputPanel rendered="{!announcementRuleDisplay}" >
+   
+    
+        <apex:form id="AnnouncementTypeGrid">
+            <apex:pageBlock >
+                <apex:pageBlockSection title="Confirm Announcements to be Generated:" columns="1">
+                    <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;"  layout="block" >
+                        <apex:pageBlockTable value="{!announcementRuleFinalList}" var="AnnouncementsType" width="500PX" rules="rows">
+                                <apex:column value="{!AnnouncementsType.Announcement_Type__c}" headerValue=" Announcement Name" />     
+                                <apex:column value="{!AnnouncementsType.Account__c}" />
+                                <apex:column value="{!AnnouncementsType.Selection_Criteria__c}" />
+                                <!--<apex:column value="{!AnnouncementsType.Report_Format__c}" />-->
+                                <apex:column value="{!AnnouncementsType.Report_Template__c}" />
+                                <apex:column value="{!AnnouncementsType.Date_Last_Run__c}" />
+                                <apex:column title="Title Name" headerValue="Announcement Type">
+                                    <apex:outputLink value="/{!AnnouncementsType.id}">{!AnnouncementsType.name}</apex:outputLink>
+                                </apex:column> 
+                                 
+                                                            
+                        </apex:pageBlockTable>
+                    
+                    </apex:outputPanel> 
+                  
+                </apex:pageBlockSection>
+                  <apex:pageMessage summary="{!$Label.AnnouncementConfirmationScreen}" severity="normal" strength="3" />                  
+                 <div align="center" >
+                    <apex:outputText value="Internal Only?"/>&nbsp;
+                    <apex:inputCheckbox label="Internal Only?" value="{!InternalOnlyCheck}" selected="false"/>      
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                             
+                    <apex:commandButton id="confirmButton" value="Confirm" styleClass="confirmBtnCls" onclick="return disableSave();"/>&nbsp;&nbsp;&nbsp;
+                    <apex:commandButton value="Cancel"   style="align:middle;"  action="{!cancel}"/>  <br/>
+                </div>
+           </apex:pageBlock>
+            <apex:actionFunction name="callAnnouncementCreation" action="{!announcementCreation}"/>
+        </apex:form>
+   </apex:outputPanel>
+   
+   <script type="text/javascript">
+        function pageLoad(){
+            var r = {!announcementRuleDisplay};
+            
+             if (r == false) {
+                   alert('You dont have access to create Announcements') ;      
+                   window.top.location.href ='{!$Label.Announcement_Type_Home_Page}';
+            }
+        }
+        
+        function disableSave() {
+            document.getElementsByClassName("confirmBtnCls")[0].disabled = true;
+            callAnnouncementCreation();
+            return false;
+        }
+        window.onload = pageLoad;
+   </script>
+             
+</apex:page>

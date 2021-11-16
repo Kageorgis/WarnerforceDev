@@ -1,0 +1,178 @@
+<aura:component implements="force:appHostable" controller="WBCP_SendEmailController">
+    <aura:handler name="init" value="{!this}" action="{!c.onPageReferenceChange}"/>
+    
+    <aura:registerEvent name="openTemplateModel" type="c:WBCP_SendEmailEvent"/>
+    <aura:handler name="emailTempSendEvent" event="c:SendEmailTemplateBody" action="{!c.selectEmailTemplate}"/>
+    
+    
+    <!--Part 1 [for attribute declare]-->
+    <aura:attribute name="loaded" type="Boolean" default="true" />
+    <aura:attribute name="templateFlag" type="boolean" default="false"/>
+    <aura:attribute name="emailPills" type="list" default="[]"/>
+    <aura:attribute name="subject" type="string" />
+    <aura:attribute name="emailBody" type="string" />
+    <aura:attribute name="email" type="string" />
+    <aura:attribute name="mapContactEmailId" type="string" />
+    <aura:attribute name="listOfEmails" type="String[]" />
+    <aura:attribute name="showModal" type="boolean" default="true"/>
+    <aura:attribute name="listViewId" type="string" />
+    <aura:attribute name="emailBoxWidth" type="String" default="50%"/>
+    <aura:attribute name="pillBoxWidth" type="String" default="50%"/>
+    <aura:attribute name="emailTemp" type="EmailTemplate" />
+    <aura:attribute name="mailStatus" type="boolean" default="false" />
+    <aura:attribute name="fileUpload" type="boolean" default="false" />
+    <aura:attribute name="accept" type="String" default=".txt,.png,.jpg,.jpeg,.csv,.pdf,.xls,.xlsx,.pptx,.ppt,.doc,.docx,.mp4"/>
+    <aura:attribute name="attachments" type="list" default="[]"/>
+    <aura:attribute name="attachmentSize" type="Integer"/>
+    <aura:attribute name="toastMessage" type="string" default="pre-line !important"/>
+    <aura:html tag="style">
+        .emailBox {
+        	width:{!v.emailBoxWidth} !important;
+        }
+        .pillBox {
+        	width:{!v.pillBoxWidth} !important;
+        }
+        span.toastMessage.slds-text-heading--small.forceActionsText{
+        	white-space : {!v.toastMessage};
+        }
+    </aura:html>
+    
+    <aura:if isTrue="{!v.showModal}">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aura:id="Modalbox" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container emailContainer">
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModal }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Send List Email</h2>
+                </header>
+                <div class="slds-modal__content ParendDiv" id="modal-content-id-1">
+                    <!-- [header part] -->
+                    <div class="exampleHolder">
+                        <aura:if isTrue="{! v.loaded }">
+                            <lightning:spinner alternativeText="Loading" />
+                        </aura:if>
+                    </div>
+                    <!---Part 4 [mail form part]-->
+                    <div class="slds-container--medium">
+                        <div class="slds-form--stacked mainDiv">
+                            <!--Test for template -->
+                            <div class="slds-grid slds-wrap main-input slds-form-element">
+                                <div class="slds-size_1-of-8 slds-p-top_x-small slds-p-left_small">Recipients</div>
+                                <div class="slds-size_7-of-8">
+                                    <div role="listbox" aria-orientation="horizontal">
+                                        <ul class="slds-listbox slds-listbox_inline slds-p-top_xxx-small" role="group" aria-label="Inputted Options:" style="width:100%">
+                                            <aura:iteration items="{!v.emailPills}" var="pill">
+                                                <li role="presentation" class="slds-listbox__item pillBox">
+                                                    <lightning:pill name="{!pill.name}" label="{!pill.label}" onremove="{!c.onRemovePill}">
+                                                        <aura:set attribute="media">
+                                                            <lightning:icon iconName="standard:contact"  alternativeText="Contact"/>
+                                                        </aura:set>
+                                                    </lightning:pill>
+                                                </li>
+                                            </aura:iteration>
+                                            <li class="emailBox">
+                                                <lightning:input aura:id="inputText" class="emailInputBox"  type="text" name="email" value="{!v.email}"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <lightning:input class="subject" value="{!v.subject}" placeholder="Enter Subject"/>
+                                </div>
+                            </div>
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <lightning:inputRichText class="border richTextHeight" aura:id="body" value="{!v.emailBody}"/>
+                                </div>
+                            </div>
+                            <div class="slds-form-element">
+                                <div class="slds-grid slds-grid_vertical">
+                                    <aura:iteration items="{!v.attachments}" var="attachment">
+                                        <lightning:pill class="slds-col slds-p-around_x-small fileBox" name="{!attachment.file.name}" label="{!attachment.label}" onremove="{!c.removeAttachment}">
+                                            <aura:set attribute="media">
+                                            	<lightning:icon iconName="{!attachment.type}"  alternativeText="attachment"/>
+                                            </aura:set>
+                                        </lightning:pill>
+                                    </aura:iteration>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-box borderRemove" style="padding-top: 10px;padding-bottom: 10px;">
+                            <lightning:buttonGroup>
+                                <lightning:buttonIcon iconName="utility:insert_template" size="small"  alternativeText="Insert Template" title="Templates" onclick="{!c.openTemplateModel}"/>
+                                <lightning:buttonIcon iconName="utility:attach" size="small" alternativeText="Attach File" title="Attachment" onclick="{!c.openFileUploadScreen}"/>
+                            </lightning:buttonGroup>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeMessage}">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick="{!c.sendMail}">Send</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>    
+    </aura:if>
+    <c:WBCP_InsertTemplateCmp aura:Id="templateCMP" showModal="{!v.templateFlag}"/>
+    <aura:if isTrue="{!v.mailStatus}">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aura:id="mailStatusBox" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id"
+                 aria-describedby="prompt-message-wrapper"
+                 class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="width: 41%;">
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeFileUploadBox }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Send anyway?</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around--medium" style="border-top-right-radius: 3px;border-top-left-radius: 3px;text-align: center;">
+                        <div>
+                            <p>This list email doesn’t have a subject. Do you want to send it anyway?</p>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer" style="border-top: 1px solid #cacacadb;">
+                        <button class="slds-button slds-button_neutral" onclick="{!c.closeMailStatus}">Cancel</button>
+                        <button class="slds-button slds-button--brand" onclick="{!c.sendMailStatus}">Send</button>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-backdrop slds-backdrop_open"></div>  
+        </section>
+    </aura:if>
+    <aura:if isTrue="{!v.fileUpload}">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aura:id="fileUpoadModal" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id"
+                 aria-describedby="prompt-message-wrapper"
+                 class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeFileUploadBox }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Select File</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around--medium">
+                        <lightning:input name="file1" type="file" label="Add Attachments" multiple="true" accept="{!v.accept}" onchange="{! c.handleFilesChange }"/>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick="{!c.closeFileUploadBox}">Cancel</button>
+                    </footer>
+                </div>
+            </div>
+            <div class="slds-backdrop slds-backdrop_open"></div>  
+        </section>
+    </aura:if>
+</aura:component>

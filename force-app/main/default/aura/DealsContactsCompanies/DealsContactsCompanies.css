@@ -1,0 +1,35 @@
+.THIS {
+}
+
+.THIS .header__title {
+    position: absolute;
+}
+
+.THIS .slds-dropdown-trigger .slds-dropdown {
+    max-height: 220px;
+    overflow: auto;
+}
+
+.THIS .header__title-menu-item {
+    font-weight: normal;
+}
+
+.THIS .header__title > button {
+    color: black;
+    border-radius: 0px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.THIS .header__title > button:hover {
+    text-decoration: underline;
+}
+
+.THIS .spinner-container {
+    background: white;
+    padding: 10%;
+    width: 100%;
+    height: 100%;
+}

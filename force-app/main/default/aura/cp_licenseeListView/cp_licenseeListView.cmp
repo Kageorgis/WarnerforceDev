@@ -1,0 +1,15 @@
+<!--
+ - Created by XMMORENO on 3/13/2020.
+ -->
+
+<aura:component description="cp_licenseeListView" implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes,force:hasRecordId,force:hasSObjectName,force:lightningQuickAction,lightning:isUrlAddressable">
+    <lightning:listView aura:id="listViewAccounts"
+                        objectApiName="Account"
+                        listName="WBCP_Licensee_Accounts"
+                        rows="50"
+                        showSearchBar="true"
+                        showActionBar="true"
+                        enableInlineEdit="true"
+                        showRowLevelActions="true"
+    />
+</aura:component>

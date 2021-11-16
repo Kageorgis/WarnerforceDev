@@ -1,0 +1,46 @@
+<apex:page StandardController="Local_Title__c" tabStyle="Local_Title__c" >
+<apex:sectionHeader title="Local Data Edit" subtitle="New Local Data"/>
+<apex:form >
+<apex:pageMessages id="showmessage"></apex:pageMessages>
+ <apex:pageBlock title="Local Data Edit">
+ <apex:pageBlockButtons >
+     <apex:commandButton action="{!save}" value="Save"/>
+     <apex:commandButton action="{!cancel}" value="Cancel"/>
+       </apex:pageBlockButtons>
+<apex:pageBlockSection title="Select Parameters to Create Local Data" columns="2">
+    <apex:inputField value="{!Local_Title__c.Title__c}" required="true"/>    
+    <apex:inputField value="{!Local_Title__c.Country__c}" required="true"/>
+    <apex:inputField value="{!Local_Title__c.name}" required="true"/>
+    <apex:inputField value="{!Local_Title__c.Language__c}" required="true"/> 
+    <apex:inputField value="{!Local_Title__c.Category__c}"/>
+</apex:pageBlockSection>
+
+<apex:pageBlockSection title="Other Details">
+ <apex:inputField value="{!Local_Title__c.Status__c}"/>
+ 
+ <!--apex:inputField value="{!Local_Title__c.Version_EIDR__c}"/-->
+ <apex:inputField value="{!Local_Title__c.Local_Rating_System__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_Rating__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_Synopsis__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_Label__c}"/>
+ <apex:inputField value="{!Local_Title__c.Caption_Included_picklist__c}"/>
+ <apex:inputField value="{!Local_Title__c.Readiness__c}"/> 
+<apex:inputField value="{!Local_Title__c.Caption_Required__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_Run_Time__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_Theatrical_Release_Date__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_TV_Air_Date__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_DVD_Release_Date__c}"/>
+ <apex:inputField value="{!Local_Title__c.Local_BD_Release_Date__c}"/>
+ <apex:inputField value="{!Local_Title__c.UV_Published_Date__c}"/>
+ <apex:inputField value="{!Local_Title__c.ALID__c}"/>
+ <apex:inputField value="{!Local_Title__c.CID__c}"/>        
+   
+</apex:pageBlockSection>
+
+<!--<apex:commandButton value="Create Localised Title" action="{!savelocalisedtitle}" reRender="showmessage" />
+<apex:commandButton value="Cancel"/> -->
+
+</apex:pageBlock>
+</apex:form>
+ 
+</apex:page>

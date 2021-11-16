@@ -1,0 +1,969 @@
+<apex:page controller="WB_PlayListContentDetailsController" tabStyle="Title__c">
+
+  <apex:outputpanel >
+     <apex:actionstatus id="loadingStatus">
+       <apex:facet name="start">
+      <div class="waitingSearchDiv" id="el_loading" style="background-color: #DCD6D6; height: 100%;opacity:0.80;width:100%;">
+      <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+        <img class="waitingImage" src="/img/loading.gif"     title="Please Wait..." />
+        <span class="waitingDescription">Processing...</span>
+         </div>
+          </div>
+      </apex:facet>
+ </apex:actionstatus>
+    </apex:outputpanel>
+
+<apex:form >
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css"></link>
+
+<html lang="en">
+<head>
+
+<script type="text/javascript">
+
+    $j = jQuery.noConflict();
+    var selectedVar = '';
+    var tabSelected = "relatedTitle";
+    function filterB(element) {
+        var value = $j(element).val();
+
+        $j("#sortable-listB > li").each(function() {
+            if ($j(this).text().toLowerCase().search(value.toLowerCase()) > -1) {
+                $j(this).show();
+            }
+            else {
+                $j(this).hide();
+            }
+        });
+    }
+    
+    function filterC(element) {
+        var value = $j(element).val();
+
+        $j("#sortable-listC > li").each(function() {
+            if ($j(this).text().toLowerCase().search(value.toLowerCase()) > -1) {
+                $j(this).show();
+            }
+            else {
+                $j(this).hide();
+            }
+        });
+    }
+    
+    function filterD(element) {
+        var value = $j(element).val();
+
+        $j("#sortable-listD > li").each(function() {
+            if ($j(this).text().toLowerCase().search(value.toLowerCase()) > -1) {
+                $j(this).show();
+            }
+            else {
+                $j(this).hide();
+            }
+        });
+    }
+    
+    /*
+    function moveAllRight(from) {
+         $j("#sortable-listC > li").each(function(index) {
+          $j(this).appendTo("ul#sortable-listD"); 
+          $j('div[id*=order]').remove();
+        });
+        var liIds = $j('#sortable-listC li').map(function(i,n) {
+        return $j(n).attr('id');
+        }).get().join('!#!');
+       $j('[id$=selectedValue_serialised]').val(liIds);
+           
+       
+    }
+    function moveAllRightTab2(from) {
+         $j("#sortable-listB > li").each(function(index) {
+          $j(this).appendTo("ul#sortable-listD"); 
+          $j('div[id*=order]').remove();
+        });
+        var liIds = $j('#sortable-listB li').map(function(i,n) {
+        return $j(n).attr('id');
+        }).get().join('!#!');
+       $j('[id$=selectedValue_serialised]').val(liIds);
+           
+       
+    }
+    function moveSelectedRight() {
+        //debugger;
+       $j(".state-selected").each(function(index) {
+          $j(this).appendTo("ul#sortable-listD"); 
+          $j('div[id*=order]').remove();
+        });
+        var liIds = $j('#sortable-listC li').map(function(i,n) {
+        return $j(n).attr('id');
+        }).get().join('!#!');
+       $j('[id$=selectedValue_serialised]').val(liIds);     
+       
+    }
+    
+     function moveSelectedRightTab2() {
+       $j(".state-selected").each(function(index) {
+          $j(this).appendTo("ul#sortable-listD"); 
+          $j('div[id*=order]').remove();
+        });
+        var liIds = $j('#sortable-listB li').map(function(i,n) {
+        return $j(n).attr('id');
+        }).get().join('!#!');
+       $j('[id$=selectedValue_serialised]').val(liIds);     
+       
+    }
+    
+    function moveToRight(action){
+    	if(tabSelected ==''){
+    		if(action == 'Selected')
+    			moveSelectedRight();
+    		else
+    			moveAllRight('relatedTitle');	
+    	}else{
+    		if(action == 'Selected')
+    			moveSelectedRightTab2();
+    		else
+    			moveAllRightTab2('searchedTitle');
+    	}
+    }
+    
+    function moveAllLeft() {
+       // alert(tabSelected);
+        if(tabSelected ==''){
+        $j("#sortable-listD > li").each(function(index) {
+          $j(this).appendTo("ul#sortable-listC"); 
+          $j('div[id*=order]').remove();
+        });
+        var liIds = $j('#sortable-listD li').map(function(i,n) {
+        return $j(n).attr('id');
+        }).get().join('!#!');
+       $j('[id$=selectedValue_serialised]').val(liIds);
+        }
+        else{
+            
+            $j("#sortable-listD > li").each(function(index) {
+              $j(this).appendTo("ul#sortable-listB"); 
+              $j('div[id*=order]').remove();
+            });
+            var liIds = $j('#sortable-listD li').map(function(i,n) {
+            return $j(n).attr('id');
+            }).get().join('!#!');
+           $j('[id$=selectedValue_serialised]').val(liIds);
+            
+        }
+    }
+    
+    function moveSelectedToLeft() {
+        debugger;
+        if(tabSelected ==''){
+               $j(".state-selected").each(function(index) {
+                  $j(this).appendTo("ul#sortable-listC"); 
+                  $j('div[id*=order]').remove();
+                });
+                var liIds = $j('#sortable-listD li').map(function(i,n) {
+                return $j(n).attr('id');
+                }).get().join('!#!');
+               $j('[id$=selectedValue_serialised]').val(liIds);
+        }
+        else{
+            
+                $j(".state-selected").each(function(index) {
+                  $j(this).appendTo("ul#sortable-listB"); 
+                  $j('div[id*=order]').remove();
+                });
+                var liIds = $j('#sortable-listD li').map(function(i,n) {
+                return $j(n).attr('id');
+                }).get().join('!#!');
+               $j('[id$=selectedValue_serialised]').val(liIds);
+            
+        }
+    }*/
+    
+    function moveAllToRight() {
+        
+        var idSelectedRight = '';
+        var errorVar = 'N';
+        $j('#sortable-listD li').each(function(){
+        	idSelectedRight += this.id+'!#!'; 
+        });  
+
+        if(tabSelected == 'relatedTitle'){
+	        $j("#sortable-listC > li:visible").each(function(index) {
+	           $j(this).appendTo("ul#sortable-listD"); 
+	        });
+        }
+        
+        if(tabSelected == 'searchedTitle'){
+	        $j("#sortable-listB > li").each(function(index) {
+	            
+		        if(idSelectedRight.indexOf(this.id) > -1){
+		           errorVar = 'Y';
+		        }
+            
+            	if(idSelectedRight.indexOf(this.id) == -1 && errorVar == 'N')
+           			$j(this).appendTo("ul#sortable-listD"); 
+        	});
+        
+        	if(errorVar == 'Y')
+        		alert('Titles already exist in Selected Titles');
+        } 
+        
+       	conctenateIdsAndAssignSequence();
+        
+    }
+    
+    function moveSelectedToRight() {
+        debugger;
+        
+        var idSelectedRight = '';
+        var errorVar = 'N';
+        $j('#sortable-listD li').each(function(){
+        	idSelectedRight += this.id+'!#!'; 
+        });  
+
+        if(tabSelected == 'relatedTitle'){
+	        $j("#sortable-listC > li.state-selected:visible").each(function(index) {
+	           $j(this).appendTo("ul#sortable-listD"); 
+	        });
+        }
+        
+        if(tabSelected == 'searchedTitle'){
+	        $j("#sortable-listB > li.state-selected").each(function(index) {
+	            
+		        if(idSelectedRight.indexOf(this.id) > -1){
+		           errorVar = 'Y';
+		        }
+            
+            	if(idSelectedRight.indexOf(this.id) == -1 && errorVar == 'N')
+           			$j(this).appendTo("ul#sortable-listD"); 
+        	});
+        
+        	if(errorVar == 'Y')
+        		alert('Titles already exist in Selected Titles');
+        } 
+        
+       	conctenateIdsAndAssignSequence();
+        
+    }
+    
+    function moveAllToLeft() {
+        $j("#sortable-listD > li").each(function(index) {
+        	$j(this).appendTo("ul#sortable-listC"); 
+        });
+        
+        conctenateIdsAndAssignSequence();
+    }
+    
+    function moveSelectedToLeft(){
+        $j("#sortable-listD > li.state-selected").each(function(index) {
+        	$j(this).appendTo("ul#sortable-listC"); 
+        });
+        
+        conctenateIdsAndAssignSequence();
+    }
+    
+    function conctenateIdsAndAssignSequence(){
+    	var liIds = $j('#sortable-listD li').map(function(i,n) {
+       		return $j(n).attr('id');
+       		}).get().join('!#!');
+        		
+       	$j('[id$=selectedValue_serialised]').val(liIds);
+        
+        $j('div[id*=order]').remove();
+        $j("#sortable-listD > li").each(function(index) {
+        	var x = $j( this ).text();
+        	$j(this).append("<div id='order' class='OrderNoCSS'><b>"+ (index+1) + "</b></div>");
+        });
+        
+        var idAvailable = '';
+        $j('#sortable-listB li').each(function(){
+           idAvailable += this.id+'!#!'; 
+        });
+        $j('#sortable-listC li').each(function(){
+           idAvailable += this.id+'!#!'; 
+        });    
+   		$j('[id$=availValue_serialised]').val(idAvailable);
+   		$j(".state-selected").removeClass("state-selected");
+    }
+    
+    
+    
+    function playlistError(){
+        
+        var playlistID = "{!$CurrentPage.parameters.playList}";
+        var TitleID = "{!$CurrentPage.parameters.Title}";
+        var $j = jQuery.noConflict();
+        var d = sfdcPage.dialogs['MyCoolDialog'], close;
+        if (!d) {
+        d = sfdcPage.dialogs['MyCoolDialog'] = new SimpleDialog('MyCoolDialog', false);
+        
+        d.setTitle('Playlist Status Error');
+        d.setWidth(1000);
+        d.createDialog();
+          }
+
+        $j(d.dialog).find('#MyCoolDialogInner').html( $j(".localTitleRec"));
+        $j(d.dialog).find('#MyCoolDialogInner iframe').on('load', function() {
+        $j(this).contents().find('input[type="submit"]').on('click', function() {
+        if ($j(this).val() == 'Cancel') d.hide();
+        return false;
+        });
+        });
+        
+        if ($j(d.dialog).find('#InlineEditDialogX').size() == 0) {
+        
+        close = $j('<a id="InlineEditDialogX" title="Close" tabindex="0" href="javascript:void(0)" class="dialogClose">Close</a>');
+        
+        close.mouseover(function() {
+        this.className = 'dialogCloseOn';
+        }).mouseout(function() {
+        this.className = 'dialogClose';
+        }).click(function() {
+        
+        d.hide();
+        window.location.href= "apex/WB_PlayListContentDetails?mode=e&playList="+playlistID+"&Title="+TitleID;
+        });
+        
+        close.insertBefore($j(d.dialog).find('.topLeft h2'));
+        }
+        
+        d.show();
+        
+    }
+    
+    function setTabSelect(value){
+        tabSelected = value;
+    }
+    
+</script>   
+<style>
+    .OrderNoCSS {   
+    float: right;
+    width: 20px;
+    height: 20px;
+    padding-bottom: 1px;
+    display:inline;
+    border-radius: 10px;
+    border-color: rgba(0,0,0,.2);
+}
+.detailList:nth-of-type(1){
+    width : 90% !important;
+}
+.newClass {
+    padding : 2 2 2 2 ;
+}
+
+    .activeTab {background-color: #98c6f7; color:white; width: 120px; height: 20px; padding-top: 5px; font-size: 12px; font-style: bold;font-family: Arial,Helvetica,sans-serif; background-image:none; }
+    .inactiveTab { background-color: lightgrey; color:black; width: 120px; height: 20px; padding-top: 5px; font-size: 12px; font-style: bold;font-family: Arial,Helvetica,sans-serif; background-image: none}
+
+
+    .TFtable{
+        border-collapse: collapse;
+        width: 100%;
+        border-width:1px;   
+        border-bottom-style:solid;
+        border-left-style:solid;
+        border-right-style:solid;
+
+    }
+    .TFtable td,th { 
+        text-align: left;
+        padding: 8px;
+    }
+    .TFtable th { 
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .TFtable tr:nth-child(even){
+        background-color: #f2f2f2;
+    }
+
+    .state-selected {
+      background-color: #ff0 !important;
+    }
+    
+  .longText{
+    width:120px;
+    text-overflow: ellipsis;
+    word-break: break-all;
+    overflow:hidden;
+    white-space: nowrap;
+}
+
+.longText{
+    overflow: visible; 
+    white-space: normal; 
+}
+    
+</style>
+</head>
+<body style="width: 99%;position: absolute;left: 0px;" >
+        <apex:pageMessages id="statusFlag"></apex:pageMessages>
+        <apex:outputPanel id="PlaylistError">
+            <apex:outputPanel rendered="{!if(playlistInLocalData.size>0 || playlistInClientAvail.size>0 || playlistInCommercialAvail.size>0, true,false )}">
+        <div class="localTitleRec" style="min-height:400px">
+        <apex:pageMessages ></apex:pageMessages> <br/>   
+        <B>Local Title Record</B><hr/>    
+        <table class="TFtable">
+            <tr>
+                <th >SL No</th>
+                <th>Local Title Name</th>
+            </tr>
+            <apex:variable value="{!1}" var="rowNum"/>
+            <apex:repeat value="{!playlistInLocalData}"  var="PlLD" >
+            <tr>
+                <td><apex:outputText value="{!FLOOR(rowNum)}"/></td>
+                <td><a target="_blank" href="/{!PlLD.ID}">{!PlLD.name}</a></td>
+            </tr>
+             <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+            </apex:repeat>
+        </table> 
+        
+                <!-- Error For Release Plan -->
+        <br></br>
+         <B>Release Plan Record</B><hr/>  
+         <div style="height:200px; overflow-y: scroll;">
+        <table class="TFtable">
+            <tr>
+                <th>SL No</th>
+                <th>Release Plan Name</th>
+            </tr>
+            <apex:variable value="{!1}" var="rowNum"/>
+            <apex:repeat value="{!playlistInCommercialAvail}"  var="PIRP" >
+            <tr>
+                <td><apex:outputText value="{!FLOOR(rowNum)}"/></td>
+                <td><a target="_blank" href="/{!PIRP.ID}">{!PIRP.name}</a></td>
+            </tr>
+             <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+            </apex:repeat>
+        </table> 
+        </div>
+        <!-- Error For Client Avail -->
+        <br></br>
+         <B>Client Avail Record</B><hr/>  
+      <div style="height:200px; overflow-y: scroll;">
+        <table class="TFtable">
+            <tr>
+                <th>SL No</th>
+                <th>Client Avail Name</th>
+            </tr>
+            <apex:variable value="{!1}" var="rowNum"/>
+            <apex:repeat value="{!playlistInClientAvail}"  var="PlCA" >
+            <tr>
+                <td><apex:outputText value="{!FLOOR(rowNum)}"/></td>
+                <td><a target="_blank" href="/{!PlCA.ID}">{!PlCA.name}</a></td>
+            </tr>
+             <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+            </apex:repeat>
+        </table> 
+        </div>   
+        </div>   
+        
+        <script type="text/javascript">
+            playlistError();
+        </script>
+        
+        </apex:outputPanel>
+        </apex:outputPanel>
+        
+<apex:pageBlock title="{!Header} {!playListObj.name}" >
+<apex:pageblocksection columns="3" rendered="{!if($CurrentPage.parameters.mode == 'e' || $CurrentPage.parameters.mode == 'c', true,false )}" >
+            
+            <apex:repeat value="{!PlayListFieldSet}"  var="playListFS" >
+             <apex:outputText label="Playlist Name" value="Standard Playlist" rendered="{!if(playListFS.Label=='Playlist Name' && $CurrentPage.parameters.mode == 'n', true,false )}"  styleClass="white-space: nowrap"/>
+             <apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Playlist Name','width:70%','')};{!IF(playListFS.Label=='Notes','width:90%','')};white-space: nowrap"  required="{!playListFS.Required}" rendered="{!if(playListFS.Label!='Parent Title' && playListFS.Label!='Version Number' && playListFS.Label!='Playlist Name' && playListFS.Label!='Playlist Type' && playListFS.Label!='Playlist Status' && playListFS.Label!='PlaylistALIDs', true,false )}" onkeypress="return event.keyCode != 13;" />
+             <!--<apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Playlist Name','width:70%','')};{!IF(playListFS.Label=='Notes','width:90%','')};white-space: nowrap"  required="{!playListFS.Required}" rendered="{!if(playListFS.Label!='Parent Title' && playListFS.Label!='Version Number' && playListFS.Label!='Playlist Name' && playListFS.Label!='Playlist Type' && playListFS.Label!='Playlist Status', true,false )}" onkeypress="return event.keyCode != 13;" />-->
+             <apex:inputField value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Playlist Status' , true,false )}" onchange="if(this.value == 'Deleted'){ alert('Changing the Playlist status to Deleted will delete the Playlist.') } "   styleClass="white-space: nowrap"/>             
+             <apex:outputField value="{!playListObj[playListFS.fieldPath]}" id="selectPlaylistType" rendered="{!if(playListFS.Label=='Playlist Type' , true,false )}"  styleClass="white-space: nowrap" style=" line-height: 2;"/>             
+             <apex:outputField value="{!playListObj[playListFS.fieldPath]}" label="Title" rendered="{!if(playListFS.Label=='Parent Title' , true,false )}"  styleClass="white-space: nowrap"/>
+             <apex:outputField value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Version Number' && $CurrentPage.parameters.mode == 'e', true,false )}"  styleClass="white-space: nowrap"/>
+             <apex:outputText label="Version Number" value="{!cloneVideoVersion}" rendered="{!if(playListFS.Label=='Version Number' && $CurrentPage.parameters.mode == 'c', true,false )}"  styleClass="white-space: nowrap"/>
+             <apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Playlist Name','width:70%','')};white-space: nowrap;"  required="{!playListFS.Required}" rendered="{!if(playListFS.Label=='Playlist Name' && ($CurrentPage.parameters.mode == 'c' || $CurrentPage.parameters.mode == 'e'), true,false )}" onkeypress="return event.keyCode != 13;" styleClass="white-space: nowrap"/>
+             <!--<apex:outputField value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Playlist Name' && $CurrentPage.parameters.mode == 'e' , true,false )}"  styleClass="white-space: nowrap"/>-->
+            <apex:outputText label="PlaylistALIDs" value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='PlaylistALIDs', true,false )}"  styleClass="longText white-space: pre-wrap;" escape="false" />
+            <apex:inputField value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Episode End Date Calc' && $CurrentPage.parameters.mode == 'n', true,false )}"  styleClass="white-space: nowrap"/>
+            
+            </apex:repeat>
+             <apex:inputCheckbox value="{!playListObj.Recalculate_Sequence__c}" />
+         <c:DragNDropComponent />
+</apex:pageblocksection>
+<apex:pageblocksection columns="3" rendered="{!if($CurrentPage.parameters.mode == 'n' , true,false )}">
+
+             <apex:repeat value="{!PlayListFieldSet}"  var="playListFS" >
+               
+                <apex:outputText label="Playlist Name" value="{!playListObj.Name}" rendered="{!if(playListFS.Label=='Playlist Name'  && cloneVideoVersion == 1 && titleContentType == 'Collection Features', true,false )}"  styleClass="white-space: nowrap"/>
+                <apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Notes','width:100%','')}" rendered="{!if(playListFS.Label=='Notes' , true,false )}" />
+                <apex:inputField value="{!playListObj[playListFS.fieldPath]}"  rendered="{!if(playListFS.Label=='Playlist Status' , true,false )}" />
+                <apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Playlist Name','width:100%','')};"  required="{!playListFS.Required}"  rendered="{!if(playListFS.Label=='Playlist Name' && ((cloneVideoVersion != 1 && titleContentType == 'Collection Features')||(titleContentType == 'Collection TV' || titleContentType == 'Season'))  , true,false )}" />
+                <apex:outputField value="{!playListObj[playListFS.fieldPath]}" id="selectPlaylistType" rendered="{!if(playListFS.Label=='Playlist Type' , true,false )}"  style=" line-height: 2;"/>
+               <apex:outputField value="{!playListObj[playListFS.fieldPath]}" label="Title" rendered="{!if(playListFS.Label=='Parent Title' , true,false )}"  />
+               <apex:outputText label="Version Number" value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Version Number' && $CurrentPage.parameters.mode == 'n', true,false )}"  />
+               
+               <!--<apex:inputField value="{!playListObj[playListFS.fieldPath]}" style="{!IF(playListFS.Label=='Playlist Name','width:100%','')};{!IF(playListFS.Label=='Notes','width:125%','')}"  required="{!playListFS.Required}"  rendered="{!if(playListFS.Label!='Parent Title' && playListFS.Label!='Version Number' && playListFS.Label!='Playlist Type' , true,false )}" />
+                <apex:outputField value="{!playListObj[playListFS.fieldPath]}" id="selectPlaylistType" rendered="{!if(playListFS.Label=='Playlist Type' , true,false )}"  style=" line-height: 2;"/>
+                <apex:outputField value="{!playListObj[playListFS.fieldPath]}" label="Title" rendered="{!if(playListFS.Label=='Parent Title' , true,false )}"  />
+                <apex:outputText label="Version Number" value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Version Number' && $CurrentPage.parameters.mode == 'n', true,false )}"  />-->
+                <apex:inputField value="{!playListObj[playListFS.fieldPath]}" rendered="{!if(playListFS.Label=='Episode End Date Calc' && $CurrentPage.parameters.mode == 'n', true,false )}"  styleClass="white-space: nowrap"/>
+             </apex:repeat>
+            <apex:inputCheckbox value="{!playListObj.Recalculate_Sequence__c}" />
+         <c:DragNDropComponent />
+</apex:pageblocksection>
+
+<br/>
+<hr/>
+<br/>
+<center> <apex:commandButton action="{!customSaveRecord}" value="Save" status="loadingStatus" style="width:100px" reRender="statusFlag,PlaylistError" />  &nbsp;&nbsp;
+<!--<apex:commandbutton style="width:100px" value="Back" onclick="window.location='/apex/WB_ManagePlayListContent?id={!$CurrentPage.parameters.Title}';"/>-->
+<apex:commandbutton style="width:100px" value="Back" action="{!backToPage}" immediate="true"/>
+<!--<apex:outputLink title="Back To PlayList" value="/apex/WB_ManagePlayListContent?id={!$CurrentPage.parameters.Title}" styleClass="btn" style="text-decoration: none;font-size: .9em;font-weight: bold;font-family: Arial,Helvetica,sans-serif;-webkit-border-radius: 3px;border-radius: 3px;padding: 2px 3px;display: inline-block;height: 17px;width: 100px;border: 1px solid #B5B5B5;">Back</apex:outputLink>-->                            
+<input type="hidden" id="selectedValue_serialised" name="selectedValue_serialised" value="{!rightString}"/>
+<input type="hidden" id="availValue_serialised" name="availValue_serialised" value="{!leftString}"/>
+<!--<apex:commandButton action="{!showSelectedItems}" reRender="selectedItems" value="Show Selected Value" status="status"/>-->
+</center>
+<br/>
+<apex:pageBlockSection columns="3">
+<apex:pageBlockSectionItem >
+                  <apex:tabPanel switchType="client" tabClass="activeTab" inactiveTabClass="inactiveTab" selectedTab="Suggestedtitle" id="theTabPanel">  
+                       <apex:tab label="Suggested Titles" name="Stitle" id="tabOne" ontabenter="setTabSelect('relatedTitle');">
+                          <apex:pageBlockSection >
+                      <apex:outputPanel >
+                            <div class="list-wrapper" >
+                                <!-- Sugestive search : start-->
+                                <table style="width:100%">
+                                    <tr><td>
+                                        Filter by MPM, VV, Title : <input type="text" class="filterSearch"  placeholder="Enter MPM or VV or Title" onkeyup="filterC(this)" />                                            
+                                        </td>
+                                          
+                                        <!-- <td>
+                                          <div class="" style="float: right;">
+                                            <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveSelectedRight();">Add</button>
+                                        </div> 
+                                        </td>
+                                        <td>
+                                        <div class="" style="float: right;">
+                                            <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveAllRight('relatedTitle');">Add All</button>
+                                        </div>           
+                                        </td>
+                                         -->
+                                    </tr>
+                                </table>
+
+                                <!-- Sugestive search : end-->
+                                <ul id="sortable-listC" style="min-height: 250px;">
+                                    <apex:repeat value="{!titlelistAvaliable}" var="availT">
+                                    <li id="{!availT.id}" class="list-item" title="{!availT.MPM_Long_Desc__c}"><span style="margin-left: 12%;">{!availT.video_version__c} &nbsp; | &nbsp; {!availT.MPM_F__c} &nbsp; | &nbsp; {!IF((availT.TV_Title__c == '' || upper(availT.TV_Title__c) == 'TBD'),availT.name,if(availT.Season_Episode_Number__c == '',availT.TV_Title__c,availT.Season_Episode_Number__c+'-'+availT.TV_Title__c))}</span></li>
+                                    </apex:repeat>
+                                     <apex:variable value="" var="fooDisable" rendered="{!BOMcount==0}" >
+                                    <b class="disabled" style="padding-top: 5px;padding-left: 5px;"><font color="red">V-BOM doesn't exist yet for this Title.</font></b>
+                                     </apex:variable>     
+                                     <apex:variable value="" var="fooDisable1" rendered="{!AND(TitleCount==0,BOMcount!=0)}" >
+                                    <b class="disabled" style="padding-top: 5px;padding-left: 5px;"><font color="red">No Suggested Titles found or all Suggested Titles have already been selected.</font></b>
+                                     </apex:variable>     
+                                </ul>
+                            </div>
+                            <div class="responsive-message"></div>
+                        </apex:outputPanel>   
+                        </apex:pageBlockSection>
+                       </apex:tab>
+                       
+                       <apex:tab label="Title Search" name="searchTitle" id="tabtwo" ontabenter="setTabSelect('searchedTitle');">
+                        <div class="list-wrapper">
+                            <apex:pageBlockSection columns="2">
+                                 <apex:inputText styleClass="fieldClass" value="{!titleSearchInstance.titleName}" Label="Title Name"></apex:inputText>
+                                 <apex:inputText styleClass="fieldClass" value="{!titleSearchInstance.titleVVNumber}" Label="Video Version"></apex:inputText>
+                                 <apex:inputText styleClass="fieldClass" value="{!titleSearchInstance.MPMName}" Label="MPM"></apex:inputText>
+                                 <apex:inputText styleClass="fieldClass" value="{!titleSearchInstance.ContentType}" Label="Content Type"></apex:inputText>
+                                 <apex:inputText styleClass="fieldClass" value="{!titleSearchInstance.AbstractEIDR}" Label="Abstract EIDR"></apex:inputText>
+                            </apex:pageBlockSection>   
+                            <hr/>
+                              <center>  
+                                <apex:commandButton styleClass="tSearch" style="width:100px" value="Search" action="{!search}" reRender="listtitles,statusFlag" oncomplete="reInitializeJS();" status="loadingStatus"/>
+                              </center>
+                             <apex:pageBlockSection columns="1">       
+                                <!-- <div class="" style="float: right;">
+								    <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveSelectedRightTab2();">Add</button>
+                                    <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveAllRightTab2('searchedTitle');">Add All</button>
+                                </div>
+                                 --> 
+                                <apex:pageBlockSectionItem >
+                                <apex:outputPanel id="listtitles">
+                                <div style="overflow-x:visible;overflow-x:auto;">
+                                <ul id="sortable-listB" style="min-height: 250px;height: 400px;">
+                                    <apex:repeat value="{!lstTitles}" var="availT">
+                                    <li id="{!availT.id}" class="list-item" title="{!availT.MPM_Long_Desc__c}"><span style="margin-left: 12%;">{!availT.video_version__c} &nbsp; | &nbsp;  {!availT.MPM_F__c} &nbsp; | &nbsp; {!IF((availT.TV_Title__c == '' || upper(availT.TV_Title__c) == 'TBD'),availT.name,if(availT.Season_Episode_Number__c == '',availT.TV_Title__c,availT.Season_Episode_Number__c+'-'+availT.TV_Title__c))}</span></li>
+                                    </apex:repeat>
+                                    
+                                   <apex:variable value="" var="fooDisable" rendered="{!lstTitles.size==0}" >
+                                    <b class="disabled" style="padding-top: 5px;padding-left: 5px;"><font color="red">Digital Planned Titles not found for your search criteria or already on 'Suggested Titles' Section/Tab.</font></b>
+                                   </apex:variable>  
+                                    
+    
+                                </ul>
+                                </div>    
+                                </apex:outputPanel>
+                                </apex:pageBlockSectionItem>
+                            </apex:pageBlockSection>
+                         </div>    
+                       </apex:tab> 
+                        
+                  </apex:tabpanel>  
+</apex:pageBlockSectionItem>
+
+<apex:pageBlockSectionItem >
+	<apex:pageBlockSection >
+		<apex:outputPanel >
+           <div>
+               <table style="width:100%">
+               	   <tr>
+                       <td style="height: 100px;">
+                       	&nbsp;
+                       </td>
+                   </tr>
+                   <tr>    
+                       <td>
+                       		<button style="width: 85px;height: 21px;" type="button" onclick="moveAllToRight();">Add All &gt;&gt;</button>
+                       </td>
+                   </tr>	
+                   <tr>
+                       <td>
+                       		<button style="width: 85px;height: 21px;" type="button" onclick="moveSelectedToRight();">Add &gt;</button>
+                       </td>
+                   </tr>
+                   <tr>
+                       <td>
+                       		<button style="width: 85px;height: 21px;" type="button" onclick="moveSelectedToLeft();"> &lt; Remove</button>
+                   	   </td>
+                   </tr>
+                   <tr>	   
+                   	   <td>
+                       		<button style="width: 85px;height: 21px;" type="button" onclick="moveAllToLeft();"> &lt;&lt; Remove All</button>
+                   	   </td>
+                   </tr>
+               </table>
+           </div>
+        </apex:outputPanel>
+	</apex:pageBlockSection>
+</apex:pageBlockSectionItem>
+
+<apex:pageBlockSectionItem >
+     <apex:pageBlockSection title="Selected Titles" collapsible="false" >
+            <apex:outputPanel >
+                <div class="list-wrapper">
+
+                                <!-- Sugestive search : start-->
+                                <table>
+                                    <tr>
+                                        <td>
+                                        Filter by MPM, VV, Title : <input type="text" class="filterSearch"  placeholder="Enter MPM or VV or Title" onkeyup="filterD(this)" />                                            
+                                        </td>
+                                        <!-- <td> <label>Recalculate Playlist Sequence</label> </td>
+                                         
+                                            <td>
+                                               <apex:inputCheckbox value="{!playListObj.Recalculate_Sequence__c}" />
+                                            </td>
+                                       
+                                       
+                                        <td>
+                                        <div class="" style="float: right;">
+                                        <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveSelectedToLeft();">Remove</button>
+                                    </div>
+                                    </td><td>
+                                    <div class="" style="float: right;">
+                                        <button style="width: 100px;height: 21px;float: right;" type="button" onclick="moveAllLeft();">Remove All</button>
+                                    </div></td> -->
+                                    </tr>
+                                </table>
+
+                                <!-- Sugestive search : end-->
+             
+                <ul id="sortable-listD" style="min-height: 250px;">
+                    <apex:repeat value="{!titlelistSelected}" var="SelectedT">
+                    <li id="{!SelectedT.Content_Title__c}" class="list-item" title="{!SelectedT.Content_Title__r.MPM_Long_Desc__c}"><span style="margin-left: 12%;">{!SelectedT.Content_VV__c} &nbsp; | &nbsp; {!SelectedT.Content_Title__r.MPM_F__c} &nbsp; | &nbsp; {!SelectedT.Title_Name__c}</span> </li>
+                    </apex:repeat>
+                </ul>
+                </div>
+                <div class="responsive-message"></div>
+            </apex:outputPanel>    
+     </apex:pageBlockSection>
+</apex:pageBlockSectionItem>
+
+</apex:pageBlockSection>
+
+<center> <apex:commandButton action="{!customSaveRecord}" value="Save" status="loadingStatus" style="width:100px" reRender="statusFlag,PlaylistError"/>  &nbsp;&nbsp;
+<!--<apex:commandbutton style="width:100px" value="Back" onclick="window.location='/apex/WB_ManagePlayListContent?id={!$CurrentPage.parameters.Title}'; return false;"/>-->
+<apex:commandbutton style="width:100px" value="Back" action="{!backToPage}" immediate="true"/>
+<!--<apex:outputLink title="Back To PlayList" value="/apex/WB_ManagePlayListContent?id={!$CurrentPage.parameters.Title}" styleClass="btn" style="text-decoration: none;font-size: .9em;font-weight: bold;font-family: Arial,Helvetica,sans-serif;-webkit-border-radius: 3px;border-radius: 3px;padding: 2px 3px;display: inline-block;height: 17px;width: 100px;border: 1px solid #B5B5B5;">Back</apex:outputLink>-->                            
+<input type="hidden" id="selectedValue_serialised" name="selectedValue_serialised" value="{!rightString}"/>
+<input type="hidden" id="availValue_serialised" name="availValue_serialised" value="{!leftString}"/>
+<!--<apex:commandButton action="{!showSelectedItems}" reRender="selectedItems" value="Show Selected Value" status="status"/>-->
+</center>
+
+<!--         <apex:actionStatus id="status" startText="Fetching..."></apex:actionStatus>
+         <apex:outputPanel id="selectedItems">
+             <i>{!rightString}</i> <br/>
+             <i>{!leftString}</i>
+         </apex:outputPanel>-->
+
+</apex:pageBlock>    
+</body>
+
+      <script>
+            $j = jQuery.noConflict();
+                function placeholder(element) {
+                   // debugger;
+                   var draggedElement = element.clone().css({ "opacity": 0.3, "border": "1px dashed #000000" });
+                   $j.each($j(".state-selected"), function(index,value){
+                       if($j(value).parent(".sortable-hint").length == 0 && $j(draggedElement).attr("id") != $j(value).attr("id")){
+                           var clonedElement = $j(value).clone();
+                           $j(clonedElement).css({ "opacity": 0.3, "border": "1px dashed #000000" });
+                           $j(clonedElement).addClass("newplaceholder");
+                            $j(draggedElement).append(clonedElement);
+                       }
+                   });
+                   console.log(draggedElement);
+                  
+                   return draggedElement;
+                }
+                
+                function reInitializeJS(){
+		         	$j = jQuery.noConflict();
+		                $j(document).ready(function() {
+		                    /*------------------------------------------*/
+		                    var onLoadidSelected = '';
+		                    var containerB = $j("#sortable-listB").kendoSortable({
+		                        disabled: ".disabled",
+		                        autoScroll: true,
+		                        connectWith: "#sortable-listD",
+		                        placeholder: placeholder,
+		                        hint: function(element) {
+							        var hint = $j("<div class='sortable-hint'></div>");
+							        if(element.hasClass("state-selected")){
+							       		this.element.find(".state-selected").clone().css("display", "block").appendTo(hint);
+							       	}else{
+							       		element.clone().css("display", "block").appendTo(hint);
+							       	}
+							
+							        setTimeout(function() {
+							          hint.children().show();
+							        });
+									console.log('In Hint Method',element);
+									
+							        return hint;
+						      	},
+		                        start: function(e) {
+		                            //debugger;
+		        					if(e.item.hasClass("state-selected")){
+		                        		this.element.find(".state-selected").hide();
+		                        	}else{
+		                        		this.element.find(".state-selected").removeClass("state-selected");
+		                        	}
+		      					},
+		      					end: function(e) {
+		                            var items = this.element.find(".state-selected").not(e.item);
+		                            console.log('In End Method',items);
+		        					items.insertAfter(this.placeholder).show();
+		        				},
+		                        change: function(e) {
+		                        	console.log('In Change Method',e);
+		                            var idAvailable = '';
+		                             $j('#sortable-listB li').each(function(){
+		                                idAvailable += this.id+'!#!'; 
+		                             });    
+		                        	$j('[id$=availValue_serialised]').val(idAvailable);        
+		                        }
+		                        
+		                    }).data("kendoSortable");
+							
+							containerB.draggable.userEvents.bind("tap", function(e) {
+						      if (e.event.ctrlKey) {
+						        e.target.toggleClass("state-selected")  
+						      } else {
+						        $j(".state-selected").removeClass("state-selected");
+						        e.target.addClass("state-selected");
+						      }
+						    });
+						    
+		                   });
+    			}
+    			
+                $j(document).ready(function() {
+                /*-- Enter Click Handle --*/    
+                    $j('.fieldClass').keypress(function (e) {
+                     var key = e.which;
+                     if(key == 13)  // the enter key code
+                      {
+                        $j('.tSearch').focus();
+                        $j('.tSearch').click();
+                        return false;  
+                      }
+                    });
+                    
+                    $j('.filterSearch').keypress(function (e) {
+                     var key = e.which;
+                     if(key == 13)  // the enter key code
+                      {
+                        return false;  
+                      }
+                    });
+                    
+                    /*-- Remove Salesforce CSS Class on page load to make the UI uniform --*/
+                    $j('.rich-tabpanel-content').removeClass('rich-tabpanel-content');
+                    $j("td").removeClass('labelCol empty');
+                    $j('td').removeClass('dataCol empty');
+                    /*------------------------------------------*/
+                    $j("#sortable-listD > li").each(function(index) {
+                    $j(this).append("<div  id='order' class='OrderNoCSS'><b>"+ (index+1) + "</b></div>");
+                    });
+                    /*------------------------------------------*/
+                    
+                    var onLoadidSelected = '';
+                    var onLoadidAvailable = '';
+                    
+                    $j('#sortable-listD li').each(function(){
+                        onLoadidSelected += this.id+'!#!'; 
+                    });  
+                    $j('#sortable-listC li').each(function(){
+                        onLoadidAvailable += this.id+'!#!'; 
+                    }); 
+                    
+                    /*$j('#sortable-listB li').each(function(){
+                        onLoadidAvailable += this.id+'!#!'; 
+                    });*/
+                    
+                    $j('[id$=availValue_serialised]').val(onLoadidAvailable);      
+                    $j('[id$=selectedValue_serialised]').val(onLoadidSelected);
+                                        
+                    var containerC = $j("#sortable-listC").kendoSortable({
+                        disabled: ".disabled",
+                        autoScroll: true,
+                        connectWith: "#sortable-listD",
+                        placeholder: placeholder,
+                        hint: function(element) {
+					        var hint = $j("<div class='sortable-hint'></div>");
+					        if(element.hasClass("state-selected")){
+					       		this.element.find(".state-selected").clone().css("display", "block").appendTo(hint);
+					       	}else{
+					       		element.clone().css("display", "block").appendTo(hint);
+					       	}
+					
+					        setTimeout(function() {
+					          hint.children().show();
+					        });
+							console.log('In Hint Method',element);
+							
+					        return hint;
+				      	},
+                        start: function(e) {
+                            //debugger;
+        					if(e.item.hasClass("state-selected")){
+                        		this.element.find(".state-selected").hide();
+                        	}else{
+                        		this.element.find(".state-selected").removeClass("state-selected");
+                        	}
+      					},
+      					end: function(e) {
+                            var items = this.element.find(".state-selected").not(e.item);
+                            console.log('In End Method',items);
+        					items.insertAfter(this.placeholder).show();
+        				},
+                        change: function(e) {
+                        	console.log('In Change Method',e);
+                            var idAvailable = '';
+                             $j('#sortable-listC li').each(function(){
+                                idAvailable += this.id+'!#!'; 
+                             });    
+                        	$j('[id$=availValue_serialised]').val(idAvailable);        
+                        }
+                        
+                    }).data("kendoSortable");
+					
+					containerC.draggable.userEvents.bind("tap", function(e) {
+				      if (e.event.ctrlKey) {
+				        e.target.toggleClass("state-selected")  
+				      } else {
+				        $j(".state-selected").removeClass("state-selected");
+				        e.target.addClass("state-selected");
+				      }
+				    });
+				    
+                    var containerD = $j("#sortable-listD").kendoSortable({
+                        autoScroll: true,
+                        connectWith: "#sortable-listC,#sortable-listB",
+                        placeholder: placeholder,
+                        
+                        hint: function(element) {
+					        var hint = $j("<div class='sortable-hint'></div>");
+					        if(element.hasClass("state-selected")){
+					       		this.element.find(".state-selected").clone().css("display", "block").appendTo(hint);
+					       	}else{
+					       		element.clone().css("display", "block").appendTo(hint);
+					       	}
+					        					
+					        setTimeout(function() {
+					          hint.children().show();
+					        });
+							console.log('In Hint Method',element);
+							
+					        return hint;
+				      	},
+                        start: function(e) {
+                          
+        					if(e.item.hasClass("state-selected")){
+                        		this.element.find(".state-selected").hide();
+                        	}else{
+                        		this.element.find(".state-selected").removeClass("state-selected");
+                        	}
+      					},
+      					
+                        end: function(e) {
+                            debugger;
+                            var items = this.element.find(".state-selected").not(e.item);
+                            console.log('In End Method'+items);
+                            $j.each(items, function(index, item){
+                                console.log(item);
+                            })
+                            console.log("index of item", this.indexOf(e.item));
+                            console.log("index of placeholder", this.indexOf(this.placeholder));
+                            console.log("from " + e.oldIndex + " to " + e.newIndex);
+                            items.insertAfter(this.placeholder).show();
+                            $j(".newplaceholder").remove();
+                        },
+                        
+                        change: function(e) {
+                            debugger;
+                        	console.log('In Change Method'+e);
+                             var idSelected = '';
+                             $j('#sortable-listD li').each(function(){
+                             	idSelected += this.id+'!#!'; 
+                             });    
+                            $j('[id$=selectedValue_serialised]').val(idSelected);
+                       		$j(".state-selected").removeClass("state-selected");
+                       		
+                       		$j('div[id*=order]').remove();
+                       		 
+                        	$j("#sortable-listD > li").each(function(index) {
+                        		var x = $j( this ).text();
+                        		$j(this).append("<div id='order' class='OrderNoCSS'><b>"+ (index+1) + "</b></div>"); 
+                        	});
+                        }
+                        
+                    }).data("kendoSortable");
+                    
+                    
+                    containerD.draggable.userEvents.bind("tap", function(e) {
+				      if (e.event.ctrlKey) {
+				        e.target.toggleClass("state-selected")  
+				      } else {
+				        $j(".state-selected").removeClass("state-selected");
+				        e.target.addClass("state-selected");
+				      }
+				    });
+    
+                   });
+            </script>
+
+</html>
+</apex:form>
+</apex:page>

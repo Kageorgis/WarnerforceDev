@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>35.0</apiVersion>
+    <availableInTouch>true</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>The page calls the visual flow by using extension class to generate multiple orders and add order Products for the Order</description>
+    <label>CRM_GenerateOrderFromDeal</label>
+</ApexPage>

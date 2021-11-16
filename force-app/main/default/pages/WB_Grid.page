@@ -1,0 +1,658 @@
+<apex:page sidebar="false" controller="WB_CreateClientAvail_Controller">
+<script>
+if(!window.sldsPath){
+    //window.sldsPath = '{!URLFOR($Asset.SLDS, 'assets/icons')}';
+    window.sldsPath = '/apexpages/slds/latest/assets/icons';
+}
+</script>
+<PowerGrid:PowerGrid />
+
+<!-- Mahesh : Added action functions, one is to assign all Ids to controller variable and another is to call a controller method to redirect to new page -->
+<apex:form >
+    <apex:actionFunction name="redirectToNewPage1" action="{!pageRedirect}" />
+    
+    
+    <apex:actionFunction name="redirectToNewPage" rerender="none" oncomplete="redirectToNewPage1()">
+        <apex:param value="" name="resultSelectedRecords" assignTo="{!str}"/>
+    </apex:actionFunction>
+    
+    <!--Added in CRRT Phase 7: Fix language utilty functionlity alert box-->
+    <div id="errorDialog" style="Display:None;"/>
+    <div id="processDialog" style="Display:None;"/>
+</apex:form>
+
+<!-- ER-256 : Mahesh : Start -->
+<script type="text/javascript">
+    var __sfdcSessionId = '{!GETSESSIONID()}';
+</script>
+<script src="/soap/ajax/30.0/connection.js" type="text/javascript"></script>
+<script src="/soap/ajax/30.0/apex.js" type="text/javascript"></script>
+<!-- ER-256 : Mahesh : End -->
+
+<script> 
+
+    var defaultObjectList = [];
+    defaultObjectList['Account']='Accounts';
+    defaultObjectList['Announcement__c']='Announcements';
+    defaultObjectList['Announcement_Receipient__c']='Announcement Recipients';
+    defaultObjectList['Announcement_Record__c']='Announcement Records';
+    defaultObjectList['Announcement_Rule__c']='Announcement Types';
+    defaultObjectList['Available_Languages__c']='Available Languages';
+    defaultObjectList['Client_Avail__c']='Client Avails';
+    <!--defaultObjectList['Contact']='Contacts';-->
+    defaultObjectList['Country_Group_Country__c']='Country Group Countries';
+    defaultObjectList['Country__c']='Countries';
+    defaultObjectList['Country_Groups__c']='Country Groups';
+    defaultObjectList['Language_Preference__c']='Language Preferences';
+    defaultObjectList['Language__c']='Languages';
+    defaultObjectList['Local_Title__c']='Local Data';
+    defaultObjectList['Rights_Group__c']='Locales';
+    defaultObjectList['MPM__c']='MPMs';
+    defaultObjectList['MPM_Release_Date__c']='MPM Release Date';
+    <!-- ER-007234 Changes Start -->
+    <!--defaultObjectList['Release_Planning_Country_Content__c']='MRP-Country'; -->
+    <!--defaultObjectList['Release_Planning_Release__c']='MRP-Release'; -->
+    <!--defaultObjectList['Release_Planning_Title__c']='MRP-Title'; -->
+    <!-- ER-007234 Changes End -->
+    defaultObjectList['Pricing__c']='Pricing';
+    defaultObjectList['Pricebook_Entry_Period__c']='Pricebook Entry Periods';
+    defaultObjectList['Promotion__c']='Promotions';
+    defaultObjectList['Promotion_Title__c']='Promotion Title';
+    defaultObjectList['Promotion_Title_Detail__c']='Promotion Title Detail';
+    defaultObjectList['Commercial_Avail__c']='Release Plans';
+    defaultObjectList['Rights__c']='Rights';
+    defaultObjectList['Agreement__c']='Storefronts';
+    defaultObjectList['Title__c']='Titles';
+    defaultObjectList['Client_Avail_Price__c']='Client Avail Pricing';
+    defaultObjectList['Earliest_Avail_Date__c']='Earliest Avail Dates';
+    defaultObjectList['TV_Sales_History__c']='TV Sales History';
+    defaultObjectList['Rate_Card__c']='Rate Card';
+
+
+    function getGridObjectList() {
+      var ret = [];
+      $('#objectSelContainer input, #objectSelContainer label').hide();
+      for (var i = 0; i < allObjects.length; i++) {
+       if (defaultObjectList[allObjects[i].value]==null) continue;
+       ret.push(allObjects[i].value);
+      }
+      return ret;
+    }
+
+    // customizations go here
+    var updateObjectSelOrig = updateObjectSel;
+
+    updateObjectSel = function(val, func){
+     //console.log(func);
+     if(!func){
+      func = function(){
+      }
+     }
+     updateObjectSelOrig(val, func); 
+    }
+
+    function postProcessToolbar(toolbar, objType, grid_var) {
+        $('#objectSelContainer').show();
+    
+        $("#objectSel > option").each(function() {
+            if(defaultObjectList[this.value] != null){
+              this.text = defaultObjectList[this.value];
+            }
+        });
+
+
+
+    if (objType == 'Title__c') {
+        toolbar.push({
+                   type: "button",
+                   id: "add_rp",
+                   img: "Configero/wizard.png",
+                   tooltip: 'Generate Release Plan',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows();
+                        if(records.length>50) { alert("The maximum number of titles that can be selected is 50"); return; }
+                        if (records.length == 0) { alert("Please select at least one row"); return; } 
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        /*added by shalini for ER-326   */
+                       /*added by Hari for ER-001187   */
+                       //window.open('/apex/WB_Create_CommercialAvail?ID='+ids,'_blank' ); 
+                      
+                      
+                    window.open('/apex/wb_create_release_plan?ID='+ids,'_blank' );        
+                       
+                   }
+               });
+        /* ER-000959 :START : Request rights refresh added (from title)*/      
+        toolbar.push({
+                type: "button",
+                id: "add_RF",
+                 img: "{!$Resource.Request_Rights}",
+                tooltip: 'Request Rights',
+                onClick: function(grid) {
+                    var records = grid.CF_getGridCheckedRows();
+                    if(records.length>50) { alert("The maximum number of Title that can be selected is 50"); return; }
+                    if (records.length == 0) { alert("Please select at least one row"); return; }
+                    var ids = [];
+                    for (var i = 0; i < records.length; i++) {
+                        ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                    }
+                    ids = ids.join(',');
+                    var url="apex/WB_Request_Refresh_Title?ID="+ids+"&param=std"; 
+                    window.open(url, 'Popup',' height=807,width=1198,left=30,top=100,resizable=yes,scrollbars=yes,toolbar=no,status=no'); 
+
+                }
+            });  /* ER-000959 :END*/  
+    }
+    if (objType == 'Client_Avail__c') {
+        toolbar.push({
+                   type: "button",
+                   id: "clone_ca",
+                   img: "{!$Resource.Clone}",
+                   tooltip: 'Clone Client Avail',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows();
+                        if(records.length>50) { alert("The maximum number of client avails that can be selected is 50"); return; }
+                        if (records.length == 0) { alert("Please select at least one row"); return; } 
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        /*added by shalini for ER-326*/
+                        window.open('/apex/WB_Clone_ClientAvail?ID='+ids,'_blank' ); 
+                   }
+               });
+        toolbar.push({
+                   type: "button",
+                   id: "gap_ca",
+                   img: "{!$Resource.GapAnalysis}",
+                   tooltip: 'Perform Gap Analysis',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows();
+                        if(records.length>50) { alert("The maximum number of client avails that can be selected is 50"); return; }
+                        if (records.length == 0) { alert("Please select at least one row"); return; } 
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        /*added by shalini for ER-326*/
+                        window.open('/apex/WB_RunGapAnalysis_ClientAvail?ID='+ids,'_blank' ); 
+                   }
+               });
+        toolbar.push({
+                   type: "button",
+                   id: "rp_ca",
+                   img: "{!$Resource.Reprice}",
+                   tooltip: 'Re-Price Client Avail',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows();
+                        if(records.length > 2500) { alert("The maximum number of client avails that can be selected is 2500"); return; }
+                       
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        
+                        //Mahesh : ER-256 new chages start
+                         if (records.length == 0) { 
+                             window.open('/apex/WB_PriceWizard?action=rePrice','_blank'); 
+                         }else if(records.length!=0 && records.length < 24){
+                            window.open('/apex/WB_PriceWizard?action=rePrice&ID='+ids,'_blank');
+                        }else{
+                            var uniqueId = sforce.connection.getUserInfo().userId + '' + new Date().getTime();
+                            var ClientAvailIdStore = new sforce.SObject("Client_Avail_Id_Store__c");
+                            ClientAvailIdStore.Key__c = uniqueId;
+                            ClientAvailIdStore.ID_Store__c = ids;
+                            ClientAvailIdStore.Re_Price_User__c = sforce.connection.getUserInfo().userId;
+                            sforce.connection.create([ClientAvailIdStore]);
+                            //added by shalini for ER-326
+                            window.open('/apex/WB_PriceWizard?action=rePrice&UNIQUEID='+uniqueId,'_blank');
+                            //window.open('/apex/WB_RePrice_ClientAvails?ID='+uniqueId,'_blank');
+                            //Mahesh : ER-256 new chages end
+                        }
+                   }
+               });
+              
+               /*toolbar.push({
+                   type: "button",
+                   id: "rp_upt",
+                   img: "{!$Resource.UpdatePriceTier}",
+                   tooltip: 'Apply Price Code',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows();
+                        if(records.length>50) { alert("The maximum number of client avails that can be selected is 50"); return; }
+                        if (records.length == 0) { alert("Please select at least one row"); return; } 
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        //added by shalini for ER-326
+                        window.open('/apex/WB_price_Tier_MassUpdate?ID='+ids,'_blank' ); 
+                   }
+               });*/
+        
+        }
+        if (objType == 'Commercial_Avail__c') { 
+        toolbar.push({
+                   type: "button",
+                   id: "add_ca",
+                   img: "{!$Resource.CreateClientAvails}",
+                   tooltip: 'Generate Client Avails',
+                   onClick: function(grid) {
+                        var records =grid.CF_getGridCheckedRows(); 
+                        var ids = [];
+                        var selected = records.length ;
+                        
+                        //if(records.length>200) {
+                        //if(records.length>650) {//Mahesh - ER-00050
+                        //    alert("The maximum number of release plan that can be selected is 650 and you have selected " +selected +"release plans");
+                        // return;
+                        // }
+                        if (records!=null) {
+                            if (records[0] == null){
+                                alert("Please select at least one row");
+                            }
+                            else { 
+                                for (var i = 0; i < records.length; i++) {
+                                    ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                                }
+                                ids = ids.join(','); 
+                                //window.open('/apex/WB_Create_ClientAvail?ID='+ids); Mahesh
+                                console.log('Length : ' + ids.length + ' : ' + ids);
+                               // redirectToNewPage(ids); //Mahesh
+                                
+                                // ER-326Start : New implementation
+                                if(records.length < 50){
+                                    window.open('/apex/WB_CreateClientAvail_Lightning?IDs='+ids,'_blank');
+                                }else{
+                                    var uniqueId = sforce.connection.getUserInfo().userId + '' + new Date().getTime();
+                                    var ClientAvailIdStore = new sforce.SObject("Client_Avail_Id_Store__c");
+                                    ClientAvailIdStore.Key__c = uniqueId;
+                                    ClientAvailIdStore.ID_Store__c = ids;
+                                    ClientAvailIdStore.Re_Price_User__c = sforce.connection.getUserInfo().userId;
+                                    sforce.connection.create([ClientAvailIdStore]);
+                                    window.open('/apex/WB_CreateClientAvail_Lightning?UNIQUEID='+uniqueId,'_blank');
+                                }
+                                //End : New implementation */
+                            }
+                        }
+                    }
+                });
+        toolbar.push({
+                   type: "button",
+                   id: "split_rp",
+                   img: "{!$Resource.SplitReleasePlan}",
+                   tooltip: 'Split Release Plans',
+                   onClick: function(grid) {
+                        var records =grid.CF_getGridCheckedRows(); 
+                        var ids = []; 
+                        if (records!=null) {
+                            if (records[0] == null){
+                                alert("Please select at least one row")
+                            }
+                            else {
+                                for (var i = 0; i < records.length; i++) {
+                                    ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                                }
+                                ids = ids.join(','); 
+                                //added by shalini for ER-326
+                                window.open('apex/WB_SplitReleaseplanPage?ID='+ids,'_blank'); 
+                            }
+                        }
+                   }
+               });
+               
+        //Fix Language Utility
+        toolbar.push({
+                   type: "button",
+                   id: "fix_lang",
+                   img: "{!$Resource.FixReleasePlan}",
+                   tooltip: 'Fix Language',
+                   onClick: function(grid) {
+                        var user = sforce.connection.getUserInfo();
+                        var isAuthProf = false;
+                        var profs = '{!$Label.Fix_Language_Utility_Profiles}';
+                       var prof = profs.split(';');
+                       for (var i = 0; i < prof.length; i++) {
+                           if(prof[i] == user.profileId)
+                               isAuthProf = true;
+                       }
+                        if(isAuthProf){
+                            var records = grid.CF_getGridCheckedRows(); 
+                            if(records.length > 50) { alert("The maximum number of release plan that can be selected is 50"); return; }
+                            if(records.length > 0){
+                                var lstIds = []; 
+                                var mapIds = new Object(); 
+                                var lstError = [];
+                                
+                                processDialog();
+                                
+                                setTimeout(function(){
+                                    try{
+                                        if (records!=null) {
+                                            if (records[0] != null) {
+                                                
+                                                for (var i = 0; i < records.length; i++) {
+                                                    lstIds.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                                                    mapIds[mygrid.CF_getBufferSequenceRec(records[i]).idd] = 'fixed';
+                                                }
+                                                
+                                                if(lstIds[0] != null){
+                                                    var results = sforce.apex.execute("WB_FixLanguageUtility", "processFixLangauges", 
+                                                    {lstRPId : lstIds}); 
+                                                   
+                                                    $( "#processDialog" ).dialog( "close" );
+                                                    
+                                                    if(results[0].includes('Exception')) {
+                                                        alertDialog(results);
+                                                        return;
+                                                    }
+                                                    else if(results[0] != null && results != 'successful' && results != 'unsuccessful'){
+                                                        var strResult = results[0];
+                                                        var lstId = strResult.split(',');
+                                                        
+                                                        var mapRPStatus = new Object(); 
+                                                        
+                                                        for (var k = 0; k < lstId.length; k++){
+                                                            var rec = (lstId[k]).split('::');
+                                                            
+                                                            if(rec[0] != null){
+                                                                var recId = rec[0];
+                                                                var recStatus = rec[1];
+                                                                
+                                                                if(recStatus.includes('cta')){
+                                                                    mapRPStatus[recId] = 'cta';
+                                                                }
+                                                                else if(recStatus.includes('cpyrd')){
+                                                                    var originalRec = recStatus.split('~');
+                                                                    mapRPStatus[recId] = 'cpyrd';
+                                                                }
+                                                            }
+                                                        }
+                                                        
+                                                        for (var i = 0; i < records.length; i++) {
+                                                            if(mapRPStatus[mygrid.CF_getBufferSequenceRec(records[i]).idd] == 'cta'){
+                                                                mapIds[mygrid.CF_getBufferSequenceRec(records[i]).idd] = 'cta';
+                                                                $(mygrid.CF_getBufferSequenceRec(records[i])).css("background-color", "rgba(255, 235, 59, 0.55)");
+                                                                if(lstError.indexOf('cta') === -1)
+                                                                    lstError.push('cta');
+                                                            }
+                                                            else if(mapRPStatus[mygrid.CF_getBufferSequenceRec(records[i]).idd] == 'cpyrd'){
+                                                                mapIds[mygrid.CF_getBufferSequenceRec(records[i]).idd] = 'cpyrd';
+                                                                $(mygrid.CF_getBufferSequenceRec(records[i])).css("background-color", "#ed6f67");
+                                                                if(lstError.indexOf('cpyrd') === -1)
+                                                                    lstError.push('cpyrd');
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    if(mapIds != null && (Object.keys(mapIds).length) > 0){
+                                                        for (var i = 0; i < records.length; i++) {
+                                                            if(mapIds[mygrid.CF_getBufferSequenceRec(records[i]).idd] == 'fixed'){
+                                                               $(mygrid.CF_getBufferSequenceRec(records[i])).css("background-color", "#4BC076");
+                                                               if(lstError.indexOf('fixed') === -1)
+                                                                    lstError.push('fixed');
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                if(lstError[0] != null)
+                                                    setTimeout(function(){ alertDialog(lstError); }, 800);
+                                            }
+                                        }
+                                    }
+                                    catch(ex){}
+                                }, 1000);
+                            }
+                        }
+                        else
+                            alert('You are not an authorized user for this');
+                   }
+               });
+    }
+    //added by shalini -- ER---000093
+    if (objType == 'Announcement_Rule__c') { 
+        toolbar.push({
+                   type: "button",
+                   id: "generate_announcements",
+                   img: "Configero/wizard.png",
+                   tooltip: 'Generate Announcements',
+                   onClick: function(grid) {
+                        var records =grid.CF_getGridCheckedRows(); 
+                        var ids = [];
+                        var selected = records.length ;
+                        
+                        //if(records.length>200) {
+                        //if(records.length>100) {//Mahesh
+                           // alert("The maximum number of release plan that can be selected is 200 and you have selected " +selected +"release plans");
+                           // return;
+                        //}
+                        if (records!=null) {
+                            if (records[0] == null){
+                                alert("Please select at least one row");
+                            }
+                        else { 
+                            for (var i = 0; i < records.length; i++) {
+                                ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                            }
+                            ids = ids.join(','); 
+                            //added by shalini for ER-326
+                            window.open('/apex/WB_Announcement_Confirmation?ID='+ids,'_blank'); 
+                            //console.log('Length : ' + ids.length + ' : ' + ids);
+                            //redirectToNewPage(ids); //Mahesh
+                       }
+                       }
+                   }
+               });
+        }
+       if (objType == 'Client_Avail_Price__c') {  
+         toolbar.push({
+                   type: "button",
+                   id: "rp_upt",
+                   img: "{!$Resource.UpdatePriceTier}",
+                   tooltip: 'Price Update',
+                   onClick: function(grid) {
+                        var records = grid.CF_getGridCheckedRows(); 
+                        if(records.length > 2500) { alert("The maximum number of client avails price records that can be selected is 2500"); return; }
+                        var ids = [];
+                        for (var i = 0; i < records.length; i++) {
+                            ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                        }
+                        ids = ids.join(',');
+                        if (records.length == 0) { 
+                            window.open('/apex/WB_PriceWizard?action=priceUpdate','_blank'); 
+                        }else if(records.length!=0 && records.length < 24){
+                            window.open('/apex/WB_PriceWizard?action=priceUpdate&ID='+ids,'_blank' ); 
+                        }else{
+                            var uniqueId = sforce.connection.getUserInfo().userId + '' + new Date().getTime();
+                            var ClientAvailIdStore = new sforce.SObject("Client_Avail_Id_Store__c");
+                            ClientAvailIdStore.Key__c = uniqueId;
+                            ClientAvailIdStore.ID_Store__c = ids;
+                            ClientAvailIdStore.Re_Price_User__c = sforce.connection.getUserInfo().userId;
+                            sforce.connection.create([ClientAvailIdStore]);
+                            window.open('/apex/WB_PriceWizard?action=priceUpdate&UNIQUEID='+uniqueId,'_blank');
+                        }
+                   }
+               });
+  
+    }
+    // Added by Preeti jha(CRRT Phase 3)- Request Refresh Button on MPM Result panal to open the Request Refresh wizard.
+        if (objType == 'MPM__c') {
+            toolbar.push({
+                type: "button",
+                id: "add_RF",
+                 img: "{!$Resource.Request_Rights}",
+                tooltip: 'Request Rights',
+                onClick: function(grid) {
+                    var records = grid.CF_getGridCheckedRows();
+                    if(records.length>50) { alert("The maximum number of MPM that can be selected is 50"); return; }
+                    if (records.length == 0) { alert("Please select at least one row"); return; }
+                    var ids = [];
+                    for (var i = 0; i < records.length; i++) {
+                        ids.push(mygrid.CF_getBufferSequenceRec(records[i]).idd);
+                    }
+                    ids = ids.join(',');
+                    var url="apex/WB_Request_Refresh?ID="+ids+"&param=std"; 
+                    window.open(url, 'Popup',' height=807,width=1198,left=30,top=100,resizable=yes,scrollbars=yes,toolbar=no,status=no'); 
+
+                }
+            });
+        }
+ }
+
+
+function RatingsChangeAlertFunction() {
+    alert('The DMDM team will be notified of the change in Rating. Please note that it may take up to 48 hrs before this change is confirmed and permanently updated in MSB/CAS.');
+}
+
+dhtmlXGridObject.prototype.ORIG_CF_setWasChanged = dhtmlXGridObject.prototype.CF_setWasChanged;
+
+dhtmlXGridObject.prototype.CF_setWasChanged = function(rid, cindex, wasChanged, hasError, skipDirtyFlag) {
+    this.ORIG_CF_setWasChanged(rid, cindex, wasChanged, hasError, skipDirtyFlag);
+    if (this == mygrid && wasChanged && cindex == mygrid.CF_indexByField['Local_Rating__c']) {
+        window.clearTimeout(this.XCUSTOM_ALERT_TIMER);
+        this.XCUSTOM_ALERT_TIMER = window.setTimeout(RatingsChangeAlertFunction, 0);
+    }
+}
+var SAVE_PAGE_SIZE = 4;
+
+$.downloadFile = function(data, name, type) {
+    if (data === undefined) return;
+    // make sure it's not too big
+    if (data.length > 1024 * 1024 * 14) {
+        alert("The file you're trying to download is too big.  Please limit the number of records and try again.");
+    } else {
+        //adding the BOM character for Excel to recognize UTF8...Windows only!
+        $('#csvdownload_formdata').val('\uFEFF'+data);
+        $('#csvdownload_type').val(type);
+        $('#csvdownload_name').val(name);
+        // redirect to the full URL because chrome loses the post on a 302
+        $('#csvdownload_form').attr('action', CF_HOSTED_URL + '/apex/Configero_CSVDownload').submit();
+    }
+}
+
+//Sriniz Start - Price Code dropdown
+dhtmlXGridObject.prototype.CF_beginVFEdit_ORIG = dhtmlXGridObject.prototype.CF_beginVFEdit;
+
+dhtmlXGridObject.prototype.CF_beginVFEdit = function(idd, ind) {
+    if (this != this.CF_getRealGrid()) {
+        return this.CF_getRealGrid().CF_beginVFEdit(idd, ind);
+    }
+    if (idd || getObjectType() != 'Local_Title__c' || !this.CF_indexByField['Title_Content_Type__c'] || !this.CF_indexByField['Country__c'] || !this.CF_indexByField['Price_Code__c'] || ind != this.CF_indexByField['Price_Code__c']) {
+        return this.CF_beginVFEdit_ORIG(idd, ind);
+    }
+
+    var sel = this.CF_getGridCheckedRows();
+    if (sel.length == 0) return;
+
+    var txa = {};
+    var ffa = [];
+    for (var i = 0; i < sel.length; i++) {
+        var rec = this.CF_getBufferSequenceRec(sel[i]);
+        var val = this.CF_getValueFromCellRec(rec, this.CF_indexByField['Country__c']) + '_' + this.CF_getValueFromCellRec(rec, this.CF_indexByField['Title_Content_Type__c']);
+        if (txa[val]) continue;
+        txa[val] = 1;
+        ffa.push(val);
+    }
+
+    var vfUrl = 'c__WB_Distinct_PriceCodes?dt=' + escape(ffa.join(';'));
+    vfUrl = $.CF_getApexURL(vfUrl);
+    var g = this;
+
+    var dependencyList = this.CF_getFieldDependency(ind);
+    var allId = dependencyList['allId'];
+
+    var selectFunc = function(vals) {
+        var recs = [];
+        for (var i = 0; i < sel.length; i++) {
+            rec = g.CF_getBufferSequenceRec(sel[i]);
+            if (g.CF_getUserData(rec.idd, 'deleted') || $.isGroupId(rec.idd))
+                continue;
+            recs.push(rec);
+        }
+        for (var i = 0; i < vals.length; i++) {
+            for (var j = 0; j < g.CF_fieldDef.length; j++) {
+                if (g.CF_fieldDef[j].field == vals[i].field) {
+                    // found the field
+                    for (var k = 0; k < recs.length; k++) {
+                        g.CF_setValueInCellRec(recs[k], j, vals[i].value);
+                        g.CF_checkWasChanged(recs[k].idd, j, vals[i].value);
+                    }
+                    break;
+                }
+            }
+        }
+        var idds = [];
+        for (var i = 0; i < recs.length; i++) {
+            idds.push(recs[i].idd);
+        }
+        g.callEvent('CF_bulkEditComplete', [allId, idds]);
+        $('#CF_vfDialog').dialog('close');
+    };
+    var initFunc = function() { return []; };
+    var ifr = $('<iframe style="width: 100%; height: 100%; border: 0px" />').attr('src', vfUrl);
+    ifr.get(0).selectFunc = selectFunc;
+    ifr.get(0).initFunc = initFunc;
+    $('#CF_vfDialog').html(ifr).dialog('open');
+}
+//Sriniz end - Price Code dropdown
+
+//Added in CRRT Phase 7: Fix language utilty functionlity alert box
+
+function alertDialog(errorMsg) {  
+    try{
+        var outputMsg = '<br/>';
+       
+        if(errorMsg[0].includes('Exception'))
+            outputMsg = '<p> &#9632; '+errorMsg+'</p>';
+        else{
+            for (var i = 0; i < errorMsg.length; i++){
+                if(errorMsg[i] == 'cta')
+                    outputMsg += ' <p><span style="color:#ffc107"> &#9632; </span>Highlighted release plans cannot be fixed since Fix language utility cannot be run on a release plan with a status of Confirmed. Please first change the status to Tentative and save, then run the Fix Language Utility again.</p><br/>';
+                else if(errorMsg[i] == 'cpyrd')
+                    outputMsg += '<p> <span style="color:#f44336"> &#9632; </span> Highlighted release plans cannot be fixed because there is a duplicate Release plan with this combination</p><br/>';
+            }
+        }
+        
+        if(errorMsg.indexOf('cta') !== -1 || errorMsg.indexOf('cpyrd') !== -1 || errorMsg[0].includes('Exception')){
+              $( "#errorDialog" ).html(outputMsg).dialog({
+                  resizable: false,
+                  height: "auto",
+                  width: 410,
+                  top: 40,
+                  modal: true,
+                  buttons: {
+                      Ok: function() {
+                        if(errorMsg.indexOf('fixed') !== -1)
+                            $($('.buttons_cont tr')[4]).find('button').trigger('click');
+                        $( this ).dialog( "close" );
+                      }
+                  }
+              });
+        }
+        else if(errorMsg.indexOf('fixed') !== -1)
+            setTimeout(function(){ $($('.buttons_cont tr')[4]).find('button').trigger('click'); }, 800); 
+    }
+    catch(ex){}
+ }
+ 
+ function processDialog() {  
+     $( "#processDialog" ).html('<B>Processing...</B>').dialog({
+          resizable: false,
+          height: 100,
+          width: 200,
+          top: 40,
+          modal: true
+      });
+      $('.ui-dialog-titlebar button').css("display","none");
+ }
+</script>
+</apex:page>

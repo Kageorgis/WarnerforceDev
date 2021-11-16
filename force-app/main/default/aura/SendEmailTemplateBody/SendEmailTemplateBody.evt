@@ -1,0 +1,3 @@
+<aura:event type="COMPONENT">
+    <aura:attribute name="emailTemplate" type="object" default="{'sobjectType':'EmailTemplate'}"/>
+</aura:event>

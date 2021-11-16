@@ -1,0 +1,21 @@
+.THIS{
+    background-color: #fff;
+}
+.THIS .slds-text-title{
+    font-size: 16px!important;
+}
+div.THIS .slds-grid .slds-col video {
+    width: 100%;
+}
+
+div.THIS .slds-grid .slds-col  {
+    padding: 10px;
+}
+
+div.THIS  .slds-grid .slds-col .slds-text-title{
+    margin-top: 15px;
+}
+
+div.THIS  .slds-grid .slds-col .slds-text-body_small{
+    margin-top: 7px;
+}

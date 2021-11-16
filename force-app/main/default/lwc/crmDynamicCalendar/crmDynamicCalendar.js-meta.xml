@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata" fqn="CrmDynamicCalendar">
+    <apiVersion>46.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__HomePage">
+            <property name="calendarIds" type="String" label="Calendar Ids" description="Comma separated calenadar ids/friendly name"/>
+            <property name="calHeight" default="300" type="Integer" label="Height" description="Set the height of the calendars."/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

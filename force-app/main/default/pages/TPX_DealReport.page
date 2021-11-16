@@ -1,0 +1,1642 @@
+<apex:page Controller="TPX_DealReport_CC" showHeader="false" applyBodyTag="false" standardStylesheets="false" applyHtmlTag="false" doctype="html-5.0">
+<head>
+    <apex:stylesheet value="{!URLFOR($Resource.TPX_Bootstrap, 'css/bootstrap.min.css')}" />
+    <style>
+        @page { font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;orientation: landscape;}
+        body{
+            font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;
+            padding: 8px;
+            font-size: 12px;
+        }
+        table tr>th{
+            text-align: center;
+        }
+        .table-bordered>thead>tr>td, .table-bordered>thead>tr>th, .table-bordered>tbody>tr>td, .table-bordered{
+            border: 1px solid #333;
+        }
+        .pager {
+            text-align: center;
+            /*margin-left:5%;-*/
+        }
+    </style>
+</head>
+<body>
+    <apex:form id="frm">
+        <ul class="pager">
+            <li>
+                <apex:outputPanel styleClass="glyphicon glyphicon-arrow-left" style="color:black;cursor: pointer;">
+                    <apex:actionSupport action="{!previousSeason}" event="onclick" reRender="frm" />
+                </apex:outputPanel>            
+            </li>
+            <li>{!commitment.Name}</li>
+            <li>
+                <apex:outputPanel styleClass="glyphicon glyphicon-arrow-right" style="color:black;cursor: pointer;">
+                    <apex:actionSupport action="{!nextSeason}" event="onclick" reRender="frm" />
+                </apex:outputPanel>            
+            </li>
+            <li style="position: absolute;margin-left: 250px;">
+                <input type="button" class="btn btn-default" value="Export" onclick="exportt()"/>
+                <apex:inputHidden id="seasonInput" value="{!seasonIndex}"/>
+            </li>
+        </ul>
+        <table class="table table-bordered table-hover" style="border: 1px solid #333;" border="1">
+            <thead>
+                <tr>
+                    <th colspan="2"></th>
+                    <th style="background-color: #e6b8b7;font-weight: normal;">Digital</th>
+                    <th colspan="4" style="background-color: #d8e4bc;font-weight: normal;">Ellentube (WAD AGREEMENT)</th>
+                    <th style="background-color: #00b050;font-weight: normal;">Ellentube (Digital IO)</th>
+                    <th colspan="3" style="background-color: #ccc0da;font-weight: normal;">Youtube</th>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <th colspan="12" style="background-color: #fcd5b4;font-weight: normal;">Games</th> -->
+                    <th colspan="3" style="background-color: #fcd5b4;font-weight: normal;">Games</th>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + END -->
+                </tr>
+                <tr>
+                    <th style="width:1in;font-weight: normal;">Account Name</th>
+                    <th style="width:2in;text-align: left;font-weight: normal;">Deal Name</th>
+                    <th style="width:0.9in;font-weight: normal;">Digital Fee</th>
+                    <th style="font-weight: normal;">Ellentube Fee (WAD Agreement)</th>
+                    <th style="font-weight: normal;">Est. Ellentube Costs Ellentube Fee</th>
+                    <th style="font-weight: normal;">Final Ellentube Costs Ellentube Fee </th>
+                    <th style="font-weight: normal;">Net Ellentube Income Ellentube Fee</th>
+                    <th style="font-weight: normal;">Ellentube Fee (Digital IO)</th>
+                    <th style="font-weight: normal;">Youtube Fee</th>
+                    <th style="font-weight: normal;">Est. YouTube Revenue</th>
+                    <th style="font-weight: normal;">Final YouTube Revenue</th>
+                    <!-- Code Modified by Mayank Desai on 03/25/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <th style="width:0.7in;font-weight: normal;">Heads Up Fee</th>
+                    <th style="width:0.7in;font-weight: normal;">Final Heads Up Costs</th>
+                    <th style="width:0.7in;font-weight: normal;">Final Heads Up Net Income</th>
+                    <th style="font-weight: normal;">Psych Fee</th>
+                    <th style="font-weight: normal;">Final Psych Costs</th>
+                    <th style="font-weight: normal;">Final Psych Net Income</th>
+                    <th style="font-weight: normal;">Hot Hands Fee</th>
+                    <th style="font-weight: normal;">Final Hot Hands Costs</th>
+                    <th style="font-weight: normal;">Final Hot Hands Net Income</th>
+                    <th style="font-weight: normal;">Emoji App Fee</th>
+                    <th style="font-weight: normal;">Emoji App Final Costs</th>
+                    <th style="font-weight: normal;">Final Emoji App Net Income</th> -->
+                    <th style="font-weight: normal;">Games Fee</th>
+                    <th style="font-weight: normal;">Final Games Costs</th>
+                    <th style="font-weight: normal;">Final Games Net Income</th>
+                    <!-- Code Modified by Mayank Desai on 03/25/2019 for ER-002310_TPX_GamesRollup + End -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background-color: #ffff99;">
+                    <td style="font-weight: bold;" colspan="2">DIGITAL {!UPPER(commitment.Name)}: CLOSED</td>
+                    <td></td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td> -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + END -->
+                </tr>
+                <apex:repeat value="{!closedDeals}" var="closedDeal" id="closedDeals">
+                    <tr>
+                        <td>{!closedDeal.Account.Name}</td>
+                        <td>{!closedDeal.name}</td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Digital_Integration_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!closedDeal.How_is_Digital_Being_Paid__c!='Digital IO'}">
+                               <apex:param value="{!closedDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Est_Ellentube_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Ellentube_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Net_Ellentube_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!closedDeal.How_is_Digital_Being_Paid__c=='Digital IO'}">
+                               <apex:param value="{!closedDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.YouTube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Est_YouTube_Revenue__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_YouTube_Revenue__c}" />
+                            </apex:outputText>
+                        </td>
+                        <!-- Code Modified by Mayank Desai on 03/25/2019 for ER-002310_TPX_GamesRollup + Start -->
+                        <!-- <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!closedDeal.Heads_Up_Fee__c}" />
+                        </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Heads_Up_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Heads_Up_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Psych_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Psych_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Psych_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Hot_Hands_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Hot_Hands_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Hot_Hands_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Emoji_App_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Emoji_App_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Emoji_App_Net_Income__c}" />
+                            </apex:outputText>
+                        </td> -->
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Games_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Games_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!closedDeal.Final_Games_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <!-- Code Modified by Mayank Desai on 03/25/2019 for ER-002310_TPX_GamesRollup + End -->
+                    </tr>
+                </apex:repeat>
+                <tr style="background-color: #ddd;text-align: right;font-weight: bold;">
+                    <td></td>
+                    <td>Total</td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedDigitalIntegrationFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedEllentubeFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedEstEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalNetEllentubeIncome}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedEllentubeFeeDigital}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedYouTubeFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedEstYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedHeadsUpFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalHeadsUpCost}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalHeadsUpNetIncome}" />
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedPsychFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalPsychCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalPsychNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedHotHandsFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalHotHandsCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalHotHandsNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedEmojiAppFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalEmojiAppCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalEmojiAppNetIncome}"/>
+                        </apex:outputText>
+                    </td> -->
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedGamesFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalGamesCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalClosedFinalGamesNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + END -->
+                </tr>
+                <tr style="background-color: #ddd;">
+                    <td></td>
+                    <td style="font-weight: bold;text-align: right;">Corporate Forecast</td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Fee_WAD_Agreement__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Costs__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Costs__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Net_Ellentube_Income__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Fee_Digital_IO__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Heads_Up_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Psych_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Hot_Hands_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Emoji_App_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td></td>
+                    <td></td> -->
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Games_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                </tr>
+                <tr style="background-color: #ddd;">
+                    <td></td>
+                    <td style="font-weight: bold;text-align: right;">Percent to Goal</td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedEllentubeFeeWADAgreement!=null}">
+                           <apex:param value="{!PercentClosedEllentubeFeeWADAgreement}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedEstEllentubeCosts!=null}">
+                           <apex:param value="{!PercentClosedEstEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedFinalEllentubeCosts!=null}">
+                           <apex:param value="{!PercentClosedFinalEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedNetEllentubeIncome!=null}">
+                           <apex:param value="{!PercentClosedNetEllentubeIncome}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedEllentubeFeeDigitalIO!=null}">
+                           <apex:param value="{!PercentClosedEllentubeFeeDigitalIO}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedYouTubeFee!=null}">
+                           <apex:param value="{!PercentClosedYouTubeFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedEstYouTubeRevenue!=null}">
+                           <apex:param value="{!PercentClosedEstYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedFinalYouTubeRevenue!=null}">
+                           <apex:param value="{!PercentClosedFinalYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedHeadsUpGoal!=null}">
+                           <apex:param value="{!PercentClosedHeadsUpGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedPsychGoal!=null}">
+                           <apex:param value="{!PercentClosedPsychGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedHotHandsGoal!=null}">
+                           <apex:param value="{!PercentClosedHotHandsGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedEmojiAppGoal!=null}">
+                           <apex:param value="{!PercentClosedEmojiAppGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td></td>
+                    <td></td> -->
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentClosedGamesGoal!=null}">
+                           <apex:param value="{!PercentClosedGamesGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                </tr>
+                <tr style="background-color: #ffff99;">
+                    <td style="font-weight: bold;" colspan="2">DIGITAL {!UPPER(commitment.Name)}: CONTRACT</td>
+                    <td></td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td> -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <apex:repeat value="{!contractDeals}" var="contractDeal" id="contractDeals">
+                    <tr>
+                        <td>{!contractDeal.Account.Name}</td>
+                        <td>{!contractDeal.name}</td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Digital_Integration_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!contractDeal.How_is_Digital_Being_Paid__c!='Digital IO'}">
+                               <apex:param value="{!contractDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Est_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Net_Ellentube_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!contractDeal.How_is_Digital_Being_Paid__c=='Digital IO'}">
+                               <apex:param value="{!contractDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.YouTube_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Est_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <!-- <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Heads_Up_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Heads_Up_Cost__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Heads_Up_Net_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Psych_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Psych_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Psych_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Hot_Hands_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Hot_Hands_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Hot_Hands_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Emoji_App_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Emoji_App_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Emoji_App_Net_Income__c}" />
+                            </apex:outputText>
+                        </td> -->
+                         <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Games_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Games_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!contractDeal.Final_Games_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                </apex:repeat>
+                <tr style="background-color: #ddd;text-align: right;">
+                    <td></td>
+                    <td style="font-weight: bold;">Total</td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractDigitalIntegrationFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractEllentubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractEstEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalNetEllentubeIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractEllentubeFeeDigital}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractYouTubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractEstYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    
+                    <!-- <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractHeadsUpFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalHeadsUpCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalHeadsUpNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractPsychFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalPsychCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalPsychNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractHotHandsFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalHotHandsCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalHotHandsNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractEmojiAppFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalEmojiAppCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalEmojiAppNetIncome}"/>
+                        </apex:outputText>
+                    </td> -->
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractGamesFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalGamesCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalContractFinalGamesNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <tr style="background-color: #ffff99;">
+                    <td style="font-weight: bold;" colspan="2">DIGITAL {!UPPER(commitment.Name)}: HOT</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td> -->
+                </tr>
+                <apex:repeat value="{!hotDeals}" var="hotDeal" id="hotDeals">
+                    <tr>
+                        <td>{!hotDeal.Account.Name}</td>
+                        <td>{!hotDeal.name}</td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Digital_Integration_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!hotDeal.How_is_Digital_Being_Paid__c!='Digital IO'}">
+                               <apex:param value="{!hotDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Est_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Net_Ellentube_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!hotDeal.How_is_Digital_Being_Paid__c=='Digital IO'}">
+                               <apex:param value="{!hotDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.YouTube_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Est_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        
+                        <!-- <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Heads_Up_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Heads_Up_Cost__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Heads_Up_Net_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Psych_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Psych_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Psych_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Hot_Hands_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Hot_Hands_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Hot_Hands_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Emoji_App_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Emoji_App_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Emoji_App_Net_Income__c}" />
+                            </apex:outputText>
+                        </td> -->
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Games_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Games_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!hotDeal.Final_Games_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                </apex:repeat>
+                <tr style="background-color: #ddd;text-align: right;">
+                    <td></td>
+                    <td style="font-weight: bold;">Total</td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotDigitalIntegrationFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotEllentubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotEstEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalNetEllentubeIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotEllentubeFeeDigital}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotYouTubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotEstYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <!-- <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotHeadsUpFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalHeadsUpCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalHeadsUpNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotPsychFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalPsychCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalPsychNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotHotHandsFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalHotHandsCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalHotHandsNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotEmojiAppFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalEmojiAppCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalEmojiAppNetIncome}"/>
+                        </apex:outputText>
+                    </td> -->
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotGamesFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalGamesCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalHotFinalGamesNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <tr style="background-color: #ffff99;">
+                    <td style="font-weight: bold;" colspan="2">DIGITAL {!UPPER(commitment.Name)}: PROPOSAL</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <!-- <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td> -->
+                </tr>
+                <apex:repeat value="{!proposalDeals}" var="proposalDeal" id="proposalDeals">
+                    <tr>
+                        <td>{!proposalDeal.Account.Name}</td>
+                        <td>{!proposalDeal.name}</td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Digital_Integration_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!proposalDeal.How_is_Digital_Being_Paid__c!='Digital IO'}">
+                               <apex:param value="{!proposalDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Est_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Ellentube_Costs__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Net_Ellentube_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}" rendered="{!proposalDeal.How_is_Digital_Being_Paid__c=='Digital IO'}">
+                               <apex:param value="{!proposalDeal.Ellentube_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.YouTube_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Est_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_YouTube_Revenue__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <!-- <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Heads_Up_Fee__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Heads_Up_Cost__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Heads_Up_Net_Income__c}"/>
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Psych_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Psych_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Psych_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Hot_Hands_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Hot_Hands_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Hot_Hands_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Emoji_App_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Emoji_App_Costs__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Emoji_App_Net_Income__c}" />
+                            </apex:outputText>
+                        </td> -->
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Games_Fee__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Games_Cost__c}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="text-align: right;">
+                            <apex:outputText value="{0, number, currency}">
+                               <apex:param value="{!proposalDeal.Final_Games_Net_Income__c}" />
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                </apex:repeat>
+                <tr style="background-color: #ddd;text-align: right;">
+                    <td></td>
+                    <td style="font-weight: bold;text-align: right;">Total</td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalDigitalIntegrationFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalEllentubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalEstEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalFinalEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalFinalNetEllentubeIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalEllentubeFeeDigital}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalYouTubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalEstYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalFinalYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalGamesFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalFinalGamesCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalProposalFinalGamesNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <tr style="background-color: #ddd;text-align: right;font-weight: bold;">
+                    <td></td>
+                    <td>{!commitment.Name} Grand Total</td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenDigitalIntegrationFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenEllentubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenEstEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalEllentubeCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalNetEllentubeIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenEllentubeFeeDigital}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenYouTubeFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenEstYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalYouTubeRevenue}"/>
+                        </apex:outputText>
+                    </td>
+                    
+                    <!-- <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenHeadsUpFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalHeadsUpCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalHeadsUpNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenPsychFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalPsychCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalPsychNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenHotHandsFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalHotHandsCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalHotHandsNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenEmojiAppFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalEmojiAppCosts}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalEmojiAppNetIncome}"/>
+                        </apex:outputText>
+                    </td> -->
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenGamesFee}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalGamesCost}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!totalOpenFinalGamesNetIncome}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <tr style="background-color: #ddd;">
+                    <td></td>
+                    <td style="font-weight: bold;text-align: right;">Corporate Forecast</td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Fee_WAD_Agreement__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Costs__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Costs__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Net_Ellentube_Income__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Ellentube_Fee_Digital_IO__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.YouTube_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Heads_Up_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Psych_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Hot_Hands_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Emoji_App_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td></td>
+                    <td></td> -->
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0, number, currency}">
+                           <apex:param value="{!commitment.Games_Goal__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + END -->
+                </tr>
+                <tr style="background-color: #ddd;">
+                    <td></td>
+                    <td style="font-weight: bold;text-align: right;">Percent to Goal</td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenEllentubeFeeWADAgreement!=null}">
+                           <apex:param value="{!PercentOpenEllentubeFeeWADAgreement}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenEstEllentubeCosts!=null}">
+                           <apex:param value="{!PercentOpenEstEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenFinalEllentubeCosts!=null}">
+                           <apex:param value="{!PercentOpenFinalEllentubeCosts}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenNetEllentubeIncome!=null}">
+                           <apex:param value="{!PercentOpenNetEllentubeIncome}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenEllentubeFeeDigitalIO!=null}">
+                           <apex:param value="{!PercentOpenEllentubeFeeDigitalIO}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenYouTubeFee!=null}">
+                           <apex:param value="{!PercentOpenYouTubeFee}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenEstYouTubeRevenue!=null}">
+                           <apex:param value="{!PercentOpenEstYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenFinalYouTubeRevenue!=null}">
+                           <apex:param value="{!PercentOpenFinalYouTubeRevenue}" />
+                        </apex:outputText>
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                    <!-- <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenHeadsUpGoal!=null}">
+                           <apex:param value="{!PercentOpenHeadsUpGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenPsychGoal!=null}">
+                           <apex:param value="{!PercentOpenPsychGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenHotHandsGoal!=null}">
+                           <apex:param value="{!PercentOpenHotHandsGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenEmojiAppGoal!=null}">
+                           <apex:param value="{!PercentOpenEmojiAppGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td></td>
+                    <td></td> -->
+                    <td style="text-align: right;">
+                        <apex:outputText value="{0}%" rendered="{!PercentOpenGamesGoal!=null}">
+                           <apex:param value="{!PercentOpenGamesGoal}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <td style="text-align: right;">
+                    </td>
+                    <!-- Code Modified by Mayank Desai on 03/26/2019 for ER-002310_TPX_GamesRollup + Start -->
+                </tr>
+            </tbody>
+        </table>   
+    </apex:form>
+    <apex:includeScript value="{!URLFOR($Resource.TPX_JQuery, 'jquery.min.js')}"/>
+    <script>
+        $(document).ready(function() {
+        });
+        function exportt(){
+            window.open("/apex/TPX_DealReportToDownload?seasonIndex="+$('input[id$=seasonInput]').val());                                
+        }
+    </script>
+</body>
+</apex:page>

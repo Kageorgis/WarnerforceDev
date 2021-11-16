@@ -1,0 +1,7 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:hasRecordId" access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="recordId" type="String"/>
+    <lightning:card title="Maximized view">
+        <c:cp_forecastingItemGrid recordId="{!v.recordId}" />
+    </lightning:card>
+</aura:component>

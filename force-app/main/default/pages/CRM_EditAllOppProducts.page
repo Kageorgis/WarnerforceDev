@@ -1,0 +1,1257 @@
+<apex:page standardController="Opportunity" extensions="CRM_EditAllOppProductsCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+  <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+      
+  <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'css/EditProducts.css')}" />
+
+  <script>
+        window.$Label = window.$Label || {};
+        window.$Label.updateSuccessMsg = "{!$Label.CRM_Deal_Entry_Edit_Products_Message}";
+        window.$Label.selectFieldToUpdateMsg = "{!$Label.CRM_Select_Field_To_Update}";
+        window.$Label.selectRecordForAnyOperationMsg = "{!$Label.CRM_Select_Record_For_Any_Operation}";
+        window.$Label.delectSuccessMsg = "{!$Label.CRM_Product_Deleted_Success_Message}";
+        window.$Label.enterPromotedPriceDataMsg = "{!$Label.CRM_Enter_Value_For_Promoted_Price}";
+        window.$Label.enterQuantityDataMsg = "{!$Label.CRM_Enter_Value_For_Quantity}";
+        window.$Label.enterPhysicalDealQuantityDataMsg = "{!$Label.CRM_Enter_Value_For_Physical_Deal_Quantity}";
+        window.$Label.enterValueForDecayCureveCalculationMsg = "{!$Label.CRM_Enter_Value_For_Decay_Curve_Calculation}";
+        window.$Label.enterValueForNRCoopMsg = "{!$Label.CRM_Enter_Value_For_NR_Coop}";
+        window.$Label.enterMaterialNumberDataMsg = "{!$Label.CRM_Enter_Value_For_Material_Number}";
+        window.$Label.enterValueToUpdateMsg = "{!$Label.CRM_Enter_Value_to_Update}";
+        window.$Label.selectNoneValueForPicklist = "{!$Label.CRM_Select_None_Value}";
+        window.$Label.productNotFound = "{!$Label.CRM_No_Product_found_label}";
+        window.$Label.promotedPriceByPercentLabel = "{!$Label.CRM_Promoted_Price_By_Discount}";
+        window.$Label.enterRentalFieldsDataMsg = "{!$Label.CRM_Enter_Value_For_Rental_Fields}";
+        window.$Label.enterValidHandlingFeeDataMsg = "{!$Label.CRM_Enter_Value_For_Handling_Fee}";
+        window.$Label.setOverridePricingToChangeRentalPricing = "{!$Label.CRM_Set_Override_Pricing_Error}";
+        window.$Label.enterValueForDecayCurveTemplateJapanMsg = "{!$Label.CRM_Enter_Value_For_Decay_Curve_Template_Japan}";
+        window.$Label.enterValidFormatForNumberFields = "{!$Label.CRM_Enter_Valid_Value_For_Number}";
+  </script>
+   
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular-sanitize.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+  
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+  
+  <!-- to use the picklist component -->
+  
+  <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/EditProductsCtrl.js')}" /> 
+  <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" />
+  <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+  
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+  <link data-require="bootstrap-css@3.1.1" data-semver="3.1.1" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+  <script data-require="angular.js@1.3.0" data-semver="1.3.0" src="https://code.angularjs.org/1.3.0/angular.js"></script>
+  <script data-require="bootstrap@3.1.1" data-semver="3.1.1" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/simplePagination.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/angular-input-masks.js"/>
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+
+  <style>
+    .slds .slds-checkbox [type="checkbox"][disabled] > .slds-checkbox--faux:after, .slds .slds-checkbox [type="checkbox"][disabled] ~ .slds-checkbox--faux:after {
+        border-bottom: 2px solid #1589ee;
+        border-left: 2px solid #1589ee;
+    }
+    
+    .slds-col-label {
+                text-transform: uppercase;
+                font-size: 10.5px !important;
+                color: #54698d;
+                /*max-width: 59% !important;*/
+    }
+    
+    .slds .slds-form--horizontal .slds-form-element > .slds-form-element__label {
+        max-width: 49%;
+        white-space: pre-wrap;
+        
+    }
+    
+    .slds .slds-form--horizontal .slds-form-element + .slds-form-element{
+        margin-top: 5px;
+    }
+    .slds .slds-form--horizontal .slds-form-element__control {
+        width: calc(50% - (12px * 2));
+        margin-right:10px;
+       
+    }
+  </style>
+  
+</head>
+
+<script>
+    /* Initialize global variables to use in static resource */
+    var initialQuantityLabel = '{!$ObjectType.OpportunityLineItem.fields.Initial_Quantity__c.Label}';
+    var initialBackOrderQuantityLabel = '{!$ObjectType.OpportunityLineItem.fields.Initial_Back_Order_Quantity__c.Label}';
+    var replenQuantityLabel = '{!$ObjectType.OpportunityLineItem.fields.Replen_Quantity__c.Label}';
+    // US#605 changes start
+    var merchandisingLabel = '{!$ObjectType.OpportunityLineItem.fields.Merchandising__c.Label}';
+    var distributionCostLabel = '{!$ObjectType.OpportunityLineItem.fields.Distribution_Cost__c.Label}';
+    var returnCostLabel = '{!$ObjectType.OpportunityLineItem.fields.Return_Cost__c.Label}';
+    var productionCostLabel = '{!$ObjectType.OpportunityLineItem.fields.Production_Cost__c.Label}';
+    var royaltyFeeFixedLabel = '{!$ObjectType.OpportunityLineItem.fields.Royalty_Fee_Fixed__c.Label}';
+    var masterNegativeLabel = '{!$ObjectType.OpportunityLineItem.fields.Master_Negative__c.Label}';
+    var salesAllowanceLabel = '{!$ObjectType.OpportunityLineItem.fields.Sales_Allowance__c.Label}';
+    var replenDelayDaysLabel = '{!$ObjectType.OpportunityLineItem.fields.Replen_Delay_Days__c.Label}';
+    
+    var returnsLabel = '{!$ObjectType.OpportunityLineItem.fields.Returns__c.Label}';
+    var papLabel = '{!$ObjectType.OpportunityLineItem.fields.PAP__c.Label}';
+    var gemaLabel = '{!$ObjectType.OpportunityLineItem.fields.Gema__c.Label}';
+    var grossReceiptTaxesFFALabel = '{!$ObjectType.OpportunityLineItem.fields.Gross_receipt_taxes_FFA__c.Label}';
+    var doubtfulAccountsLabel = '{!$ObjectType.OpportunityLineItem.fields.Doubtful_Accounts__c.Label}';
+    var cashDiscountsLabel = '{!$ObjectType.OpportunityLineItem.fields.Cash_Discounts__c.Label}';
+    
+    // US#605 changes end
+    var discountLabel = '{!$ObjectType.OpportunityLineItem.fields.Discount.Label}';
+    var quantityLabel = '{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}';
+    var plQuantityLabel = '{!$ObjectType.OpportunityLineItem.fields.P_L_Quantity__c.Label}';
+    var promotedPriceLabel = '{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.Label}';
+    var promotedPriceByPercentLabel = $Label.promotedPriceByPercentLabel;
+    var handlingFeeLabel = '{!$ObjectType.OpportunityLineItem.fields.Handling_Fee__c.Label}';
+    var rentalPriceLabel = '{!$ObjectType.OpportunityLineItem.fields.Rental_Price__c.Label}';
+    var revenueShareLabel = '{!$ObjectType.OpportunityLineItem.fields.Revenue_Share__c.Label}';
+    var numberOfRentalsLabel = '{!$ObjectType.OpportunityLineItem.fields.Number_of_Rentals_per_Unit__c.Label}';
+    var finalPurchasePriceLabel = '{!$ObjectType.OpportunityLineItem.fields.Final_Purchase_Price__c.Label}';
+    var finalPurchaseLabel = '{!$ObjectType.OpportunityLineItem.fields.Final_Purchase__c.Label}';
+    var coopRequestedAmountLabel = '{!$ObjectType.OpportunityLineItem.fields.Co_op_Requested_Amount__c.Label}';
+    var subTagsLink = "{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}";
+    var numberingSystemLink = "{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}";
+    var numberLocaleLink = "{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json";
+    
+    var coopReason = '{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}';
+    //US#787
+    var listPrice = '{!$ObjectType.OpportunityLineItem.fields.ListPrice__c.Label}';
+    
+    //Defect#4380 :US#799: hide cost fields from picklist based on access.
+    var mapCostFieldsAccess ={
+      '{!$ObjectType.OpportunityLineItem.fields.Sales_Allowance__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Sales_Allowance__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Master_Negative__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Master_Negative__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Merchandising__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Merchandising__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Distribution_Cost__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Distribution_Cost__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Return_Cost__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Return_Cost__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Production_Cost__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Production_Cost__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Royalty_Fee_Fixed__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Royalty_Fee_Fixed__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Returns__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Returns__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.PAP__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.PAP__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Gema__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Gema__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Gross_receipt_taxes_FFA__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Gross_receipt_taxes_FFA__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Doubtful_Accounts__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Doubtful_Accounts__c.accessible},
+      '{!$ObjectType.OpportunityLineItem.fields.Cash_Discounts__c.Label}':{!!$ObjectType.OpportunityLineItem.fields.Cash_Discounts__c.accessible}
+    };
+    
+    //US#172 
+    var priceTierLabel ='{!$ObjectType.OpportunityLineItem.fields.Price_Tier__c.Label}';
+    
+    //US#663 - added label
+    var permanentPriceTierLabel ='{!$ObjectType.OpportunityLineItem.fields.Permanent_Price_Tier__c.Label}';
+    /* Login to sforce proxy service */
+    sforce.connection.sessionId = "{!$Api.Session_ID}";
+
+    /* Pass a few dynamic parameters */
+    angular.module("appConfig", [])
+        .service("appConfig", function() {
+             return {
+                resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                resourceAddProducts : '{!URLFOR($Resource.CRM_EditAllProducts_Resources)}'.replace('?isdtp=p1',''),
+                recordType: 'Opportunity',
+                recordId: '{!Opportunity.Id}',
+                breadcrumbObjectName: '{!$ObjectType.Opportunity.labelPlural}',
+                breadcrumbObjectLink: '{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}',
+                breadcrumbRecordName: '{!JSENCODE(Opportunity.Name)}',
+                breadcrumbRecordLink: '{!URLFOR($Action.Opportunity.View,Id)}',
+                userTerritory : '{!TEXT($User.Territory__c)}',
+                apexController: CRM_EditAllOppProductsCtrl,
+                onSaveSuccessUrl: '{!URLFOR($Action.Opportunity.View,Id)}',
+                dealCurrencyCode: '{!Opportunity.CurrencyISOCode} ',
+                isReadOnlyPage: {!isPageReadOnly},
+                isCoOpClosed: {!isCoOpClosed},
+                isDigitalDeal: {!isDigitalDeal},
+                isNRDeal: {!IsNRDeal}, //US#598
+                isConsignmentCustomer: {!isConsignmentCustomer},
+                isAccessibleToUser: {!isAccessibleToUser},//US#799
+                maxProductLimit:{!maxProductLimit},  
+                isGerman: {!isGerman},             
+                isFrance: {!isFrance},
+                isJapan: {!isJapan},
+                isJapanForSellThrough: {!isJapanForSellThrough},
+                isJapanTerritory: {!isJapanTerritory},
+                isFR_BXTerritory: {!isFR_BXTerritory},
+                showCoopTab: {!showCoopTab},
+                isQuantityReadOnly : {!isQuantityReadOnly},
+                highLevelTarget : {!highLevelTarget},
+                highLevelForecast : {!highLevelForecast},
+                decimalPlaces : {!decimalPlaces},
+                isRevenueShareAccount : {!isRevenueShareAccount},
+                coopRequestedDealAmount : {!coopRequestedDealAmount},
+               // coopBlanceFromBudget : {!coopBlanceFromBudget}, US#954 Ankita US Games
+                isEstimateAvailableOnDealAndDp : {!isEstimateAvailableOnDealAndDp},
+                userLocale : '{!UserLocale}',
+                isUSCANMEXTerritory : {!isUSCANMEXTerritory} //US:936:US Games
+            };
+        });
+    
+    function checkUncheckAll() {
+        var val = $("#select-all").prop("checked");
+        $("input[id^='select-row-']").prop('checked', val);
+    }
+                 
+</script>
+
+<body style="padding:0px" >
+<div class="mainContainer" xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmEditProducts" ng-cloak="ngCloak" ng-controller="crmEditProductController" ng-init="loadLineItems()">
+  <c:CRM_SLDSPicklist />
+  <c:CRM_SLDSLookup />
+  
+      <style>
+        .wb-tab-planning-col { display: {{currentTab == 'wb-tab-planning' ? '' : 'none'}}; }
+        .wb-tab-RentalDetails-col { display: {{currentTab == 'wb-tab-RentalDetails' ? '' : 'none'}}; }
+        .wb-tab-nrCoop-col { display: {{currentTab == 'wb-tab-nrCoop' ? '' : 'none'}}; }
+        .wb-tab-cops-col { display: {{currentTab == 'wb-tab-cops' ? '' : 'none'}}; }
+        .wb-tab-review-col { display: {{currentTab == 'wb-tab-review' ? '' : 'none'}}; }
+        .wb-tab-consignment-col { display: {{currentTab == 'wb-tab-consignment' ? '' : 'none'}}; }
+    </style>
+  
+  <div class="slds">
+    <div class="spinnerModel" ng-show="showSpinner">
+     <div class="spinnerContent slds-spinner--large">
+       <img src="{{appConfig.resourceSlds+'/assets/images/spinners/slds_spinner_brand.gif'}}" alt="Loading..." />
+       <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+     </div>
+   </div>
+        
+    <div id="headerDiv" class="slds-page-header" role="banner">
+      <div class="slds-grid">
+        <div class="slds-col slds-has-flexi-truncate">
+          <nav class="slds-m-bottom--xx-small" role="navigation">
+            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+              <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$ObjectType.Opportunity.labelPlural}</a></li>
+              <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Opportunity.View,Id)}">{!Opportunity.Name}</a></li>
+            </ol>
+          </nav>
+          <div class="slds-col slds-has-flexi-truncate">
+            <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Edit_Product_Label}">{!$Label.CRM_Edit_Product_Label}</h1>
+          </div>
+        </div>
+        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+            <!--US#598 Toggle Targeted  and Untargeted Deal Products only for physical Deal -->
+            <div class="slds-form-element" ng-show= "!appConfig.isDigitalDeal && appConfig.isNRDeal">
+                <div class="slds-form-element__control"  >
+                       <input name="excludeUntargeted" type="checkbox" ng-model="excludeUntargetedProd" />
+                       <span class="slds-checkbox--faux"></span>
+                      <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Exclude_Untargeted}</label>
+                </div>
+            </div>
+            <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                     <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Product_UPC_Material_Number}</label>
+                     <input id= "txt2" class="slds-input slds-input--small" type="text" ng-model="search.materialNumber" style="width:150px;" ng-keyup="$event.keyCode == 13 && moveFocusAndAdd()" ng-disabled="appConfig.isReadOnlyPage"/>
+                </div>
+            </div>
+            <div class="slds-form-element">
+                <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                <div class="slds-form-element__control">
+                  <input class="slds-input slds-input--small" style="width:150px; !important"  ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-change="filter()"/>
+                </div>
+            </div>
+           
+          <div class="slds-form-element">
+            <div class="slds-form-element__control">
+              <div class="slds-button-group slds-button-space-left" role="group">
+                  <!-- Added for La Moulinette Functionality -->
+                  <button class="slds-button slds-button--neutral" ng-click="showLaMoulinettePopup(lineItems)" ng-show= "((isGerman && !appConfig.isReadOnlyPage) || isFrance) && !isDigitalDeal && !noSharePercent">
+                      <svg aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#setup_assistant_guide')}"></use>
+                      </svg>
+                  </button>
+                  <button class="slds-button slds-button--neutral" ng-click="showHideCoopRequestedAmountPopup(true)" ng-show= "isGerman && !appConfig.isReadOnlyPage" ng-disabled="!appConfig.isEstimateAvailableOnDealAndDp">
+                     <!-- <svg aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#push')}"></use>
+                      </svg>--> {!$Label.CRM_Co_op_Button_On_Edit_Product_Page}
+                  </button>
+                  <button ng-click="saveData(true)" class="slds-button slds-button--neutral">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                  <button ng-click="saveData(false)" class="slds-button slds-button--neutral">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+              </div>
+            </div>
+          </div>
+          <div class="slds-button-group" role="group">
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slds-tabs--default">
+      <ul class="slds-tabs--default__nav">
+        <li id="wb-tab-planning" ng-class="{'slds-active': currentTab == 'wb-tab-planning' }" ng-hide="appConfig.isJapan" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-planning'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab">{!$Label.CRM_Deal_Entry_Plan_Tab}</a></li>
+        <li id="wb-tab-RentalDetails" ng-class="{'slds-active': currentTab == 'wb-tab-RentalDetails' }" ng-show="appConfig.isJapan" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-RentalDetails'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab">{!$Label.CRM_Rental_Details_Tab}</a></li>
+        <!--<li id="wb-tab-schedule" ng-class="{'slds-active': currentTab == 'wb-tab-schedule' }" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-schedule'"><a href="#" role="tab">{!$Label.CRM_Deal_Entry_Schedule_Tab}</a></li>-->
+        <li id="wb-tab-nrCoop" ng-class="{'slds-active': currentTab == 'wb-tab-nrCoop' }" ng-hide="appConfig.showCoopTab" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-nrCoop'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab">{!$Label.CRM_NR_Coop_Tab}</a></li>
+        <!-- US#799 : added check to show cost tab to only accissible users ng-show="isAccessibleToUser" -->
+        <li id="wb-tab-cops" ng-class="{'slds-active': currentTab == 'wb-tab-cops' }" class="wb-tab slds-tabs__item slds-text-heading--label" ng-show="isAccessibleToUser" ng-click ="currentTab = 'wb-tab-cops'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab">{!$Label.CRM_Deal_Entry_Costs_Tab}</a></li>
+        <!--<li id="wb-tab-actuals" class="wb-tab slds-tabs__item slds-text-heading--label"><a href="#" role="tab">Actuals</a></li>-->
+        <li id="wb-tab-review" ng-class="{'slds-active': currentTab == 'wb-tab-review' }" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-review'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab" >{!$Label.CRM_Deal_Entry_Review_Tab}</a></li>
+        <li id="wb-tab-consignment" ng-class="{'slds-active': currentTab == 'wb-tab-consignment' }" ng-show="isConsignmentCustomer" class="wb-tab slds-tabs__item slds-text-heading--label" ng-click ="currentTab = 'wb-tab-consignment'; initErrorMsg(); changeUpdateAllRowList();"><a href="#" role="tab" >{!$Label.CRM_Consignment_Tab}</a></li>
+      </ul> 
+    </div>
+    
+    <div id="errorDiv" class="slds-grid" ng-show="msgText">
+      <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+        <span class="slds-assistive-text">Info</span>
+        <button class="slds-button slds-notify__close" ng-click="removeMsgBlock()">
+          <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+            <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+          </svg>
+          <span class="slds-assistive-text">Close</span>
+        </button>
+        <div class="notify__content slds-grid">
+          <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+        </div>
+      </div>
+    </div>
+    
+    <div id="updateDiv" class="slds-grid slds-max-small-hide">
+        <div class="slds-col--padded slds-m-vertical--small slds-form--inline">
+            <div class="slds-form-element" ng-hide="appConfig.isReadOnlyPage">
+                
+                <label class="slds-form-element__label">{!$Label.CRM_Deal_Entry_Message}</label>
+                <div class="slds-form-element__control">
+                    <crm-multiselect-picklist options="updateRowFieldOptions" selectedOpts="updateRowsField" multiple="false" placeholder="{!$Label.CRM_Deal_Entry_Select_Field_Placeholder}"/>
+                </div>
+                <div class="slds-form-element__control">
+                    <!--<input class="slds-form-element slds-input" ui-number-mask="2" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-show="!appConfig.isJapanTerritory && updateRowsField[0].value !=  'coopReason' &&  updateRowsField[0].value !=  'priceTier'" ng-model="updateRowsFieldVal" style="width:150px;"/>
+                    <input class="slds-form-element slds-input" integer-input="true" type="text" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-show="appConfig.isJapanTerritory && updateRowsField[0].value !=  'priceTier'" ng-model="updateRowsFieldVal" style="width:150px;"/>-->
+                    <input class="slds-form-element slds-input" format-number="{{appConfig.decimalPlaces}}" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-show="updateRowsField[0].value !=  'coopReason' &&  updateRowsField[0].value !=  'priceTier'" ng-model="updateRowsFieldVal" style="width:150px;"/>
+                    <!--US#172 pricetier in update all changes -->
+                    <input class="slds-form-element slds-input" type="text" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-show="updateRowsField[0].value ==  'priceTier'" ng-model="updatePriceTierVal" style="width:150px;"/>
+                    <div class="slds-select_container" >
+                         <select id="coopReasonPicklist" style="width: 150px;" class="slds-select" ng-model="updateCoopReasonVal" ng-show="!appConfig.isJapanTerritory && updateRowsField[0].value ==  'coopReason'">
+                             <option value="{{opt.value|decodehtml}}" ng-repeat="opt in coopReasonOptions" >{{opt.label | decodehtml}}</option>
+                         </select>
+                     </div>
+                </div>
+             
+                <div class="slds-form-element__control" role="group"> 
+                     <div class="slds-button-group slds-button-space-left" role="group">
+                        <button class="slds-button slds-button--neutral" ng-click="selectAllRecords(true)">
+                            <svg  aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint">
+                              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>
+                            </svg>{!$Label.CRM_Select_Deselect_All} 
+                            
+                        </button>
+                        <div class="slds-dropdown-trigger slds-is-open" aria-expanded="true">
+                            <button class="slds-button slds-button--neutral slds-button--icon-more slds-button--icon-border-filled" style="border-radius: 0 4px 4px 0;" aria-haspopup="true">
+                                <svg aria-hidden="true" class="slds-button__icon">
+                                  <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#down'}}"></use>
+                                </svg>
+                            </button>
+                           
+                         <div class="slds-dropdown slds-dropdown--right">
+                           <ul class="dropdown__list" role="menu">
+                             <li class="slds-dropdown__item"> 
+                                <a href="#void" role="menuitem" ng-click="updateAllRows()">
+                                  <p class="slds-truncate">
+                                      <svg aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint" >
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#replace')}"></use>
+                                      </svg>{!$Label.CRM_Deal_Entry_Update_All_Button}
+                                  </p>
+                               </a>
+                             </li>
+                             <li class="slds-dropdown__item"> 
+                                <a href="#void" role="menuitem" ng-click="deleteAllRows()">
+                                  <p class="slds-truncate">
+                                      <svg aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint" >
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}"></use>
+                                      </svg>{!$Label.CRM_Deal_Entry_Delete_All_Button}
+                                  </p>
+                               </a>
+                             </li>
+                             <li class="slds-dropdown__item" ng-show ="currentTab == 'wb-tab-planning' && !isDigitalDeal" ng-click="copySelectedPriceRows()">
+                               <a href="#void" role="menuitem" ng-click="copySelectedPriceRows()">
+                                 <p class="slds-truncate">
+                                      <svg aria-hidden="true" class="slds-button__icon slds-icon--more slds-button__icon--hint" >
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#copy')}"></use>
+                                      </svg>{!$Label.CRM_Deal_Entry_Copy_Suggested_Price_Button}
+                                  </p>
+                               </a> 
+                             </li>  
+                            </ul>
+                         </div>
+                       </div>
+                   </div>
+             </div>
+        </div>
+        <!-- New Pagination Code -->
+        <div class="slds-form-element__control">
+            <div class="slds-button-group slds-button-space-left" role="group">
+                <c:CRM_EditAllProductPagination />
+            </div>  
+        </div>
+        <!-- End of New Pagination Code -->
+       </div>
+    </div>
+    
+    <div id="wb-listview" class="products-list-div"> <!--  style="height:{{height}}px;" -->
+            <table id="wb-listtable" class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+              <!--  <thead>
+                  <tr class="slds-text-heading--label">
+                </tr>
+              </thead> -->
+         <tbody>
+                <tr class="slds-hint-parent" ng-repeat="lineItem in filteredlineItems = (lineItems| filter:search.text)| startFrom: pagination.page * pagination.perPage | limitTo: pagination.perPage" rendered="false">
+                <!-- US#598 excludeUntargeted Deal Products .The checkbox is true on the Page on load and lineItem.isUnTargetedDealProd is the calculated for every deal product. -->
+                <td ng-show = "((!lineItem.isUnTargetedDealProd && excludeUntargetedProd && !isDigitalDeal) || isDigitalDeal || !excludeUntargetedProd)" >
+                    <div class="slds-grid">
+                        <div class="slds-grid" style="width:270px;"> <!-- main div part 1 -->
+                            <div class="">
+                                 <div class="slds-form-element">
+                                        <div class="slds-row-select" ng-hide="appConfig.isReadOnlyPage">
+                                            <label class="slds-checkbox" for="select-row-{{$index}}">
+                                               <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="lineItem.isSelected"/>
+                                              <span class="slds-checkbox--faux"></span>
+                                              <span class="slds-form-element__label slds-assistive-text">select row-{{$index}}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                            </div>
+                            
+                            <div class="" style="text-overflow: ellipsis;overflow: hidden; max-width: 270px;">
+                                
+                                <span class="slds-truncate">
+                                    <a  href="javascript:void(0)" ng-click="showMoreInfoPopup(lineItem)" ng-bind-html="lineItem.productName"></a>
+                                </span><br/>
+                                <span>{{lineItem.productCode}}</span><br/>
+                                <span>({{lineItem.languageCode}})</span><br/>
+                                <span>Product Format({{lineItem.prodFormat}})</span><br/>
+                                <span ng-style="{'color':(lineItem.isNR?'#009900':'#222')}">{{lineItem.materialStreetDate}}</span>
+                                
+                            </div>
+                        </div> <!-- main div part 1 end -->
+                        <!-- *****************Chunk Set 1**************** -->
+                        <div class="slds-col slds-size__5-of-6 slds-grid"><!-- mian div part 2  -->
+                        <div class="slds-col slds-size__1-of-3" style="width:33%;">
+                            <div class="slds-form--horizontal">
+                                <!--Planning Tab Chunk 1 Set Starts  -->
+                                <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning'">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Account_Price__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                        <span class="slds-truncate">{{lineItem.accountPrice | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element" ng-show="currentTab == 'wb-tab-planning' && !appConfig.isJapanTerritory">
+                                    <label class="slds-form-element__label slds-col-label" ng-show="currentTab == 'wb-tab-planning' && !appConfig.isJapanTerritory">{!$ObjectType.OpportunityLineItem.fields.Discount__c.Label} %</label>
+                                    <div class="slds-form-element__control">
+                                        <span>{{lineItem.discount | number : appConfig.decimalPlaces}}%</span>
+                                    </div>
+                                </div>  
+                                
+                                <div class="slds-form-element wb-tab-planning-col" data-tab="wb-tab-planning" >
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Promoted_Price__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                        <!--<div ng-show="!appConfig.isJapanTerritory">-->
+                                            <div ng-show="!appConfig.isReadOnlyPage">
+                                                <!-- US#663 - promo price allow to be blank if price tier present -->
+                                              <div ng-class="{'slds-has-error': (lineItem.promotedPrice == null || lineItem.promotedPrice == undefined) && (lineItem.priceTier == null || lineItem.priceTier == undefined || lineItem.priceTier == '')}">
+                                                <input id = "promotedPrice-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.promotedPrice"  ng-disabled="isFrance || isUSCANMEXTerritory" ng-change="lineItem.isDirtyRow = true;handlePriceChange(lineItem, 'promoPriceChange');handleEstimatedPriceChange(lineItem, 'promoPriceChange');validateFormat(lineItem, 'promotedPrice');"/>
+                                              </div>
+                                            </div>
+                                            <span ng-if="lineItem.promotedPrice" ng-show="appConfig.isReadOnlyPage">{{lineItem.promotedPrice | number : appConfig.decimalPlaces}}</span>
+                                        <!--</div>-->
+                                          
+                                        <!--<div ng-show="appConfig.isJapanTerritory">
+                                            <div ng-show="!appConfig.isReadOnlyPage">
+                                              <div ng-class="{'slds-has-error': (lineItem.promotedPrice == null || lineItem.promotedPrice == undefined) && (lineItem.priceTier == null || lineItem.priceTier == undefined || lineItem.priceTier == '')}">
+                                                <input class="slds-input slds-input--small" type="text" integer-input="true" ng-model="lineItem.promotedPrice"  ng-disabled="isFrance" ng-change="lineItem.isDirtyRow = true;handlePriceChange(lineItem, 'promoPriceChange');handleEstimatedPriceChange(lineItem, 'promoPriceChange')"/>
+                                              </div>
+                                            </div>
+                                            <span ng-if="lineItem.promotedPrice" ng-show="appConfig.isReadOnlyPage">{{lineItem.promotedPrice}}</span>
+                                       </div>-->
+                                   </div>
+                                </div>
+                                
+                                <!--Planning Tab Chunk 1 Set Ends  -->
+                                <!-- **************** Consignment Tab Chunk 1 Set start ******************* -->
+                                <div class="slds-form-element wb-tab-consignment-col" data-tab="wb-tab-consignment">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.P_L_Quantity__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                            <div ng-show="!appConfig.isReadOnlyPage">
+                                                <input id = "plQuantity-{{lineItem.lineItemId}}" class="slds-input slds-input--small"  format-number="0" ng-model="lineItem.plQuantity" ng-disabled="appConfig.isReadOnlyPage || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'plQuantity');"/>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage">{{lineItem.plQuantity | number : 0}}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !isDigitalDeal && isJapanForSellThrough">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Initial_Back_Order_Quantity__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                            <div class="slds-form-element" ng-show="!appConfig.isQuantityReadOnly">
+                                                <div class="slds-form-element__control form-control-class"> 
+<!--                                                 <div ng-class="{'slds-has-error': !lineItem.isManuallySchedule && (((lineItem.replenQuantity == null || lineItem.replenQuantity == undefined) && (lineItem.initialQuantity == null || lineItem.initialQuantity == undefined) && (lineItem.initialBackOrderQuantity == null || lineItem.initialBackOrderQuantity == undefined)) || (lineItem.initialBackOrderQuantity != null && lineItem.initialBackOrderQuantity != undefined && lineItem.initialBackOrderQuantity <0))}"> -->
+                                                    <input id="initialBackOrderQuantity-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="10" ng-model="lineItem.initialBackOrderQuantity" ng-disabled="appConfig.isQuantityReadOnly || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;calculateSuggestedReplen(lineItem);handleEstimatedPriceChange(lineItem, 'initialQuantityChange');validateFormat(lineItem, 'initialBackOrderQuantity');"/>
+                                                    <!-- setDefaultValue(lineItem, 'Initial_Back_Order_Quantity');"/> -->
+                                                 </div>
+                                            </div>
+                                            <span ng-show="appConfig.isQuantityReadOnly">{{lineItem.initialBackOrderQuantity | number : 0}}</span>
+                                     </div>
+                                </div>
+                                <!-- **************** Consignment Tab Chunk 1 Set End ********************* -->
+                                <!-- *********************Cost Fields start Chunk Set 1 ************************-->
+                                <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Override_COP__c.accessible}">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Override_COP__c.Label}</label>  
+                                    <div class="slds-form-element__control">
+                                        <label class="slds-checkbox" for="overrideCOPCheckBox-{{lineItem.productId}}">
+                                            <input id="overrideCOPCheckBox-{{lineItem.productId}}" class="slds-checkbox" type="checkbox" ng-model="lineItem.overrideCOP" ng-disabled="true"  />
+                                            <span class="slds-checkbox--faux"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                    
+                                <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Returns__c.accessible}">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Returns__c.Label}</label>  
+                                    <div class="slds-form-element__control">
+                                        <span class="percent-input" ng-show="!appConfig.isReadOnlyPage">
+                                            <!--<input  class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.returns" ng-show="!appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <input  class="slds-input slds-input--small"  type="text" integer-input="true" ng-model="lineItem.returns" ng-show="appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                            <input id="returns-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.returns" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'returns');"/>
+                                        </span>
+                                        <span ng-if="lineItem.returns" ng-show="appConfig.isReadOnlyPage">{{lineItem.returns | number : appConfig.decimalPlaces}} %</span>
+                                    </div> 
+                                </div>
+                                
+                                <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.PAP__c.accessible}">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.PAP__c.Label}</label>      
+                                    <div class="slds-form-element__control">
+                                        <span class="percent-input"  ng-show="!appConfig.isReadOnlyPage">
+                                            <!--<input  class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.pap" ng-show="!appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <input  class="slds-input slds-input--small" type="text" integer-input="true" ng-model="lineItem.pap" ng-show="appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                            <input id="pap-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.pap" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'pap');"/>
+                                        </span>
+                                        <span ng-if="lineItem.pap" ng-show="appConfig.isReadOnlyPage">{{lineItem.pap | number : appConfig.decimalPlaces}}%</span>
+                                    </div>
+                                </div>
+                                 
+                                <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Sales_Allowance__c.accessible}">
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Sales_Allowance__c.Label}</label>         
+                                    <div class="slds-form-element__control">
+                                        <span class="percent-input" ng-show="!appConfig.isReadOnlyPage">
+                                            <!--<input  class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.salesAllowance" ng-show="!appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <input  class="slds-input slds-input--small"  type="text" integer-input="true" ng-model="lineItem.salesAllowance" ng-show="appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                            <input id="salesAllowance-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.salesAllowance" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'salesAllowance');"/>
+                                        </span>
+                                        <span ng-if="lineItem.salesAllowance" ng-show="appConfig.isReadOnlyPage">{{lineItem.salesAllowance | number : appConfig.decimalPlaces}} %</span>
+                                    </div>
+                                </div>   
+                                
+                                <div class="slds-form-element" ng-show="currentTab == 'wb-tab-cops' && appConfig.isGerman && {!$ObjectType.OpportunityLineItem.fields.Gema__c.accessible}">
+                                      <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Gema__c.Label}</label>  
+                                      <div class="slds-form-element__control">
+                                         <span class="percent-input" ng-show="!appConfig.isReadOnlyPage"> 
+                                            <input id="gema-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.gema" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'gema');"/> 
+                                         </span>  
+                                         <span ng-if="lineItem.gema" ng-show="appConfig.isReadOnlyPage">{{lineItem.gema | number : appConfig.decimalPlaces}}%</span>
+                                      </div> 
+                                </div> 
+                                
+                                 <!-- *********************Cost Fields end Chunk Set 1 ************************-->
+                                 <!-- *********************Co op Fields start Chunk Set 1 ************************-->
+                                <div class="slds-form-element wb-tab-nrCoop-col" data-tab="wb-tab-nrCoop">
+                                    <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Co_op_Requested_Amount__c.Label}</label>      
+                                    <div class="slds-form-element__control">
+                                    <div>
+                                        <input id="nrCoopAmount-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-show="!appConfig.isReadOnlyPage" ng-model="lineItem.nrCoopAmount" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'nrCoopAmount');" ng-disabled="appConfig.isCoOpClosed"/>
+                                    </div>  
+                                    <span ng-show="appConfig.isReadOnlyPage ">{{lineItem.nrCoopAmount | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                  </div>
+                                </div>
+                                
+                                
+                                 <!-- *********************Co op Fields end Chunk Set 1 ************************-->
+                                <!-- *********************Review Fields start Chunk Set 1 ************************-->
+                                 
+                                    
+                                <div class="slds-form-element" ng-show="(currentTab == 'wb-tab-review' || currentTab == 'wb-tab-planning')">
+                                    <label class="slds-form-element__label slds-col-label" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-review' || currentTab == 'wb-tab-planning'">{!$ObjectType.OpportunityLineItem.fields.Estimated_Revenue__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                        <div  ng-show="!appConfig.isReadOnlyPage">
+                                            <input id="totalPrice-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.totalPrice" ng-disabled="appConfig.isReadOnlyPage || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;handleEstimatedPriceChange(lineItem, 'estimatedPriceChange');validateFormat(lineItem, 'totalPrice');"/>
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage" class="slds-truncate">{{lineItem.totalPrice | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                    </div>  
+                                </div>
+                                
+                                <!--<div  class="slds-form-element" data-tab="wb-tab-review" ng-show="(currentTab == 'wb-tab-review' || currentTab == 'wb-tab-planning') && appConfig.isJapanTerritory" >
+                                    <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Estimated_Revenue__c.Label}</label>
+                                    <div class="slds-form-element__control">
+                                        <div  ng-show="!appConfig.isReadOnlyPage">
+                                            <input class="slds-input slds-input--small" type="text" integer-input="true" ng-model="lineItem.totalPrice" ng-disabled="appConfig.isReadOnlyPage || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;handleEstimatedPriceChange(lineItem, 'estimatedPriceChange')"/>
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage" class="slds-truncate">{{lineItem.totalPrice | currency : appConfig.dealCurrencyCode : 0}}</span>
+                                    </div>
+                                </div>-->
+                                
+                                <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                    <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Total_COP__c.Label}</label>      
+                                    <div class="slds-form-element__control" >
+                                        <span class="slds-truncate">{{lineItem.totalCOP | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                    </div>
+                                </div> 
+                                 <!-- *********************Review Fields end Chunk Set 1 ************************-->
+                                  <!-- *********************Rental Fields start Chunk Set 1 ************************-->
+                                  
+                                 <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                     <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Target_Quantity__c.Label}</label>      
+                                     <div class="slds-form-element__control" >
+                                        <span class="slds-truncate">{{lineItem.targetUnit | number : 0}}</span> 
+                                    </div>
+                                 </div>
+                                 
+                                 <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">   
+                                     <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Initial_Quantity__c.Label}</label>      
+                                     <div class="slds-form-element__control" >
+                                        <div ng-show="!appConfig.isReadOnlyPage">
+<!--                                             <div ng-class="{'slds-has-error': !lineItem.isManuallySchedule && (lineItem.initialQuantity == null || lineItem.initialQuantity == undefined || (lineItem.initialQuantity != null && lineItem.initialQuantity != undefined && lineItem.initialQuantity <0))}"> -->
+                                                <input id="initialQuantityJapan-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="10" ng-model="lineItem.initialQuantity" style="width: 75px" ng-disabled="lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;handleEstimatedPriceChange(lineItem, 'initialQuantityChange');validateFormat(lineItem, 'initialQuantityJapan');"/> <!-- setDefaultValue(lineItem, 'Initial_Quantity');"/> -->
+<!--                                             </div> -->
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage">{{lineItem.initialQuantity | number : 0}}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                    <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Handling_Fee__c.Label}</label>         
+                                    <div class="slds-form-element__control" >    
+                                        <div ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                          <div ng-class="{'slds-has-error': lineItem.handlingFee == undefined || lineItem.handlingFee == null || (!isRevenueShareAccount && lineItem.handlingFee == 0)}">
+                                            <input id="handlingFee-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" maxlength="16" ng-model="lineItem.handlingFee" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'handlingFee');"/>
+                                          </div>
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.handlingFee | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                    <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Rental_Price__c.Label}</label>         
+                                    <div class="slds-form-element__control" >    
+                                        <div ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                          <div ng-class="{'slds-has-error': isRevenueShareAccount && (lineItem.rentalPrice == undefined || lineItem.rentalPrice == null || lineItem.rentalPrice == 0)}">
+                                            <input id="rentalPrice-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" maxlength="16" ng-model="lineItem.rentalPrice" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'rentalPrice');"/>
+                                          </div>
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.rentalPrice | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                    </div>
+                                </div>
+                                
+                                 <!-- *********************Rental Fields end Chunk Set 1 ************************-->
+                                 
+                                </div>
+                                </div>
+                                <!-- *************************Chunk Set 2************************ -->
+                                <div class="slds-col slds-size__1-of-3" style="width:33%;">
+                        
+                                    <div class="slds-form--horizontal"> 
+
+                                    <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Initial_Quantity__c.Label}</label>
+<!--                                         <div class="slds-form-element__control" ng-class="{'slds-has-error': !lineItem.isManuallySchedule && (((lineItem.replenQuantity == null || lineItem.replenQuantity == undefined) &&(lineItem.initialQuantity == null || lineItem.initialQuantity == undefined) && (!isJapanForSellThrough || (isJapanForSellThrough && (lineItem.initialBackOrderQuantity == null || lineItem.initialBackOrderQuantity == undefined)))) || (lineItem.initialQuantity != null && lineItem.initialQuantity != undefined && lineItem.initialQuantity <0))}"> -->
+                                        <div class="slds-form-element__control">
+                                            <div ng-show="!appConfig.isQuantityReadOnly">
+                                                <input id="initialQuantity-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="10" ng-model="lineItem.initialQuantity" ng-disabled="appConfig.isQuantityReadOnly || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;calculateSuggestedReplen(lineItem);handleEstimatedPriceChange(lineItem, 'initialQuantityChange');validateFormat(lineItem, 'initialQuantity');"/>
+                                            </div> 
+                                            <span ng-show="appConfig.isQuantityReadOnly">{{lineItem.initialQuantity | number : 0}}</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Replen_Quantity__c.Label}</label>
+                                        <div class="slds-form-element__control"> <!--  ng-class="{'slds-has-error': !lineItem.isManuallySchedule && (((lineItem.replenQuantity == null || lineItem.replenQuantity == undefined) && (lineItem.initialQuantity == null || lineItem.initialQuantity == undefined) && (!isJapanForSellThrough || (isJapanForSellThrough && (lineItem.initialBackOrderQuantity == null || lineItem.initialBackOrderQuantity == undefined)))) || (lineItem.replenQuantity != null && lineItem.replenQuantity != undefined && lineItem.replenQuantity <0))}"> -->
+                                            <div ng-show="!appConfig.isQuantityReadOnly">
+                                                <input id="replenQuantityP-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="10" ng-model="lineItem.replenQuantity" ng-disabled="appConfig.isQuantityReadOnly || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;handleEstimatedPriceChange(lineItem, 'quantityChange');;validateFormat(lineItem, 'replenQuantityP');"/> <!-- setDefaultValue(lineItem, 'Replen_Quantity');"/> -->
+                                             </div>
+                                             <span ng-show="appConfig.isQuantityReadOnly">{{lineItem.replenQuantity | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' || currentTab == 'wb-tab-consignment'">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Target_Quantity__c.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <span>{{lineItem.targetUnit | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    <!--US#934 changes  starts-->
+                                    <div class="slds-form-element wb-tab-planning-col"  data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Actual_Quantity__c.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <span>{{lineItem.actualQty | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element wb-tab-planning-col"  data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Pos_Quantity__c.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <span>{{lineItem.posQuantity | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    <!--US#934 changes  ends-->
+                                    
+                                    <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Price_Tier__c.Label}</label>
+                                        <div class="slds-form-element__control form-control-class">
+                                            <div class="slds-form-element" ng-show="!appConfig.isReadOnlyPage" >
+                                                <div class="slds-select_container" >
+                                                    <select id="priceTierId {{lineItem.lineItemId}}" class="slds-select" ng-model="lineItem.priceTier" ng-change="lineItem.isDirtyRow = true;">
+                                                        <option value="{{opt}}" ng-repeat="opt in lineItem.lstPriceTier track by $index" >{{opt|decodehtml}}</option>
+                                                    </select>
+                                                 </div>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage">{{lineItem.priceTier}}</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && isDigitalDeal">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <div ng-show="!appConfig.isQuantityReadOnly">
+<!--                                               <div ng-class="{'slds-has-error': !lineItem.isManuallySchedule && (lineItem.replenQuantity == null || lineItem.replenQuantity == undefined)}"> -->
+                                                <input id="replenQuantityD-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="10" ng-model="lineItem.replenQuantity" ng-disabled="appConfig.isQuantityReadOnly || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;handleEstimatedPriceChange(lineItem, 'quantityChange');validateFormat(lineItem, 'replenQuantityD');"/> <!-- setDefaultValue(lineItem, 'Replen_Quantity');"/> --> 
+<!--                                               </div> -->
+                                            </div>
+                                            <span ng-show="appConfig.isQuantityReadOnly">{{lineItem.replenQuantity | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                
+                                    <!-- ******************** co-op fields start ********************-->
+                                    <div class="slds-form-element wb-tab-nrCoop-col" data-tab="wb-tab-nrCoop">
+                                    <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}</label>      
+                                    <div class="slds-form-element__control">
+                                    <div ng-show="!appConfig.isReadOnlyPage" ng-class="{'slds-has-error': ((lineItem.coopReason == null || lineItem.coopReason == undefined || lineItem.coopReason == '') && (lineItem.nrCoopAmount != null && lineItem.nrCoopAmount != undefined && lineItem.nrCoopAmount > 0.0) && (lineItem.coopComments == null || lineItem.coopComments == undefined || lineItem.coopComments == ''))}">
+                                        <div class="slds-select_container" >
+                                            <select id="coopReasonId {{lineItem.lineItemId}}" style="width: 150px" class="slds-select" ng-model="lineItem.coopReason" ng-change="lineItem.isDirtyRow = true;" ng-disabled="appConfig.isCoOpClosed">
+                                                <option value="{{opt.value|decodehtml}}" ng-repeat="opt in coopReasonOptions" >{{opt.label | decodehtml}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.coopReason}}</span>
+                                </div>
+                                </div>
+                                 <!-- *********************Co op Fields end Chunk Set 1 ************************-->
+                                     <!-- *********************Cost Fields start Chunk Set 2 ************************-->
+                                 
+                                    <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Merchandising__c.accessible}">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Merchandising__c.Label}</label>         
+                                        <div class="slds-form-element__control">
+                                            <span class="percent-input" ng-show="!appConfig.isReadOnlyPage">
+                                                <!--<input  class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.merchandising" ng-show="!appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                                <input  class="slds-input slds-input--small"  type="text" integer-input="true" ng-model="lineItem.merchandising" ng-show="appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                                <input id="merchandising-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.merchandising" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'merchandising');"/>
+                                            </span>
+                                            <span ng-if="lineItem.merchandising" ng-show="appConfig.isReadOnlyPage">{{lineItem.merchandising | number : appConfig.decimalPlaces}} %</span>
+                                          </div>
+                                    </div> 
+                                    <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Distribution_Cost__c.accessible}">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Distribution_Cost__c.Label}</label>         
+                                        <div class="slds-form-element__control">
+                                            <!--<input class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.distributionCost" ng-show="!appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)" />
+                                            <input class="slds-input slds-input--small"  type="text" integer-input="true"  ng-model="lineItem.distributionCost" ng-show="appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)" />-->
+                                            <input id="distributionCost-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.distributionCost" ng-show="!appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'distributionCost');" />
+                                            <span ng-show="appConfig.isReadOnlyPage">{{lineItem.distributionCost | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                        </div>
+                                    </div> 
+                                    <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Production_Cost__c.accessible}">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Production_Cost__c.Label}</label>  
+                                        <div class="slds-form-element__control">
+                                            <!--<input class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.productionCost" ng-disabled='true' ng-show="!appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <input class="slds-input slds-input--small" type="text" integer-input="true" ng-model="lineItem.productionCost" ng-disabled='true' ng-show="appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                            <input id="productionCost-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.productionCost" ng-disabled='true' ng-show="!appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'productionCost');"/>
+                                            <span ng-show="appConfig.isReadOnlyPage">{{lineItem.productionCost | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                        </div>
+                                    </div>   
+                                    <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Royalty_Fee_Fixed__c.accessible}">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Royalty_Fee_Fixed__c.Label}</label>  
+                                        <div class="slds-form-element__control">
+                                            <input class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.royalFeeFixed" ng-show="!appConfig.isJapanTerritory && !appConfig.isReadOnlyPage && !appConfig.isFR_BXTerritory" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <input class="slds-input slds-input--small" type="text" integer-input="true" ng-model="lineItem.royalFeeFixed" ng-disabled='true' ng-show="appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                            <span ng-show="appConfig.isReadOnlyPage || appConfig.isFR_BXTerritory">{{lineItem.royalFeeFixed | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                        </div>
+                                    </div>
+                                     <!-- *********************Cost Fields end Chunk Set 2 ************************-->  
+                                     <!-- *************consinement start *********************** -->
+                                     <div class="slds-form-element wb-tab-consignment-col" data-tab="wb-tab-review">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Consignment_Multiplier__c.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <div ng-show="!appConfig.isReadOnlyPage">
+                                                <input id="consignmentMultiplier-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.consignmentMultiplier" ng-disabled="appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'consignmentMultiplier');"/>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage">{{lineItem.consignmentMultiplier | number : appConfig.decimalPlaces}}</span>
+                                        </div>
+                                    </div> 
+                                    <div class="slds-form-element wb-tab-consignment-col" data-tab="wb-tab-consignment">
+                                        <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.P_L_Decay_Curve_Template__c.Label}</label>
+                                        <div class="slds-form-element__control">
+                                            <div ng-show="!appConfig.isReadOnlyPage && !lineItem.isManuallySchedule && (lineItem.plQuantity != null && lineItem.plQuantity != undefined)">
+                                                <div class="">
+                                                    <crm-lookup 
+                                                        record-id="lineItem.plDecayCurveTemplate" 
+                                                        record-name="lineItem.plDecayCurveTemplateName" 
+                                                        object-name="Decay_Curve_Template__c" 
+                                                        object-icon="link"
+                                                        slds-resource-loc="{{appConfig.resourceSlds}}"
+                                                        lookup-change="lineItem.isDirtyRow = true;"
+                                                        currency-Code="{{appConfig.dealCurrencyCode}}"
+                                                        decaycurve-Status="{!$label.CRM_DecayCurveTemplate_Status}"/>                                                                    
+                                                </div>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage || lineItem.isManuallySchedule || (lineItem.plQuantity == null || lineItem.plQuantity == undefined)">{{lineItem.plDecayCurveTemplateName}}</span>
+                                        </div>
+                                    </div>
+                            <!-- ************** Consinement end************************ --> 
+                                     
+                                    <!-- *********************Review Fields start Chunk Set 2 ************************-->
+                                    
+                                    <!--Defect#4712 - swaped position of two fields -->
+                                    <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                        <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Est_Contribution__c.Label}</label>      
+                                        <div class="slds-form-element__control" >
+                                            <span class="slds-truncate">{{lineItem.estContribution | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                        </div>  
+                                    </div>
+
+                                    <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                        <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Est_Contribution__c.Label} %</label>      
+                                        <div class="slds-form-element__control" >
+                                          <span class="slds-truncate">{{lineItem.estContributionPercent | number : appConfig.decimalPlaces}}</span>
+                                        </div>
+                                    </div>
+                                    <!-- *********************Review Fields end Chunk Set 2 ************************--> 
+                                    <!-- *********************Rental Fields start Chunk Set 2 ************************-->
+                                    
+                                    <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                         <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Revenue_Share__c.Label}</label>         
+                                         <div class="slds-form-element__control" >    
+                                             <div ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                                <div ng-class="{'slds-has-error': isRevenueShareAccount && (lineItem.revenueShare == undefined || lineItem.revenueShare == null || lineItem.revenueShare == 0)}">
+                                                    <span class="percent-input">
+                                                        <input id="revenueShare-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="16" ng-model="lineItem.revenueShare" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'revenueShare');"/>
+                                                    </span>
+                                                </div>
+                                            </div>    
+                                            <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.revenueShare | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                      <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Number_of_Rentals_per_Unit__c.Label}</label>           
+                                        <div class="slds-form-element__control" > 
+                                            <div  ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                                <div class="slds-form-element__control" ng-class="{'slds-has-error': isRevenueShareAccount && (lineItem.numberOfRentals == undefined || lineItem.numberOfRentals == null || lineItem.numberOfRentals == 0)}">
+                                                    <input id="numberOfRentals-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="16" ng-model="lineItem.numberOfRentals" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'numberOfRentals');"/>
+                                                </div>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.numberOfRentals | number : 0}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                        <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Final_Purchase_Price__c.Label}</label>           
+                                        <div class="slds-form-element__control" > 
+                                            <div ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                                <div class="slds-form-element__control" ng-class="{'slds-has-error': isRevenueShareAccount && (lineItem.finalPurchasePrice == undefined || lineItem.finalPurchasePrice == null || lineItem.finalPurchasePrice == 0)}">
+                                                    <input id="finalPurchasePrice-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="16" ng-model="lineItem.finalPurchasePrice" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'finalPurchasePrice');"/>
+                                                </div>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.finalPurchasePrice | currency : appConfig.dealCurrencyCode : 0}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                        <label class="slds-form-element__label slds-col-label" >{!$ObjectType.Account_Plan__c.fields.Final_Purchase__c.Label}</label>           
+                                        <div class="slds-form-element__control" > 
+                                            <div ng-show="!appConfig.isReadOnlyPage && lineItem.overrideRentalPrices">
+                                                <div ng-class="{'slds-has-error': isRevenueShareAccount && (lineItem.finalPurchase == undefined || lineItem.finalPurchase == null || lineItem.finalPurchase == 0)}">
+                                                    <span class="percent-input">
+                                                        <input id="finalPurchase-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="0" maxlength="16" ng-model="lineItem.finalPurchase" style="width: 75px" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'finalPurchase');"/>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span ng-show="appConfig.isReadOnlyPage || !lineItem.overrideRentalPrices">{{lineItem.finalPurchase | number : 0 }}</span>
+                                        </div>
+                                    </div>
+                                     <!-- *********************Rental Fields end Chunk Set 2 ************************-->  
+                                    
+                                    </div>  
+                                </div>
+                                <!-- **************************Chunk Set 3****************** -->
+                                
+                        <div class="slds-col slds-size__1-of-3" style="width:33%;">
+                        
+                         <div class="slds-form--horizontal">
+                            
+                            <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !isDigitalDeal">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Replen_Delay_Days__c.Label}</label>
+                                <div class="slds-form-element__control">
+                                    <div  ng-show="!appConfig.isReadOnlyPage">
+                                      <div ng-class="{'slds-has-error': !isDigitalDeal && !lineItem.isManuallySchedule && (lineItem.replenDelayDays == null && lineItem.replenDelayDays == undefined) && (lineItem.decayCurveTemplateName == null || lineItem.decayCurveTemplateName == undefined)}">
+                                        <input class="slds-input slds-input--small" type="number" ng-model="lineItem.replenDelayDays" ng-disabled="appConfig.isReadOnlyPage || lineItem.isManuallySchedule" ng-change="lineItem.isDirtyRow = true;"/>
+                                      </div>
+                                    </div>
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.replenDelayDays | number : 0}}</span>
+                                </div>
+                            </div> 
+                            
+                            <div class="slds-form-element wb-tab-planning-col">
+                                <label class="slds-form-element__label slds-col-label" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning'">{!$ObjectType.OpportunityLineItem.fields.Decay_Curve_Template__c.Label}</label>
+                                <div class="slds-form-element__control">
+                                        <div class="slds-form-element" ng-show="!appConfig.isReadOnlyPage && !lineItem.isManuallySchedule">
+                                        <div class="" ng-class="{'slds-has-error': !isDigitalDeal && !lineItem.isManuallySchedule && (lineItem.decayCurveTemplateName == null && lineItem.decayCurveTemplateName == undefined) &&(lineItem.replenDelayDays == null || lineItem.replenDelayDays == undefined)}">
+                                            <crm-lookup 
+                                                record-id="lineItem.decayCurveTemplate" 
+                                                record-name="lineItem.decayCurveTemplateName" 
+                                                object-name="Decay_Curve_Template__c" 
+                                                object-icon="link"
+                                                slds-resource-loc="{{appConfig.resourceSlds}}"
+                                                lookup-change="lineItem.isDirtyRow = true;"
+                                                currency-Code="{{appConfig.dealCurrencyCode}}"
+                                                decaycurve-Status="{!$label.CRM_DecayCurveTemplate_Status}"/>
+                                          </div>
+                                        </div>
+                                        <span ng-show="appConfig.isReadOnlyPage || lineItem.isManuallySchedule">{{lineItem.decayCurveTemplateName}}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- *********************Rental Fields start Chunk Set 3 ************************-->
+                            <div class="slds-form-element wb-tab-RentalDetails-col" data-tab="wb-tab-RentalDetails">
+                                <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Decay_Curve_Template__c.Label}</label>           
+                                <div class="slds-form-element__control">
+                                    <div ng-show="!appConfig.isReadOnlyPage && !lineItem.isManuallySchedule && lineItem.overrideRentalPrices">
+                                        <div style="width:200px;" ng-class="{'slds-has-error': !lineItem.isManuallySchedule && isRevenueShareAccount && (lineItem.decayCurveTemplateName == null && lineItem.decayCurveTemplateName == undefined)}">
+                                            <crm-lookup 
+                                            record-id="lineItem.decayCurveTemplate" 
+                                            record-name="lineItem.decayCurveTemplateName" 
+                                            object-name="Decay_Curve_Template__c" 
+                                            object-icon="link"
+                                            slds-resource-loc="{{appConfig.resourceSlds}}"
+                                            lookup-change="lineItem.isDirtyRow = true;"
+                                            currency-Code="{{appConfig.dealCurrencyCode}}"
+                                            decaycurve-Status="{!$label.CRM_DecayCurveTemplate_Status}"/>
+                                        </div>
+                                    </div>
+                                    <span ng-show="appConfig.isReadOnlyPage || lineItem.isManuallySchedule || !lineItem.overrideRentalPrices">{{lineItem.decayCurveTemplateName}}</span>
+                                </div>
+                            </div>
+                            <!-- *********************Rental Fields end Chunk Set 3 ************************-->
+                            
+                            <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="(currentTab == 'wb-tab-planning' && !isDigitalDeal && !appConfig.isGerman)">
+                                <label class="slds-form-element__label slds-col-label">{!$Label.CRM_Deal_Entry_Suggested_Replen}</label>
+                                <div class="slds-form-element__control">
+                                    <span ng-show="lineItem.suggestedPrice > 0">{{lineItem.suggestedPrice  | number : 0}}</span>
+                                </div>
+                            </div>
+
+                            <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && !appConfig.isJapanTerritory">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Share__c.Label}</label>
+                                <div class="slds-form-element__control">
+                                    <span class="slds-truncate">{{lineItem.sharePercent | number : appConfig.decimalPlaces}}</span>
+                                </div>
+                            </div>
+                             
+                            <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && isDigitalDeal">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Permanent_Price_Tier__c.Label}</label>
+                                <div class="slds-form-element__control">
+                                    <span class="slds-truncate">{{lineItem.PermanentPriceTier | limitTo : 255}}</span>
+                                </div>
+                            </div>
+                            <!-- //US#787 -->
+                            <div class="slds-form-element" data-tab="wb-tab-planning" ng-show="currentTab == 'wb-tab-planning' && isDigitalDeal">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.ListPrice__c.Label}</label>
+                                <div class="slds-form-element__control">
+                                    <span class="slds-truncate">{{lineItem.listPrice | number : appConfig.decimalPlaces}}</span>
+                                </div>
+                            </div>
+                             
+                            <!-- ******************* co-op fields start**************-->
+                            <div class="slds-form-element wb-tab-nrCoop-col" data-tab="wb-tab-nrCoop">
+                                <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Comments__c.Label}</label>      
+                                <div class="slds-form-element__control">
+                                    <div  ng-show="!appConfig.isReadOnlyPage" ng-class="{'slds-has-error': ((lineItem.coopComments == null || lineItem.coopComments == undefined || lineItem.coopComments == '') && (lineItem.nrCoopAmount != null && lineItem.nrCoopAmount != undefined && lineItem.nrCoopAmount > 0.0) && (lineItem.coopReason == null || lineItem.coopReason == undefined || lineItem.coopReason == ''))}">
+                                        <input class="slds-input slds-input--small" type="Text" ng-model="lineItem.coopComments" style="width: 150px" ng-change="lineItem.isDirtyRow = true;" ng-disabled="appConfig.isCoOpClosed"/>
+                                    </div>
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.coopComments | limitTo : 255}}</span>
+                                </div>
+                            </div>
+                            <!-- ****************** co-op field end ***************** -->
+                            <!-- *********************Cost Fields start Chunk Set 3 ************************-->
+                            
+                            <div class="slds-form-element wb-tab-cops-col" data-tab="wb-tab-cops" ng-show="{!$ObjectType.OpportunityLineItem.fields.Master_Negative__c.accessible}">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Master_Negative__c.Label}</label>  
+                                <div class="slds-form-element__control">
+                                    <!--<input class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.masterNegative" ng-show="!appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>
+                                    <input class="slds-input slds-input--small"  type="text" integer-input="true" ng-model="lineItem.masterNegative" ng-show="appConfig.isJapanTerritory && !appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem)"/>-->
+                                    <input id="masterNegative-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.masterNegative" ng-show="!appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'masterNegative');"/>
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.masterNegative | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                </div>
+                            </div>
+                            <div class="slds-form-element" data-tab="wb-tab-cops" ng-show="currentTab == 'wb-tab-cops' && appConfig.isJapanTerritory && {!$ObjectType.OpportunityLineItem.fields.Return_Cost__c.accessible}">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Return_Cost__c.Label}</label>  
+                                <div class="slds-form-element__control">
+                                    <input id="returnCost-{{lineItem.lineItemId}}" class="slds-input slds-input--small"  format-number="0" ng-model="lineItem.returnCost" ng-show="!appConfig.isReadOnlyPage" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'returnCost');" />
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.returnCost | currency : appConfig.dealCurrencyCode : 0}}</span>
+                                </div>   
+                            </div>
+                            <div class="slds-form-element" data-tab="wb-tab-cops" ng-show="currentTab == 'wb-tab-cops' && appConfig.isGerman && {!$ObjectType.OpportunityLineItem.fields.Gross_receipt_taxes_FFA__c.accessible}">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Gross_receipt_taxes_FFA__c.Label}</label>  
+                                <div class="slds-form-element__control">
+                                    <span class="percent-input" ng-show="!appConfig.isReadOnlyPage"> 
+                                        <input id="grossReceiptTaxesFFA-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.grossReceiptTaxesFFA" ng-show="appConfig.isGerman"  ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'grossReceiptTaxesFFA');"/>
+                                    </span>
+                                    <span ng-if="lineItem.grossReceiptTaxesFFA" ng-show="appConfig.isReadOnlyPage">{{lineItem.grossReceiptTaxesFFA | number : appConfig.decimalPlaces}}%</span>
+                                </div> 
+                            </div>
+                            <div class="slds-form-element" data-tab="wb-tab-cops" ng-show="currentTab == 'wb-tab-cops' && appConfig.isGerman && {!$ObjectType.OpportunityLineItem.fields.Cash_Discounts__c.accessible}">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Cash_Discounts__c.Label}</label>  
+                                <div class="slds-form-element__control">
+                                    <span class="percent-input" ng-show="!appConfig.isReadOnlyPage"> 
+                                        <input id="cashDiscounts-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.cashDiscounts" ng-show="appConfig.isGerman" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'cashDiscounts');"/>
+                                    </span>
+                                    <span ng-if="lineItem.cashDiscounts" ng-show="appConfig.isReadOnlyPage">{{lineItem.cashDiscounts | number : appConfig.decimalPlaces}}%</span>
+                                </div>
+                            </div>  
+                            <div class="slds-form-element" data-tab="wb-tab-cops" ng-show="currentTab == 'wb-tab-cops' && appConfig.isGerman && {!$ObjectType.OpportunityLineItem.fields.Doubtful_Accounts__c.accessible}">
+                                <label class="slds-form-element__label slds-col-label">{!$ObjectType.OpportunityLineItem.fields.Doubtful_Accounts__c.Label}</label>  
+                                <div class="slds-form-element__control">
+                                    <span class="percent-input" ng-show="!appConfig.isReadOnlyPage"> 
+                                        <input id="doubtfulAccounts-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.doubtfulAccounts" ng-show="appConfig.isGerman" ng-change="lineItem.isDirtyRow = true;setOverrideCostsFlag(lineItem);validateFormat(lineItem, 'doubtfulAccounts');"/>
+                                    </span>
+                                    <span ng-if="lineItem.doubtfulAccounts" ng-show="appConfig.isReadOnlyPage">{{lineItem.doubtfulAccounts | number : appConfig.decimalPlaces}}%</span>
+                                </div>
+                            </div>
+                            <!-- *********************Cost Fields end Chunk Set 3 ************************-->
+                            <!-- *********************Review Fields start Chunk Set 3 ************************-->
+                            <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Customer_Retail_Price__c.Label}</label>      
+                                <div class="slds-form-element__control">
+                                    <div  ng-show="!appConfig.isReadOnlyPage">
+                                        <!--<input class="slds-input slds-input--small" ui-number-mask="2" ng-model="lineItem.customerRetailPrice" ng-show="!appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;"/>
+                                        <input class="slds-input slds-input--small"  type="text" integer-input="true"  ng-model="lineItem.customerRetailPrice" ng-show="appConfig.isJapanTerritory" ng-change="lineItem.isDirtyRow = true;"/>-->
+                                        <input id="customerRetailPrice-{{lineItem.lineItemId}}" class="slds-input slds-input--small" format-number="{{appConfig.decimalPlaces}}" ng-model="lineItem.customerRetailPrice" ng-change="lineItem.isDirtyRow = true;validateFormat(lineItem, 'customerRetailPrice');"/>
+                                    </div>
+                                    <span ng-show="appConfig.isReadOnlyPage">{{lineItem.customerRetailPrice | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                </div> 
+                            </div>
+                            
+                            <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                <label class="slds-form-element__label slds-col-label" >{!$ObjectType.OpportunityLineItem.fields.Customer_Sales_Revenue__c.Label}</label>      
+                                <div class="slds-form-element__control" >
+                                    <span class="slds-truncate">{{lineItem.customerSalesRevenue | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}     </span>
+                                </div>  
+                            </div>
+                            <!-- Defect#4712 - swaped two field positions -->
+                            <div class="slds-form-element wb-tab-review-col" data-tab="wb-tab-review">
+                                <label class="slds-form-element__label slds-col-label" >Estimated {!$ObjectType.OpportunityLineItem.fields.Customer_Contribution__c.Label}</label>      
+                                <div class="slds-form-element__control" >
+                                    <span class="slds-truncate">{{lineItem.customerSalesRevenue | currency : appConfig.dealCurrencyCode : appConfig.decimalPlaces}}</span>
+                                </div>
+                            </div>
+                            <!-- *********************Review Fields end Chunk Set 3 ************************-->
+                       </div>
+                        
+                    </div>
+                    
+                    </div><!-- main div 2 end -->
+                    </div>
+                    </td>
+                     
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+
+          <!-- Modal dialog for product details -->
+          <div id="productMoreInfoPopup" ng-show="moreInfoProduct">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+              <div class="slds-modal__container" ng-click="$event.stopPropagation()">
+                <div class="slds-modal__header slds-page-header">
+                  <h2 class="slds-text-heading--medium" ng-bind-html="moreInfoProduct.productName"></h2>
+                  <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="hideMoreInfoPopup()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                </div>
+                <div class="slds-modal__content">
+                  <iframe style="height:100%" src="{{moreInfoProductUrl}}" id="wb-moreInfo" />
+                </div>
+              </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+          </div>
+          <!-- Modal dialog for La Moulinette -->
+          <div id="productMoreInfoPopup" ng-show="laMoulinette">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+              <div class="slds-modal__container" ng-click="$event.stopPropagation()">
+                <div class="slds-modal__header slds-page-header">
+                  <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="hideLaMoulinettePopup()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                  <h2 class="slds-text-heading--medium">{!$Label.CRM_La_Moulinette_Apply_High_Level_Forecast}</h2>
+                </div>
+                <div class="slds-modal__content">
+                    <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                        <div class="slds-text-body--regular">{!$Label.CRM_La_Moulinette_Content_Part_1}</div><br/>
+                        <div class="slds-text-body--regular">{!$Label.CRM_La_Moulinette_Content_Part_2}</div><br/>
+                        <div class="slds-form-element">
+                          <div class="slds-text-body--regular">{!$ObjectType.Opportunity.fields.High_Level_Target__c.Label}</div>
+                          <!-- <label class="slds-form-element__label">{!$ObjectType.Opportunity.fields.High_Level_Target__c.Label}</label> -->
+                          <!-- <div class="slds-form-element__control">
+                            <input id="text-input-01" type="number" style="width: 300px" class="slds-input" ng-model=""/>
+                          </div> -->
+                          <span class="slds-truncate">{{highLevelTarget | number : 0}}</span>
+                        </div>
+                        <div class="slds-form-element">
+                          <div class="slds-text-body--regular">{!$Label.CRM_High_Level_Forecast}</div>
+                          <!-- <label class="slds-form-element__label">{!$Label.CRM_High_Level_Forecast}</label> -->
+                          <div class="slds-form-element__control">
+                            <input id="text-input-02" type="text" integer-input="true" style="width: 300px" class="slds-input" ng-model="highLevelForecast"/>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--neutral" ng-click="hideLaMoulinettePopup()">{!$Label.CRM_Cancel_Button}</button>
+                    <button class="slds-button slds-button--neutral slds-button--brand" ng-click="applyLaMoulinette()">{!$Label.CRM_Apply_Button}</button>
+                </div>
+              </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+          </div>
+          <!-- Modal dialog for Warning message for Japan Rental deals -->
+          
+          <!-- Modal dialog for Co-op Requested Amount Start-->
+          <div id="coopRequestedAmountPopup" ng-show="flagOfCoopReqPopup">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+              <div class="slds-modal__container" ng-click="$event.stopPropagation()">
+                <div class="slds-modal__header slds-page-header">
+                  <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="showHideCoopRequestedAmountPopup(false)">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                  <h2 class="slds-text-heading--medium">{!$Label.CRM_Co_op_Requested_Lable}</h2>
+                </div>
+                <div id="errorDiv" class="slds-grid" ng-show="popUpMsgText">
+                  <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                    <span class="slds-assistive-text">Info</span>
+                    <button class="slds-button slds-notify__close" ng-click="removeMsgBlock()">
+                      <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                        <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                      </svg>
+                      <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <div class="notify__content slds-grid">
+                      <h2 class="slds-col slds-text-heading--small">{{popUpMsgText}}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-modal__content">
+                    <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                     <!-- <div class="slds-form-element"> //US#954 Ankita US Games Commented as no longer required.
+                          <div class="slds-text-body--regular">{!$Label.CRM_CN_Coop_Balance_From_Budget}</div>
+                          <div class="slds-form-element__control">
+                            <span class="slds-truncate">{{appConfig.coopBlanceFromBudget | number : 2}}</span>
+                          </div>
+                      </div> -->
+                      <div class="slds-form-element">
+                          <div class="slds-text-body--regular">{!$Label.CRM_Co_op_Requested_Discount}</div>
+                          <div class="slds-form-element__control">
+                            <input id="coopRequestedDiscount" format-number="{{appConfig.decimalPlaces}}" style="width: 300px" class="slds-input" ng-model="coopRequestedDiscount" ng-change="validateCoop('coopRequestedDiscount');"/>
+                          </div>
+                      </div>
+                      <div class="slds-form-element">
+                        <div class="slds-select_container" >
+                            <div class="slds-text-body--regular">{!$Label.CRM_Co_op_Requested_Reason}</div>
+                             <select id="coopReasonPicklist" style="width: 150px;" class="slds-select" ng-model="updateCoopReasonVal">
+                                 <option value="{{opt.value|decodehtml}}" ng-repeat="opt in coopReasonOptions" >{{opt.label | decodehtml}}</option>
+                             </select>
+                         </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--neutral" ng-click="showHideCoopRequestedAmountPopup(false); coopRequestedDiscount = appConfig.coopRequestedDealAmount;">{!$Label.CRM_Cancel_Button}</button>
+                    <button class="slds-button slds-button--neutral slds-button--brand" ng-click="applyCoopRequestedAmount()">{!$Label.CRM_Apply_Button}</button>
+                </div>
+              </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+          </div>
+          <!-- Modal dialog for Co-op Requested Amount End-->
+          
+          <div id="confirmationPopUp" ng-show="overrideRentalPrices == false">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+              <div class="slds-modal__container" ng-click="$event.stopPropagation()" style="width: 35%">
+                <div class="slds-modal__header slds-page-header">
+                  <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="hideConfirmationPopUp()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                  <h2 class="slds-text-heading--medium">{!$Label.CRM_Rental_Override_Pricing_Confirmation_Header}</h2>
+                </div>
+                <div class="slds-modal__content">
+                    <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                        <div class="slds-text-body--regular">{!$Label.CRM_Rental_Override_Pricing_Confirmation_Message}</div><br/>
+                    </div>
+                </div>
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--neutral" ng-click="hideConfirmationPopUp()">{!$Label.CRM_Cancel_Button}</button>
+                    <button class="slds-button slds-button--neutral slds-button--brand" ng-click="applyOverridePricing()">{!$Label.CRM_Apply_Button}</button>
+                </div>
+              </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+          </div>
+        </div>
+        </div>
+<script>
+$(function() {
+ /**
+  * Assistive Help
+  */
+  $('.wb-help-icon').hover(function(e) {
+     $(e.currentTarget).next().show();
+   },
+   function(e) {
+     $(e.currentTarget).next().hide();
+  });
+
+  /**
+   * Picklist
+   
+   $('.wb-picklist').click(function(e) {
+     $(e.currentTarget).next().toggleClass('slds-hide');
+   });*/
+
+});
+
+</script>
+
+</body>
+</html>
+</apex:page>

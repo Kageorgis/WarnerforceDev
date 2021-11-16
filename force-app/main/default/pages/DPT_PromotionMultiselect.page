@@ -1,0 +1,26 @@
+<apex:page standardController="Promotion__c" extensions="DPT_PromotionMultiselect_Controller">
+    <apex:form >        
+        <apex:pageBlock >
+            <apex:pageBlockSection title="Select Promotion Countries" columns="1">
+                <apex:pageMessage summary="{!$Label.Promotion_Countries_Access}" severity="Normal" rendered="{!noCountryFoundFlag}" >
+                </apex:pageMessage>
+                <c:MultiSelectPicklist aLeftOptions="{!allCountries}" aRightOptions="{!selectedCountriesRecords }" size="7" width="150px" leftLabel="Available Country" rightLabel="Selected Country">
+                </c:MultiSelectPicklist>
+            </apex:pageBlockSection>
+            <apex:outputPanel id="channelButton">
+                <apex:commandButton value="Save" action="{!saveCountries}" reRender="channelButton,saveMessage" status="status" rendered="{!!noCountryFoundFlag}"/>
+            </apex:outputPanel>
+            <apex:outputPanel id="saveMessage">
+                <apex:outputPanel rendered="{!saveMessageFlag}">
+                    <div align="center">
+                        <apex:actionstatus id="status" startText="Updating...">
+                            <apex:facet name="stop">
+                                <p>{!$Label.Promotion_Countries_Save_Message}</p> 
+                            </apex:facet>
+                         </apex:actionstatus>       
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:pageBlock>    
+    </apex:form> 
+</apex:page>

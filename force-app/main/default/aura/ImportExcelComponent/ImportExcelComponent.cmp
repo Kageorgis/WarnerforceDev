@@ -1,0 +1,111 @@
+<aura:component controller="ImportExcelController" 
+                implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction,lightning:isUrlAddressable" access="global">   
+    <ltng:require scripts="{!$Resource.XLSX}"/>   
+    <ltng:require scripts="{!$Resource.jszip}"/>
+    <aura:attribute name="objectId" type="String" />
+    <aura:attribute name="sObjectName" type = "String" />
+    <aura:attribute name="oppDetails" type="Opportunity" />
+    <aura:attribute name="FileList" type="Object"/>   
+    <aura:attribute name="columns" type="Object"/>
+    <aura:attribute name="Spinner" type="Boolean" default="false"/> 
+    <aura:attribute name="pageSpinner" type="Boolean" default="false"/> 
+    <aura:attribute name="value" type="Integer" default="0" />
+    <aura:attribute name="successCount" type="Integer" default="0" />
+    <aura:attribute name="errorCount" type="Integer" default="0" />
+    <aura:attribute name="parentId" type="String"  />    
+    <aura:attribute name="errorData" type="String"  />
+    <aura:attribute name="message" type="String"  /> 
+    <aura:attribute name="showRing" type="Boolean" default="false"/>
+    <aura:attribute name="disableUpload" type="Boolean" default="false"/>
+    <aura:attribute name="creditNoteName" type="String" />
+    <aura:attribute name="totalCount" type="Integer" default="0" />
+    <!--W-017642-Added attribute to hold value as true if deal created for JV sale org-Start-->
+    <aura:attribute name="isJVSalesOrg" type="Boolean" default="False"/>
+    <!--W-017642-Added attribute to hold value as true if deal created for JV sale org-End-->
+
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.reInit}" />
+    <aura:handler name="change" value="{!v.parentId}" action="{!c.callBatchProcess}" />
+    <lightning:notificationsLibrary aura:id="notifLib"/> 
+    <aura:registerEvent name="cmpEvent" type="c:ComponentEventForRefresh"/>
+    <aura:if isTrue="{!v.pageSpinner}">
+        <lightning:spinner alternativeText="Loading" size="large" />
+    </aura:if>
+    <div>
+        <div class="slds-page-header" id="headerDiv" role="banner">
+            <div class="slds-grid">
+                <div class="slds-col slds-has-flexi-truncate">
+                    <nav class="slds-m-bottom--xx-small" role="navigation">
+                        <p class="slds-assistive-text" id="bread-crumb-label">You are here:</p>
+                        <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">       
+                            <aura:if isTrue="{!v.sObjectName ==$Label.c.CRM_OpportunityLineItem_Name}">
+                                    <li class="slds-list__item slds-text-heading--label"><a href="">Deals</a></li>
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!'/one/one.app#/alohaRedirect/'+v.oppDetails.Id}">{!v.oppDetails.Name}</a></li>   
+                            <aura:set attribute="else">
+                                        <li class="slds-list__item slds-text-heading--label"><a href="">CREDIT NOTES</a></li>
+                                    <li class="slds-list__item slds-text-heading--label"><a href="{!'/one/one.app#/alohaRedirect/'+v.objectId}">{!v.creditNoteName}</a></li>   
+                            </aura:set>
+                            </aura:if>
+                        </ol>
+                    </nav>
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <h1 class="slds-float--left slds-text-heading--medium slds-truncate" title="Upload File">{!$Label.c.CRM_Upload_UploadProducts}</h1>  
+                    </div>
+                    <div class="slds-col slds-has-flexi-truncate file-style" >
+                        <div class="slds-grid">
+                            <div class="slds-col ">
+                                <lightning:input aura:id="file-input" type="file" files="{!v.FileList}"  
+                                        disabled="{!v.disableUpload ? true : false}" name="file" multiple="false" onchange="{!c.upload}"/>
+                                
+                                <!--W-017642-Added conditin for download template for deal created for JV sale org-Start-->
+                                <aura:if isTrue="{!and(v.sObjectName == $Label.c.CRM_OpportunityLineItem_Name, v.isJVSalesOrg)}" >
+                                    <aura:if isTrue="{!v.oppDetails.RecordType.Name == 'Physical DFI Deal'}">
+                                     	<a href="{!$Label.c.CRMJV_Excel_Upload_Deal_Product_DFI_Template_Link}" target="_blank">Download Excel Template Here</a>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.oppDetails.RecordType.Name == 'Physical ADV/POS'}">
+                                    	 <a href="{!$Label.c.CRMJV_Excel_Upload_Deal_Product_POS_Template_Link}" target="_blank">Download Excel Template Here</a>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.oppDetails.RecordType.Name == 'Physical Planning Deal'}">
+                                    	 <a href="{!$Label.c.CRMJV_Excel_Upload_Deal_Product_Planning_Template_Link}" target="_blank">Download Excel Template Here</a>
+                                    </aura:if>
+                                     
+                                    <aura:set attribute="else">
+                                        <a href="{!v.sObjectName ==$Label.c.CRM_OpportunityLineItem_Name? (v.oppDetails.RecordType.Name=='Physical DFI Deal'?$Label.c.CRM_Excel_Upload_Deal_Product_DFI_Template_Link:$Label.c.CRM_Excel_Upload_Deal_Product_POS_Template_Link):$Label.c.CRM_Excel_Upload_Credit_Note_Template_Link}" target="_blank">Download Excel Template Here</a>
+                                    </aura:set>
+                                </aura:if>
+                                <!--W-017642-Added conditin for download template for deal created for JV sale org-End-->
+                            </div>
+
+                            <div class="slds-col back-button">   
+                                <lightning:button  label="{!v.sObjectName ==$Label.c.CRM_OpportunityLineItem_Name? $Label.c.CRM_Approval_Button_Back_To_Deal:$Label.c.CRM_Clone_Credit_Note_Back_Button}" title="Back to Deal" onclick="{! c.backToDeal }"/>               
+                            </div>
+                        </div>                
+                    </div>
+                    <div class="slds-col slds-size_1-of-2 progress-style" >
+                        <div class="slds-progress-ring" style="{!v.showRing ? '' : 'display:none;'}">
+                            <div id="progressContainer" class="slds-progress-ring__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{!v.value}">
+                            
+                            </div>
+                            <div class="slds-progress-ring__content">
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!v.value==100}"> 
+                            <div>
+                            <aura:unescapedHtml value="{!v.message}" />
+                                <aura:if isTrue="{!v.errorCount>0}">
+                                    Export error data <a onclick="{!c.exportErrorData}">here</a> 
+                                    <aura:if isTrue="{!v.successCount>0}"> 
+                                    before refreshing below product table.
+                                    </aura:if>
+                                </aura:if>          
+                                <aura:if isTrue="{!and(v.successCount>0, v.sObjectName ==$Label.c.CRM_OpportunityLineItem_Name)}"> 
+                                <p>Refresh below product table <a onclick="{!c.fireComponentEvent}">here</a></p>
+                                </aura:if>
+                            </div>
+                        </aura:if>
+                    </div> 
+                </div>            
+            </div>
+        </div>
+    </div>
+</aura:component>

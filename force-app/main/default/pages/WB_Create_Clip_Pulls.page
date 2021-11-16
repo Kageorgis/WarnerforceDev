@@ -1,0 +1,8 @@
+<apex:page standardController="EC_Piece__c" sidebar="false" showHeader="false"> 
+<script>
+if(!window.sldsPath){
+ window.sldsPath = '{!URLFOR($Asset.SLDS, 'assets/icons')}';
+}
+</script>     
+     <MiniGrid:GridRelatedListByObject obj="EC_Piece__c" val="{!EC_Piece__c.Id}" relObj="Clip_Pulls__c" defaultTemplateName="Create Clip Pulls"/> 
+</apex:page>

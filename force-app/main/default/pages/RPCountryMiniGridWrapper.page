@@ -1,0 +1,3 @@
+<apex:page standardController="Release_Planning_Title__c" sidebar="false" showHeader="false" cache="false">
+<iframe marginheight="0" marginwidth="0" width="100%" height="400" frameborder="0" border="0" src="/apex/c__RPCountryMiniGrid?al=true&CF_ParentId={!Release_Planning_Title__c.Id}"></iframe>
+</apex:page>

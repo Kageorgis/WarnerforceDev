@@ -1,0 +1,33 @@
+<apex:page controller="CRM_ExportCSVFileFromUploadExtractCtrl" cache="true" language="{!userLanguage}"
+           contenttype="application/vnd.ms-excel#{!$label.CRM_UploadExtractCSVFileName}.xls; charset=UTF-8" 
+           showheader="false">  
+{!XMLHeader}
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="12" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s62">
+   <Alignment ss:Vertical="Bottom" ss:WrapText="1"/>
+  </Style>
+ </Styles>
+<Worksheet ss:Name="{!$label.CRM_UploadExtractCSVFileName}">
+<Table>
+     <Row>
+   <apex:repeat value="{!excelHeaderNames}" var="aax">
+     <Cell><Data ss:Type="String">{!aax}</Data></Cell>
+    </apex:repeat>
+    </Row>
+  </Table>
+</Worksheet>
+</Workbook>
+</apex:page>

@@ -1,0 +1,168 @@
+<!--
+    Author   : Cognizant Technology Solutions
+    Date Created : 
+    Description : Using Standard Controller Opportunity and extension class to call Visual Flow to generate order and associated order Products
+-->
+<apex:page standardController="Opportunity" extensions="CRM_GenerateOrderFromDealController" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false" > <!--  action="{!startFlow}" -->
+    
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        
+        <apex:includeScript value="../../soap/ajax/35.0/connection.js" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+        
+        <script>
+            /* Login to sforce proxy service */
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            
+            angular.module('generateOrderApp', [])
+            .controller('generateorderCtrl', function($scope){
+                $scope.showSpinner = true;
+                $scope.errorMsg;
+                $scope.generateOrderIdlink;
+                $scope.opportunityProductIds;
+                $scope.newOrderID;
+                
+                var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                $scope.generateorder = function(){
+                    $scope.showSpinner = true;
+                    $scope.spinnerText = "{!$Label.CRM_Generate_Order_InProgress}";
+                    
+                    CRM_GenerateOrderFromDealController.generateOrderAndOrderProducts( ['{!Opportunity.Id}'], function(result, event){
+                    if (!event.status) {
+                          $scope.$apply(function(){
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                          });
+                    }
+                    else {
+                        if(result != null && result != 'undefined'){
+                            $scope.opportunityProductIds = result.dealProductIds;
+                            $scope.generateOrderIdlink = result.urlToReturn;
+                            $scope.newOrderID = $scope.generateOrderIdlink.substring(1,16);
+                            if($scope.opportunityProductIds != null && $scope.opportunityProductIds != 'undefined' && $scope.opportunityProductIds != ''){
+                                $scope.createOrderProducts($scope.generateOrderIdlink.substring(1,16));}
+                            else{
+                                $scope.msgSeverity = 'success';
+                                $scope.navigateToURL($scope.generateOrderIdlink);
+                                $scope.$apply();}  
+                        }
+                    }
+                });
+                };
+                
+                $scope.navigateToURL = function(url) {
+                    console.log('true');
+                    isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    console.log('isLightningExperienceOrSf1inside==',isLightningExperienceOrSf1);   
+                    if (isLightningExperienceOrSf1){
+                        //sforce.one.navigateToURL(url);
+                        window.open('/lightning/r/Order/'+$scope.newOrderID+'/view?c__fr=2','_parent');
+                    }
+                    else
+                        document.location.href = url;
+                };
+                        
+                $scope.createOrderProducts = function(generateOrderId) {
+                        $scope.$apply(function(){
+                            $scope.newOrderId = generateOrderId;
+                             $scope.spinnerText =  "{!$Label.CRM_Generate_Order_InProgress}"+generateOrderId;
+                        });
+                        
+                        console.log('generateOrderId ------------',generateOrderId);
+                        var orderProductIds = [];
+                        orderProductIds = $scope.opportunityProductIds;
+                        
+                        var totalProductsCount = orderProductIds.length;
+                        console.log('orderProductIds.length --------------'+orderProductIds.length);
+                        
+                        (function generateOrderProductsRemote(rowsToProcess, errorRecords){
+                         
+                            if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                 $scope.$apply();
+                            }
+            
+                            var chunkSize = 100, // Recursive batch size
+                                chunkedData = rowsToProcess.splice(0, chunkSize);
+                                
+                            CRM_GenerateOrderFromDealController.generateOrderProducts(generateOrderId, chunkedData, function(result, event){
+                                if (!event.status) {
+                                      $scope.$apply(function(){
+                                        $scope.msgText = event.message;
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                      });
+                                }
+                                else if (orderProductIds.length > 0) {
+                                    $scope.errorRecords = errorRecords.concat(result);
+                                    $scope.$apply(function(){
+                                        $scope.spinnerText = "{!$Label.CRM_Generate_Order_InProgress}"  + (totalProductsCount - orderProductIds.length) + ' / ' + totalProductsCount;
+                                    });
+                                    
+                                    generateOrderProductsRemote(rowsToProcess, errorRecords);
+                                }
+                                else {
+                                    $scope.errorRecords = errorRecords.concat(result);
+                                    if ($scope.errorRecords.length > 0) {
+                                        $scope.msgText = "{!$Label.Generate_Order_Errors}";
+                                        $scope.msgSeverity = 'error';
+                                    } else {
+                                        $scope.msgSeverity = 'success';
+                                        $scope.navigateToURL($scope.generateOrderIdlink);
+                                    }
+                                    $scope.showSpinner = false;
+                                    $scope.$apply();
+                                }
+                            });    
+                        })(orderProductIds, []);
+                    };
+
+            });
+        </script>
+    </head>
+
+    <body style="padding:0">
+        <div class="slds" ng-app="generateOrderApp" ng-controller="generateorderCtrl" ng-init="generateorder()">
+            <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}'">{!$ObjectType.Opportunity.labelPlural}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Opportunity.View,Id)}">{!Opportunity.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="Edit Products">{!$Label.CRM_Generate_Order_Title}</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slds-grid">
+                <div class="slds-col slds-grid" ng-show="showSpinner">
+                    <div class="slds-spinner--medium">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}"/>
+                    </div>
+                    <div class="slds-col slds-text-heading--small slds-m-top--small" ng-bind="spinnerText"></div>
+                </div>
+              
+            </div>
+        </div>
+    </body>
+</html>
+    
+    <apex:pageMessages />
+</apex:page>

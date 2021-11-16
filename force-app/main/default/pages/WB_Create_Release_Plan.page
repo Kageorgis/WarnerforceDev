@@ -1,0 +1,426 @@
+<apex:page StandardController="Commercial_Avail__c" tabStyle="Commercial_Avail__c" recordSetVar="Title__c" 
+extensions="WB_CreateReleasePlan_Controller" docType="html-5.0" >
+<apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+<link rel="stylesheet" href="/resources/demos/style.css"/>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<apex:pageMessages id="msg"/>
+<html>
+    <style>
+        .dateInput.dateOnlyInput span.dateFormat{
+            display:none;
+        }
+        #sectid2 .pbSubsection .detailList table tbody tr td {
+            width:3%;
+        }
+        .ui-dialog-titlebar-close {
+            visibility: hidden;
+        }
+        .bPageBlock .detailList .dataCol {
+            width: 0% !important;
+        }
+    </style>
+
+    <script>          
+        $(document).ready(function(){
+            $('[id$=sectid2]').find('td').css("width","3%");            
+        });
+        
+        function checkFlags()
+        {
+            var $start = $('[id$=useRightToCreateRPChk]').prop("checked");
+            var $end = $('[id$=useRightToCreateRPChkEND]').prop("checked");
+            
+        }
+        function setChannelListState()
+        {            
+            var $start = $('[id$=useRightToCreateRPChk]').prop("checked");
+            var $end = $('[id$=useRightToCreateRPChkEND]').prop("checked");
+            if($start || $end) {
+                
+                $('[Id$=addChnl]').css("opacity","0.5");
+                $('[Id$=addChnl]').prop( "disabled", true );
+                if($start){
+                    
+                    $('.rightToCreateStart input').prop( "disabled", true );
+                    $('.rightToCreateStart select').prop( "disabled", true );
+                    $('.rightToCreateStart select').css("background-color","#ebebe4");
+                    $('.rightToCreate input').prop( "disabled", true );
+                    $('.rightToCreate select').prop( "disabled", true );
+                    $('.rightToCreate select').css("background-color","#ebebe4");
+                    $('[id$=chanAvStart]').val(''); 
+                    $('[id$=chanRiStart]').val(''); 
+                }
+                else{
+                    $('.rightToCreateStart input').prop( "disabled", false );
+                    $('.rightToCreateStart select').prop( "disabled", false );
+                    $('.rightToCreateStart select').css("background-color","white");
+                }
+                if($end){
+                    
+                    $('.rightToCreateEnd input').prop( "disabled", true );
+                    $('.rightToCreateEnd select').prop( "disabled", true );
+                    $('.rightToCreateEnd select').css("background-color","#ebebe4");
+                    $('.rightToCreate input').prop( "disabled", true );
+                    $('.rightToCreate select').prop( "disabled", true );
+                    $('.rightToCreate select').css("background-color","#ebebe4");
+                    $('[id$=chanAvEnd]').val(''); 
+                    $('[id$=chanRiEnd]').val(''); 
+                }
+                else{
+                    $('.rightToCreateEnd input').prop( "disabled", false );
+                    $('.rightToCreateEnd select').prop( "disabled", false );
+                    $('.rightToCreateEnd select').css("background-color","white");
+                }
+                if($start && $end){
+                    $('[id$=chanStatus]').val(''); 
+                    $('.rightToCreate input').prop( "disabled", true );
+                    $('.rightToCreate select').prop( "disabled", true );
+                    $('.rightToCreate select').css("background-color","#ebebe4");
+                }
+                else{
+                        $('[id$=chanStatus]').val('Draft'); 
+                }
+                
+                $('[id$=infoMsg]').css("display","None");
+                $('[id$=opener2]').css("display","None");
+                $('[id$=opener]').css("display","inline-block");
+            }
+            else{
+                
+                $('[Id$=addChnl]').css("opacity","1");
+                $('[Id$=addChnl]').prop( "disabled", false );
+                $('.rightToCreateStart input').prop( "disabled", false );
+                $('.rightToCreateStart select').prop( "disabled", false );
+                $('.rightToCreateStart select').css("background-color","white");
+                $('.rightToCreateEnd input').prop( "disabled", false );
+                $('.rightToCreateEnd select').prop( "disabled", false );
+                $('.rightToCreateEnd select').css("background-color","white");
+                $('[id$=chanStatus]').val('Draft');
+                $('.rightToCreate input').prop( "disabled", false );
+                $('.rightToCreate select').prop( "disabled", false );
+                $('.rightToCreate select').css("background-color","white");
+                $('[id$=infoMsg]').css("display","Block");
+                $('[id$=opener2]').css("display","inline-block");
+                $('[id$=opener]').css("display","None");
+            }
+        }   
+        
+        function showHideButton()
+        {
+            
+            if($('[id$=useRightToCreateRPChk]')[0].checked) {
+               // alert('showhide().......start checked');
+                $('[id$=opener2]').css("display","None");
+                $('[id$=opener]').css("display","inline-block");
+            }
+            else{
+                
+                $('[id$=opener2]').css("display","inline-block");
+                $('[id$=opener]').css("display","None");
+            }
+        }
+        
+        var param="{!JSENCODE(titleIdsMpm)}" ;
+        var newWin=null;
+        function openLookupPopup(name, id)
+        {
+            var url="/apex/WB_MpmReleasePlanExportPage?id="+param;
+            newWin=window.open(url, 'Popup','height=807,width=1198,left=30,top=100,resizable=yes,scrollbars=yes,toolbar=no,status=no');
+            if (window.focus){
+                newWin.focus();
+            }
+            return false;
+        }
+        function closeLookupPopup()
+        {
+            if (null!=newWin){
+                newWin.close();
+            }
+        }
+      
+      function confirmedPartialPopup() {  
+          $( "#dialog" ).dialog({
+              resizable: false,
+              height: "auto",
+              width: 400,
+              top: 25,
+              modal: true,
+              buttons: {
+                  Yes: function() {
+                      ConfirmedPartial('Yes');
+                      $( this ).dialog( "close" );
+                  },
+                  No: function() {
+                      ConfirmedPartial('No');
+                      $( this ).dialog( "close" );
+                  },
+                  Cancel: function() {
+                      $( this ).dialog( "close" );
+                  }
+              }
+          });
+     }
+    </script>
+
+    <script type="text/javascript">
+        function pageLoad(){
+            var titleIds = "{!JSENCODE(titleIdRedir)}";
+            var r = {!titleDisplayed};
+            var stdPage = {!stdPage};
+            var param ="{!JSENCODE(param)}";
+            if (r == false) {
+                if(param == "std"){
+                    alert('Selected Title doesn\'t have Digital or Physical Planning as Yes') ;      
+                    window.top.location.href ='/'+titleIds;
+                }
+                else if(param == "search"){
+                    alert('Selected Titles don\'t have Digital or Physical Planning as Yes') ;      
+                    window.top.location.href ='{!$Label.Re_Direct_to_Title_Search}';
+                }  else{
+                    alert('Selected Titles don\'t have Digital or Physical Planning as Yes') ;      
+                    window.top.location.href ='{!$Label.Cancle_Commercial_Avails}';
+                }
+            }
+        }
+        window.onload = pageLoad;
+    </script>
+    
+    <script>
+        function redirectRP(){
+            var redirectFlag = {!noExceptionFlag};
+            if(redirectFlag){
+                alert('All records were processed with no errors');
+                window.top.location.href ='https://cs10.salesforce.com/a00?fcf=00BJ00000016N17';
+            } else {
+                alert('Some records failed');
+                window.top.location.href ='/apex/WB_RP_Redirect';
+            }
+        }
+    </script>
+    
+    <body >
+    <apex:outputPanel id="jspanel"> 
+      <script>  
+          function chkStatus() {  
+              if({!ConfirmedPartialPresent})
+                  confirmedPartialPopup();
+              else
+                  ConfirmedPartial('NR');                  
+          }
+      </script>
+  </apex:outputPanel>
+    <apex:outputPanel rendered="{!titleDisplayed}" id="pannel">
+    
+        <apex:sectionHeader title="Release Plan Wizard" subtitle="Batch Release Plan Generation" />
+        <apex:pageMessage summary="{!titleMessage}" severity="normal" strength="3" rendered="{!titleMessageRendered}"/>
+        
+        <apex:pageBlock rendered="{!isBatchProcessing}">
+            <br/><br/><br/><br/>
+            <apex:outputLabel value="We are processing your request through batch and you will receive an email after completion of processing" style="font-size: 20px;"/>
+            <br/><br/><br/><br/>
+        </apex:pageBlock>
+        
+        <apex:form id="CommGrid" rendered="{!!isBatchProcessing}">
+            <apex:actionStatus id="loadingstatus">
+                <apex:facet name="start" >
+                    <div class="waitingSearchDiv"  style="background-color: #fbfbfb;height: 100%;opacity:0.65;width:100%;filter: alpha(opacity=50);">
+                         <div class="waitingHolder" style="top:200px; width: 100px;">
+                            <img src="/img/loading.gif" />
+                            <span class="waitingDescription">Please Wait...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <div id="tilteDiv">
+                <apex:pageBlock >
+                    <apex:pageBlockSection title="List Of Selected Titles" columns="1" rendered="{!titleScroller}">
+                        <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;" layout="block" >
+                            <div align="center" >
+                                <apex:commandbutton id="viewRgt" value="View Rights" onclick="openLookupPopup('{!$Component.viewRgt}', '{!$Component.viewRgt}'); return false"/>
+                                <!--<apex:commandButton value="View language" action="{!viewLanguageRedirect}" onclick="launchWindow();"/>-->
+                                <apex:commandButton value="View language"  style="margin-left:20px;margin-bottom:5px" onclick="launchWindow(); return false;"/>
+                            </div>
+                            <apex:pageBlockTable value="{!titleListDisplayed}" var="title" width="500PX" rules="rows">
+                                <apex:column title="Title Name" headerValue="Title ">
+                                    <apex:outputLink value="/{!title.titlesDispalyed.id}">{!title.titlesDispalyed.name}</apex:outputLink>
+                                </apex:column>
+                                <apex:column value="{!title.countLangAvailable}" headerValue="Available Languages"/>
+                                <apex:column value="{!title.countLangProvisional}" headerValue="Provisional Languages"/>
+                                <apex:column value="{!title.titlesDispalyed.Video_Version__c}" />
+                                <apex:column value="{!title.titlesDispalyed.MPM__c}" />
+                                <apex:column value="{!title.titlesDispalyed.First_Available_Date__c}" />
+                                <apex:column value="{!title.titlesDispalyed.Expiration_Date__c}" />
+                                <apex:column value="{!title.titlesDispalyed.Abstract_EIDR_formula__c}"/>
+                                <apex:column value="{!title.titlesDispalyed.Formats__c}" />
+                            </apex:pageBlockTable>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                    
+                    <apex:pageBlockSection title="List Of Selected Titles" columns="1" rendered="{!!titleScroller}">
+                        <apex:outputpanel id="myPanel" layout="block" >
+                            <div align="center" >
+                                <apex:commandbutton id="viewRgt" value="View Rights"  onclick="openLookupPopup('{!$Component.viewRgt}', '{!$Component.viewRgt}'); return false"/>
+                                <!-- <apex:commandButton value="View language" action="{!viewLanguageRedirect}"/>-->
+                                <apex:commandButton value="View language" style="margin-left:20px;margin-bottom:5px" onclick="launchWindow(); return false;"/>
+                            </div>
+                            <apex:pageBlockTable value="{!titleListDisplayed}" var="title" width="500PX" rules="rows">
+                                <apex:column title="Title Name" headerValue="Title ">
+                                    <apex:outputLink value="/{!title.titlesDispalyed.id}">{!title.titlesDispalyed.name}</apex:outputLink>
+                                </apex:column>
+                                <apex:column value="{!title.countLangAvailable}" headerValue="Available Languages"/>
+                                <apex:column value="{!title.countLangProvisional}" headerValue="Provisional Languages"/>
+                                <apex:column value="{!title.titlesDispalyed.Video_Version__c}" />
+                                <apex:column value="{!title.titlesDispalyed.MPM__c}" />
+                                <apex:column value="{!title.titlesDispalyed.First_Available_Date__c}" />
+                                <apex:column value="{!title.titlesDispalyed.Expiration_Date__c}" />
+                                <apex:column value="{!title.titlesDispalyed.Abstract_EIDR_formula__c}"/> 
+                                <apex:column value="{!title.titlesDispalyed.Formats__c}"/>
+                            </apex:pageBlockTable>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </div>
+            <apex:pageMessages id="showmessage" escape="false"></apex:pageMessages>
+            <apex:pageMessage summary="{!$Label.ReleasePlan_message}" severity="normal" strength="3" />
+            
+            <!-- Start -->
+            <apex:pageBlock mode="edit" dir="blockid" id="relPlan">
+                <apex:actionFunction name="countryList" action="{!findCountry}" reRender="sectid1,sectid2,NoCountry,grpCountries,selectedChannels"/>
+                
+                <apex:pageBlockSection title="Select Countries and Formats" id="sectid1">
+                    <!--<apex:inputField value="{!Commercial_Avail__c.Country_Group__c}" id="countrygrp" onchange="countryList()" /><br/>-->
+                    <apex:selectList value="{!Commercial_Avail__c.Country_Group__c}" size="1" onchange="countryList()">
+                        <apex:selectOptions value="{!CountryGroup}"></apex:selectOptions>
+                    </apex:selectList><br/>
+                    <c:MultiSelectPicklist aLeftOptions="{!allCountries}" aRightOptions="{!selectedCountriesRecords }" size="7" width="150px" leftLabel="Available Country" rightLabel="Selected Country" id="availableCountry"/>
+                    <c:MultiSelectPicklist aLeftOptions="{!allFormats}" aRightOptions="{!selectedFormats}" size="7" width="150px" leftLabel="Removed Format" rightLabel="Selected Format" />
+                </apex:pageBlockSection>
+                <apex:pageBlockSection id="sectid2" columns="5">
+                   <apex:inputCheckbox id="useRightToCreateRPChk" value="{!isRightToCreateRPChk}" label="Use Rights For Start Date" onclick="setChannelListState();"/>
+                    <apex:inputCheckbox id="useRightToCreateRPChkEND" value="{!isRightToCreateRPEND}" label="Use Rights For End Date" onclick="setChannelListState();"/>
+                    <apex:inputCheckbox id="provisionalLang" value="{!provisionalLang}" label="Include Provisional Languages"/>
+                    <apex:inputCheckbox id="englishonlyChk" value="{!englishOnlyChk}" label="English only"/>
+                    <apex:inputCheckbox id="seperatelanguageTypeChk" value="{!seperateLanguageTypeChk}" label="Separate Language Types"/>
+                </apex:pageBlockSection>
+                <br/>
+                <apex:outputPanel id="channelButton">
+                    <apex:commandButton value="Fetch Channel Grid" action="{!Channelgrid}" style="align:middle;margin-left: 35em;" 
+                    rerender="showmessage,chnlGrid,noChannel,chnlGrid1,channelButton,noSelCountry" rendered="{!!channelGridFlag}" 
+                    disabled="{!OR(noFormatFlag,noAvailLang)}" status="loadingstatus" oncomplete="setChannelListState();" />
+                    <apex:commandButton value="Cancel" style="align:middle;"  rendered="{!!channelGridFlag}" action="{!cancel}"/>  <br/>
+                </apex:outputPanel>
+                <apex:outputPanel id="NoCountry">
+                    <apex:outputText rendered="{!noCountryFound}" value="{!NoCountryFoundMsg}" style="margin-left:25em; font-weight: bold;font-size:12px; color:red"></apex:outputText>
+                </apex:outputPanel> <br/>
+                <apex:outputPanel id="grpCountries">
+                    <apex:outputText rendered="{!grpCountriesFound}" value="{!grpCountriesFoundMsg}" style="margin-left:25em;font-weight: bold;font-size:12px; color:red"></apex:outputText>
+                </apex:outputPanel> <br/>
+                <apex:outputPanel id="noChannel">
+                    <apex:outputText rendered="{!noChannelFlag}" value="{!$Label.No_channel_for_country }" style="margin-left:25em; font-weight: bold;font-size:12px; color:red"></apex:outputText>
+                </apex:outputPanel>
+                <apex:outputPanel id="noSelCountry">
+                    <apex:outputText rendered="{!noSelectedCountry}" value="{!$Label.No_Channel_Found}" style="margin-left:25em; font-weight: bold;font-size:12px; color:red"></apex:outputText>
+                </apex:outputPanel>
+                
+                <apex:outputPanel id="chnlGrid1" >
+                    <apex:outputPanel rendered="{!channelGridFlag}" >
+                        <apex:pageMessage summary="{!ChannelGridMessage}" severity="normal" strength="3" id="infoMsg"/>
+                        <apex:pageBlockSection id="chnlGrid" >
+                            <apex:pageBlockSection rendered="{!channelGridFlag}" title="Channel Grid" id="relPlanSec" >
+                                <apex:outputpanel id="myPanel1" layout="block" >
+                                    <apex:pageBlockTable value="{!channelGridList}" var="channel" width="800PX" rules="rows" columnsWidth="1000px;" styleClass="tblChannel"> 
+                                        <div id="Channelgrid" class="hideCurrDate">
+                                            <apex:column headerValue="" style="width:1000px;" >
+                                                <apex:commandButton id="addChnl" value="Add" action="{!addWrapper}" rerender="chnlGrid" image="{!$Resource.AddImage}" disabled="{!Commercial_Avail__c.End_Date_In_Perpetuity__c}">
+                                                    <apex:param name="toAddIdent" value="{!channel.addIndent}" assignTo="{!toAddIdent}"/>
+                                                </apex:commandButton>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:commandButton value="Remove" action="{!delWrapper}" rerender="chnlGrid" image="{!$Resource.RemoveImage}" oncomplete="setChannelListState();">
+                                                    <apex:param name="toDelIdent" value="{!channel.delIndent}" assignTo="{!toDelIdent}"/>
+                                                </apex:commandButton>
+                                            </apex:column>
+                                            <apex:column value="{!channel.countryChannel}" headerValue="Available Channels" />
+                                            <apex:column headerValue="Avails Start" styleClass="rightToCreateStart">
+                                                <apex:inputField value="{!channel.additionalInfo.Exclusive_Date__c}" id="chanAvStart" />
+                                            </apex:column>
+                                            <apex:column headerValue="Avails End" styleClass="rightToCreateEnd" >
+                                                <apex:inputField value="{!channel.additionalInfo.Rights_End__c}" id="chanAvEnd" />
+                                            </apex:column>
+                                            <apex:column headerValue="Release Start " styleClass="rightToCreateStart" >
+                                                <apex:inputField value="{!channel.additionalInfo.Start_Date__c}" id="chanRiStart" />
+                                            </apex:column> 
+                                            <apex:column headerValue="Release End " styleClass="rightToCreateEnd" >
+                                                <apex:inputField value="{!channel.additionalInfo.End_Date__c}" id="chanRiEnd" />
+                                            </apex:column> 
+                                            <apex:column headerValue="Status" styleClass="rightToCreate" >
+                                                <apex:inputField value="{!channel.additionalInfo.Status__c}"  id="chanStatus" onchange="statusNone(id)" /> <!--As per CRRT Phase 2 Requirment-->                      
+                                                <!--<apex:actionSupport event="onchange" rendered="chnlGrid1" />-->
+                                            </apex:column> 
+                                            <apex:column headerValue="Reason Code" styleClass="rightToCreate" >
+                                                <apex:inputField value="{!channel.additionalInfo.Reason_Code__c}" />
+                                            </apex:column>
+                                            <apex:column headerValue="Notes" >
+                                                <apex:inputField value="{!channel.additionalInfo.Comments__c}" style="width:250px ; height:30px" />
+                                            </apex:column> 
+                                        </div>
+                                    </apex:pageBlockTable>
+                                </apex:outputPanel> <br/>
+                            </apex:pageBlockSection>
+                        </apex:pageBlockSection>
+                        <apex:commandButton value="Refresh Channel Grid" action="{!Channelgrid}"  style="align:middle;margin-left:30em;" rerender="chnlGrid,noChannel,chnlGrid1" oncomplete="setChannelListState();" />                        
+                        <apex:commandButton id="opener" value="Create Release Plans" style="margin:1em;" action="{!chkRightsStatus}" rerender="showmessage,jspanel" status="loadingstatus" oncomplete="chkStatus();showHideButton();"/>
+                        <apex:commandButton id="opener2" value="Create Release Plans" style="margin:1em;Display:none;" rerender="showmessage,msg,pannel" action="{!bulksave}" status="loadingstatus" oncomplete="showHideButton();"/>
+                        <apex:commandButton value="Cancel"  style="align:middle;" action="{!cancel}"/>                        
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:pageBlock>
+            <!-- End -->
+            <div id="dialog" style="Display:None;" title="Attention!!!">
+                <!--<p>There are informational restrictions for the selected MPMs, countries and channels. Do you want release plans to be created for these records?</p> -->
+                <p> You must check the rights notes before selecting one of the following options:</p>
+                <p> —     Yes:  Create release plans for ALL countries, channels, and formats, except for the ones with the rights status of “No Rights”, “Expired” or “Researching” </p>
+                <p> —     No:  Create release plans ONLY for countries, channels, and formats with the rights status of “Confirmed” </p>
+                <p> —     Cancel:  Do not create release plans. </p>
+                               
+            </div>
+            <apex:actionFunction name="ConfirmedPartial" action="{!bulksave}" rerender="msg,pannel" status="loadingstatus" oncomplete="setChannelListState();">      
+                <apex:param name="strYes" value="" assignTo="{!ConfirmedPartialAllow}"/>
+            </apex:actionFunction>
+            
+            
+        </apex:form>
+    </apex:outputPanel>
+    
+    </body>
+    <script>
+        
+        function statusNone(id){
+            var ele=document.getElementById(id).value;
+            if(ele==''){
+                alert('Status cannot be none');
+                document.getElementById(id).value='Draft';
+            }
+            //alert('hi'+ele);
+        }
+        function getstatus(rigStart,Status){ 
+            alert('status');     
+            var ele=document.getElementById('{!$Component.CommGrid.relPlan.relPlanSec.chanStatus}');
+            var opt=ele.options[ele.selectedIndex];    
+        }
+
+        function launchWindow()
+        {
+            newWin = window.open('/'+'{!($Label.View_language_ID)}'+'?pv0='+'{!vvlistString}', 'Popup','height=500,width=600,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+            if (window.focus)
+            {
+                newWin.focus();
+            }
+            return false;
+        }
+    </script>
+</html>
+</apex:page>

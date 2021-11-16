@@ -1,0 +1,57 @@
+<apex:component controller="CRM_DealApprovalEmailTemplateCtrl_USCAN" access="global">
+	
+	<apex:attribute assignTo="{!deal}" name="dealRec" type="Opportunity" required="true" description="Id Of Deal" access="global"/>
+	
+	<apex:outputPanel rendered="{!AND(DealRec != null, DealRec.Co_op_Requested_Amount__c != null, DealRec.Co_op_Requested_Amount__c > 0)}">
+		<br/><br/><p>{!$Label.CRM_Deal_Product_Information}</p>
+		<table class="dealInfoTbl">
+			<tr>
+				<td class="labelColDealProd">{!$ObjectType.Product2.Fields.Name.label}</td>
+				<td class="labelColDealProd">{!$Label.CRM_Upload_Field_VideoVersion}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Vendor_ID__c.label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Retailer_Product_Id__c.label}</td>
+				
+				<td class="labelColDealProd">{!$ObjectType.Product2.Fields.Street_Date__c.label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Promoted_Price__c.Label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Quantity.Label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.TotalPrice.Label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Co_op_Requested_Amount__c.Label}</td>
+				<td class="labelColDealProd">{!$ObjectType.OpportunityLineItem.Fields.Reason__c.label}</td>
+			</tr>
+
+			<apex:repeat value="{!DealProducts}" var="key">
+				<tr>
+					<td>{!DealProducts[key].Product2.Name}</td>   
+					<td>{!DealProducts[key].ProductCode}</td>
+					<td>{!DealProducts[key].Vendor_ID__c}</td>
+					<td>{!DealProducts[key].Retailer_Product_Id__c}</td>
+					<td>
+						<apex:outputText value="{0,date,MM/dd/yyyy}">
+							<apex:param value="{!DealProducts[key].Product2.Street_Date__c}"/> 
+						</apex:outputText>
+					</td>
+					<td>
+						<apex:outputField value="{!DealProducts[key].Promoted_Price__c}" rendered="{!AND(DealProducts[key].Promoted_Price__c != null, DealProducts[key].Promoted_Price__c > 0)}" />
+					</td>
+					<td>
+						<apex:outputText value="{0,number,###,###,###}">
+							<apex:param value="{!DealProducts[key].Quantity}" />
+						</apex:outputText>
+					</td> 
+					<td>
+						<apex:outputField value="{!DealProducts[key].TotalPrice}" rendered="{!AND(DealProducts[key].TotalPrice!= null, DealProducts[key].TotalPrice > 0)}" />
+					</td> 
+					<td>
+						<apex:outputField value="{!DealProducts[key].Co_op_Requested_Amount__c}" rendered="{!AND(DealProducts[key].Co_op_Requested_Amount__c!= null, DealProducts[key].Co_op_Requested_Amount__c>0)}" />
+					</td> 
+					<td>{!DealProducts[key].Reason__c}</td>
+				</tr>
+			</apex:repeat>
+		</table>
+	</apex:outputPanel> 
+	<br/>
+	<p>
+		<apex:outputlink value="{!LEFT($Api.Partner_Server_URL_270,FIND('.com',$Api.Partner_Server_URL_270)+4)+deal.Id}">{!$Label.CRM_Click_Here_ApproveReject}</apex:outputlink>
+	</p> 
+	<p>{!$Label.CRM_Request_Approval_2}</p>
+</apex:component>

@@ -1,0 +1,967 @@
+<apex:page controller="TPX_OnAirTrackingController" contentType="application/vnd.ms-excel#DealReport.xls" cache="true">
+<head>
+    <apex:stylesheet value="{!URLFOR($Resource.TPX_Bootstrap, 'css/bootstrap.min.css')}" />
+    <style type="text/css">
+        @page { font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;orientation: landscape;}
+        body{
+            font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;
+            padding: 8px;
+            font-size: 12px;
+        }
+        table tr>th{
+            text-align: center;
+        }
+        .table-bordered>thead>tr>td, .table-bordered>thead>tr>th, .table-bordered>tbody>tr>td, .table-bordered{
+            border: 1px solid #333;
+        }
+        .pager {
+            text-align: center;
+            /*margin-left:5%;-*/
+        }
+    </style>
+</head>
+    
+<body>    
+    <apex:form id="frm">
+    <div class="col-md-12 col-md-offset-0 table-responsive">
+    <table  class="table table-bordered table-hover" style="border: 1px solid #333; width:40%;">
+        <tbody> 
+            <tr>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <strong>GROSS ON-AIR INTEGRATION GOAL</strong>
+                </td>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(grossOnAirIntegrationGoal!=null ,true,false) }">
+                        <apex:param value="{!ROUND(grossOnAirIntegrationGoal,0)}" />    
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <strong>ADMIN COSTS</strong>
+                </td>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(adminCosts!=null ,true,false) }">
+                        <apex:param value="{!ROUND(adminCosts,0)}" />    
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <strong>ON-AIR PRODUCTION COST FORECAST</strong>
+                </td>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(onAirProductionCost!=null ,true,false) }">
+                        <apex:param value="{!ROUND(onAirProductionCost,0)}" />    
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <strong>NET ON-AIR INTEGRATION GOAL</strong>
+                </td>
+                <td style="width:372px; text-align: left;" bgcolor="#FFFF00">
+                    <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(netOnAirIntegrationGoal!=null ,true,false) }">
+                        <apex:param value="{!ROUND(netOnAirIntegrationGoal,0)}" />    
+                    </apex:outputText>
+                </td>
+            </tr>
+        </tbody> 
+    </table>
+    </div> 
+        
+    <div class="col-md-12 col-md-offset-0 table-responsive">
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    
+                        <table  class="table table-bordered table-hover" style="border: 1px solid #333; width:100%;">
+                            <thead> 
+                                <tr style="background-color: #ffff99;">
+                                    <td style="font-weight: bold;" colspan="3">ON-AIR TRACKING {!commitment.Name}: CLOSED</td>
+                                    <td></td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Name</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Owner</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">On-Air Integration Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Production Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Production Costs</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Prizing Taken out of On-Air Int. Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Final Net On-Air Income</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Stage</th>
+                                </tr>
+                            </thead>
+                            <tbody> 
+                                <apex:repeat var="lst" value="{!lstClosedOpps}">  
+                                    <tr>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Owner.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.On_Air_Integration_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.On_Air_Integration_Fee__c,0)}" />    
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Production_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Production_Cost__c,0)}" />    
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Production_Costs__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Production_Costs__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_Net_On_Air_Income__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_Net_On_Air_Income__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="{!lst.StageName}"/>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody> 
+                            <tfoot>
+                                <tr>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(onAirIntegrationFeeTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(onAirIntegrationFeeTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirProductionCostTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirProductionCostTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirProductionCostTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirProductionCostTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirSponsorshipCostTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirSponsorshipCostTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirSponsorshipCostTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirSponsorshipCostTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(prizingTakenOutOfOnAirIntFeeTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(prizingTakenOutOfOnAirIntFeeTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TOTAL CLOSED:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TOTAL CLOSED MINUS ADMIN:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(totalClosedMinusAdminClosed!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(totalClosedMinusAdminClosed,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>PERCENTAGE TO GOAL:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <apex:outputLabel value="{!percentageToGoalClosed} %" rendered="{! If(percentageToGoalClosed!=null ,true,false) }"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TO GO:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(toGo!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(toGo,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                            </tfoot>
+                        </table>
+                    
+                </div>
+            </div>  
+        </div>
+    </div>   
+    
+    <div class="col-md-12 col-md-offset-0 table-responsive"> 
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    
+                        <table  class="table table-bordered table-hover" style="border: 1px solid #333; width:100%;">
+                            <thead> 
+                                <tr style="background-color: #ffff99;">
+                                    <td style="font-weight: bold;" colspan="3">ON-AIR TRACKING {!commitment.Name}: CONTRACT</td>
+                                    <td></td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Name</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Owner</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">On-Air Integration Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Production Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Production Costs</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Prizing Taken out of On-Air Int. Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. Net On-Air Income</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Stage</th>
+                                </tr> 
+                            </thead>
+                            <tbody> 
+                                <apex:repeat var="lst" value="{!lstContractOpps}">  
+                                    <tr>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Owner.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.On_Air_Integration_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.On_Air_Integration_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Production_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Production_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Production_Costs__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Production_Costs__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_Net_On_Air_Income__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_Net_On_Air_Income__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="{!lst.StageName}"/>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody> 
+                            <tfoot>
+                                <tr>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(onAirIntegrationFeeTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(onAirIntegrationFeeTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirProductionCostTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirProductionCostTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirProductionCostTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirProductionCostTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirSponsorshipCostTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirSponsorshipCostTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirSponsorshipCostTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirSponsorshipCostTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(prizingTakenOutOfOnAirIntFeeTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(prizingTakenOutOfOnAirIntFeeTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TOTAL CONTRACT:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalContract!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalContract,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>CONTRACT PERCENTAGE:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <apex:outputLabel value="{!percentageToGoalContract} %" rendered="{! If(percentageToGoalContract!=null ,true,false) }"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                            </tfoot>
+                        </table>
+                    
+                </div>
+            </div>  
+        </div>
+    </div> 
+    
+    <div class="col-md-12 col-md-offset-0 table-responsive"> 
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    
+                        <table  class="table table-bordered table-hover" style="border: 1px solid #333; width:100%;">
+                            <thead> <tr style="background-color: #ffff99;">
+                                    <td style="font-weight: bold;" colspan="3">ON-AIR TRACKING {!commitment.Name}: HOT</td>
+                                    <td></td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Name</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Owner</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">On-Air Integration Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Production Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Production Costs</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Prizing Taken out of On-Air Int. Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. Net On-Air Income</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Stage</th>
+                                </tr> 
+                            </thead>
+                            <tbody> 
+                                <apex:repeat var="lst" value="{!lstHotOpps}">  
+                                    <tr>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Owner.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.On_Air_Integration_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.On_Air_Integration_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Production_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Production_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Production_Costs__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Production_Costs__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_Net_On_Air_Income__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_Net_On_Air_Income__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="{!lst.StageName}"/>
+                                        </td>
+                                        
+                                    </tr>
+                                </apex:repeat>
+                            </tbody> 
+                            <tfoot>
+                                <tr>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(onAirIntegrationFeeTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(onAirIntegrationFeeTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirProductionCostTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirProductionCostTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirProductionCostTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirProductionCostTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirSponsorshipCostTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirSponsorshipCostTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirSponsorshipCostTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirSponsorshipCostTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(prizingTakenOutOfOnAirIntFeeTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(prizingTakenOutOfOnAirIntFeeTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TOTAL HOT:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalHot!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalHot,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>HOT PERCENTAGE:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <apex:outputLabel value="{!percentageToGoalHot} %" rendered="{! If(percentageToGoalHot!=null ,true,false) }"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                            </tfoot>
+                        </table>
+                    
+                </div>
+            </div>  
+        </div>
+    </div> 
+    
+    <div class="col-md-12 col-md-offset-0 table-responsive"> 
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    
+                        <table  class="table table-bordered table-hover" style="border: 1px solid #333; width:100%;">
+                            <thead>
+                                <tr style="background-color: #ffff99;">
+                                    <td style="font-weight: bold;" colspan="3">ON-AIR TRACKING {!commitment.Name}: PROPOSAL</td>
+                                    <td></td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                    <td style="text-align: right;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Name</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Deal Owner</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">On-Air Integration Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Production Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Production Costs</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Actuals On-Air Sponsorship Cost</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Prizing Taken out of On-Air Int. Fee</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Est. Net On-Air Income</th>
+                                    <th id="thleft" style="border: 1px solid gray; color: black" bgcolor="#8EA9DB">Stage</th>
+                                </tr> 
+                            </thead>
+                            <tbody> 
+                                <apex:repeat var="lst" value="{!lstProposalOpps}">  
+                                    <tr>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px; text-align: left;">
+                                            <apex:outputText value="{!lst.Owner.Name}"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.On_Air_Integration_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.On_Air_Integration_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Production_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Production_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Production_Costs__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Production_Costs__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Final_On_Air_Sponsorship_Cost__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Final_On_Air_Sponsorship_Cost__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Prizing_Taken_out_of_On_Air_Int_Fee__c,0)}" />  
+                                            </apex:outputText>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(lst.Est_Net_On_Air_Income__c!=null ,true,false) }">
+                                                <apex:param value="{!ROUND(lst.Est_Net_On_Air_Income__c,0)}" />  
+                                            </apex:outputText>
+                                         </td>
+                                        <td align="right" style="width:372px;">
+                                            <apex:outputText value="{!lst.StageName}"/>
+                                        </td>
+                                        
+                                    </tr>
+                                </apex:repeat>
+                            </tbody> 
+                            <tfoot>
+                                <tr>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(onAirIntegrationFeeTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(onAirIntegrationFeeTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirProductionCostTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirProductionCostTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirProductionCostTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirProductionCostTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(estOnAirSponsorshipCostTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(estOnAirSponsorshipCostTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(actualOnAirSponsorshipCostTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(actualOnAirSponsorshipCostTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(prizingTakenOutOfOnAirIntFeeTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(prizingTakenOutOfOnAirIntFeeTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                            
+                                        </td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>TOTAL PROPOSAL:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>
+                                                <apex:outputText value="$ {0, number, #,##0.00}" rendered="{! If(finalNetOnAirIncomeTotalProposal!=null ,true,false) }">
+                                                    <apex:param value="{!ROUND(finalNetOnAirIncomeTotalProposal,0)}" />  
+                                                </apex:outputText>
+                                            </strong>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                                
+                                    <tr>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <strong>PROPOSAL PERCENTAGE:</strong> 
+                                        </td>
+                                        <td align="right" style="width:372px;" bgcolor="#FFFF00">
+                                            <apex:outputLabel value="{!percentageToGoalProposal} %" rendered="{! If(percentageToGoalProposal!=null ,true,false) }"/>
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                        <td align="right" style="width:372px;">
+                                        </td>
+                                    </tr>
+                            </tfoot>
+                        </table>
+                    
+                </div>
+            </div>  
+        </div>
+    </div> 
+    </apex:form>
+</body>
+</apex:page>

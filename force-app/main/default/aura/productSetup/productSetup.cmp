@@ -1,0 +1,25 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >	
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+	
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>  
+    
+    <aura:if isTrue="{!v.isOpen}">
+      <!--  <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="false" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                 
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{!c.closeModel }" alternativeText="close" variant="bare-inverse" class="slds-modal__close" iconClass="Black"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Create or Paste New Products</h2>
+                    </header>
+                                   
+                    <c:massCPUploader/>                    
+                                   
+                </div>
+            </section> -->
+                
+     <div style="float:center">
+ 
+           </div>
+         <c:massCPUploader/> 
+    </aura:if>
+</aura:component>

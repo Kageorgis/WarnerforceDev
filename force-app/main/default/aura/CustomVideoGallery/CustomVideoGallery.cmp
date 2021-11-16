@@ -1,0 +1,55 @@
+<aura:component controller="CustomVideoGallery" implements="forceCommunity:availableForAllPageTypes" access="global">
+    <aura:handler name="init" action="{! c.doInit }" value="{! this }" />
+    <aura:attribute name="FileName1" type="String" default="06955000000pmSgAAI"/>
+    <aura:attribute name="FileName2" type="String" default="06955000000pmSgAAI"/>
+    <aura:attribute name="FileName3" type="String" default="06955000000pmSgAAI"/>
+    
+    <aura:attribute name="url1" type="String" default=""/>
+    <aura:attribute name="url2" type="String" default=""/>
+    <aura:attribute name="url3" type="String" default=""/>
+    
+    <aura:attribute name="Description1" type="String"/>
+    <aura:attribute name="Description2" type="String"/>
+    <aura:attribute name="Description3" type="String"/>
+    
+    <aura:attribute name="Title1" type="String"  default="Momsplainning"/>
+    <aura:attribute name="Title2" type="String"  default="Momsplainning"/>
+    <aura:attribute name="Title3" type="String"  default="Momsplainning"/>
+    
+    <div class="slds-box">
+        <div class="slds-grid slds-wrap">
+            <aura:if isTrue="{! v.url1 != '' }" >
+                <div class="slds-col slds-large-size_1-of-1 slds-medium-size_1-of-1 slds-small-size_1-of-1">
+                    <aura:if isTrue="{! v.Title1 != '' }" ><div class="slds-text-title" ><b>{!v.Title1}</b></div><br/></aura:if>
+                    <video controls="controls" preload="auto" >
+                        <source src="{! v.url1 + '#t=0.5'}" type="video/mp4" />
+                    </video>
+                    <div class="slds-text-body_small">{!v.Description1}</div>
+                </div>
+            </aura:if>
+            
+            <aura:if isTrue="{! v.url2 != '' }" >
+                <div class="slds-col slds-large-size_1-of-1 slds-medium-size_1-of-1 slds-small-size_1-of-1">
+                    <aura:if isTrue="{! v.Title2 != '' }" ><div class="slds-text-title" ><b>{!v.Title2}</b></div><br/></aura:if>
+                    <video controls="controls" preload="auto" >
+                        <source src="{! v.url2 }" type="video/mp4" />
+                    </video>
+                    
+                    <div class="slds-text-body_small">{!v.Description2}</div>
+                </div>
+            </aura:if>
+            
+            <aura:if isTrue="{! v.url3 != '' }" >
+                <div class="slds-col slds-large-size_1-of-1 slds-medium-size_1-of-1 slds-small-size_1-of-1">
+                    <aura:if isTrue="{! v.Title3 != '' }" ><div class="slds-text-title" ><b>{!v.Title3}</b></div><br/></aura:if>
+                    <video controls="controls" preload="auto" >
+                        <source src="{! v.url3 }" type="video/mp4" />
+                    </video>
+                    <div class="slds-text-body_small">{!v.Description3}</div>
+                </div>
+            </aura:if>
+            
+        </div>
+    </div>
+    
+</aura:component>

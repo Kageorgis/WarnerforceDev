@@ -1,0 +1,12 @@
+<!--
+   @Author Cognizant 
+   @name WB_CreateClientAvail_Lightning.
+   @CreateDate 05 July 2018
+   @Description - Visualforce button for Create Client Avail Detail button on Title
+   @Version <1.0>
+  
+-->
+
+<apex:page standardController="Commercial_Avail__c" extensions="WB_CreateClientAvail_Lightning" action="{!forwardToListController}">
+    <apex:pageMessage summary="{!errorMessage}" severity="normal" strength="3" rendered="true"/>
+</apex:page>

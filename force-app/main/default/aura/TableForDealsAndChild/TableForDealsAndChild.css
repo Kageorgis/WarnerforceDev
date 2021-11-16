@@ -1,0 +1,16 @@
+.THIS {
+}
+
+.THIS .slds-tabs_scoped__nav {
+    border-radius: 0;
+}
+
+.THIS .slds-tabs_scoped__content {
+    padding: 0rem;
+}
+
+.THIS .category_message {
+    font-weight: bold;
+    font-style: italic;
+    padding: 1rem;
+}

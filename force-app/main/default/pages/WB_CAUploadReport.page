@@ -1,0 +1,20 @@
+<apex:page >
+</apex:page>
+<!--
+<apex:page StandardController="CA_Upload_Record__c" tabStyle="CA_Upload_Record__c" recordSetVar="CA_Upload_Record__c"  extensions="WB_CA_UploadController" contentType="application/vnd.ms-excel#CA_Upload_Result_{!TODAY()}.xls" cache="false" readOnly="true"> <!--contentType="application/octet-stream#CA_Upload_Result_{!TODAY()}.csv"         contentType="text/csv#CA_Upload_Result_{!TODAY()}.csv" --
+    <apex:pageMessages />
+    <apex:form >
+        <apex:pageBlock id="pageBlockId" rendered="{!resultDisplayBlock}">
+            <apex:pageBlockSection columns="1" collapsible="false"><!--title=" Client Avail Upload Record List"
+                <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;"  layout="block" >
+                    <apex:pageBlockTable value="{!lstCAupldRecord}" id="pageBlockTableId" var="displaydata" width="500PX" rules="rows" border="1">
+                        <apex:repeat value="{!lstColumnFields}" var="displayfieldname">
+                            <apex:column value="{!displaydata[displayfieldname]}"/>
+                        </apex:repeat>
+                     </apex:pageBlockTable>
+                </apex:outputpanel>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+-->

@@ -1,0 +1,3 @@
+<aura:event type="APPLICATION" description="cp_fileUploadedEvt">
+    <aura:attribute name="dataFile" type="Object"/>
+</aura:event>

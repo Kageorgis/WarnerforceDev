@@ -1,0 +1,73 @@
+<apex:page standardController="MPM__c" extensions="WB_PhysicalAllocations" sidebar="false">
+<apex:pagemessages > </apex:pagemessages>
+    <apex:form >
+        <apex:pageBlock >
+           <apex:pageBlockButtons >
+              
+               
+                <apex:commandButton value="Cancel" action="{!Cancel}"/>
+            
+            </apex:pageBlockButtons>
+           <apex:pageBlockSection title="Allocate Ec to Video Version" columns="2">
+             
+           <apex:pageblockSectionItem >
+           
+                     <apex:panelGrid columns="3" id="abcd">
+                            <apex:selectList id="sel1" value="{!leftselected}" multiselect="true" style="width:400px" size="{!(if(vvSize > 6,vvSize,6))}">
+                                <apex:selectOptions value="{!unselectedvalues}" />
+                            </apex:selectList>
+                            
+                            <apex:panelGroup >
+                                <br/>
+                                <apex:image value="{!$Resource.multiselected}">
+                                     <apex:actionSupport event="onclick" action="{!selectclick}" reRender="abcd"/>
+                                </apex:image>
+                                <br/><br/>
+                                <apex:image value="{!$Resource.multiunselected}" >
+                                      <apex:actionSupport event="onclick" action="{!unselectclick}" reRender="abcd"/>
+                                </apex:image>
+                            </apex:panelGroup>
+                            
+                        <apex:selectList id="sel2" value="{!rightselected}" multiselect="true" style="width:400px" size="{!if(vvSize > 6,vvSize,6)}">
+                            <apex:selectOptions value="{!SelectedValues}" />
+                        </apex:selectList>
+                    </apex:panelGrid> 
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                     <apex:commandButton value="Allocate" action="{!Next}" reRender="table"/> </apex:pageblockSectionItem>
+                     </apex:pageBlockSection>
+                    </apex:pageBlock>
+                    
+                    <apex:pageBlock >
+                     <apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!Saves}"/> 
+               
+                <apex:commandButton value="Cancel" action="{!Cancel}"/>
+            
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable value="{!EcpieceList}" var="ec2" id="table">
+                
+                   <apex:column ><apex:facet name="header">MPM:{!mpmNames}</apex:facet>{!ec2.Name} <br /> {!ec2.EC_Name__c}</apex:column>
+                   <apex:repeat value="{!TitlesecondList}" var="tit2">
+                   <apex:column >
+                     <apex:facet name="header">
+                         <apex:outputPanel >{!tit2.Video_Version__c}<br/>{!tit2.Name} <br/> <apex:inputCheckbox />
+                             <apex:actionSupport event="onclick" 
+                                    action="{!updateAll}" 
+                                    rerender="table" >
+                                    <apex:param name="q" value="{!tit2.Id}"/>
+                              </apex:actionSupport>
+                         </apex:outputPanel>
+                     </apex:facet>
+                                                      
+                      <apex:repeat value="{!Ectitles2}" var="ect6" id="rpt1">
+                        <apex:inputCheckbox value="{!ect6.checkedbox__c}" rendered="{!AND(ec2.Id = ect6.EC_Piece__c,ect6.Title__c = tit2.Id)}" /> 
+                      </apex:repeat>  
+                    
+                   </apex:column>
+                   </apex:repeat>
+                
+           </apex:pageBlockTable> 
+    </apex:pageBlock>   
+  </apex:form>             
+</apex:page>

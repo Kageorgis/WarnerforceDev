@@ -1,0 +1,4 @@
+<apex:component controller="CRM_DealApprovalRejectComments" access="global">
+    <apex:attribute name="dealId" assignTo="{!DealIds}" type="String" description="Id of the cont"/> 
+      {!ApprovalSteps.Comments}
+</apex:component>

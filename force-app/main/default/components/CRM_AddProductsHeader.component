@@ -1,0 +1,92 @@
+<apex:component >
+    <script type="text/ng-template" id="add-products-header.html">
+            <div id="header" class="slds-col slds-page-header headroom">
+          <div class="slds-grid slds-grid--align-spread slds-p-around--x-small">
+            <div class="slds-col slds-medium-show">
+              <nav class="slds-m-bottom--xx-small" role="navigation" ng-hide="{{appConfig.searchOnlyPage}}">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                  <li class="slds-list__item slds-text-heading--label"><a href="{{appConfig.breadcrumbObjectLink}}">{{appConfig.breadcrumbObjectName}}</a></li>
+                  <li class="slds-list__item slds-text-heading--label slds-truncate"><a href ng-click="navigateToURLByLink(appConfig.breadcrumbRecordLink)" style="text-overflow:ellipsis;overflow:hidden;max-width:400px;">{{appConfig.breadcrumbRecordName}}</a></li>
+                </ol>
+              </nav>
+
+            <nav class="slds-m-bottom--xx-small" role="navigation" ng-show="{{appConfig.searchOnlyPage}}">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                  <li class="slds-list__item slds-text-heading--label"><a href="javascript:window.history.back();">{!$label.CRM_Button_Back}</a></li>
+                </ol>
+              </nav>              
+
+              <div class="slds-col slds-has-flexi-truncate">
+                <h1 ng-hide="{{appConfig.searchOnlyPage}}" class="slds-text-heading--medium slds-truncate" title="Add Products">{!$Label.CRM_Add_Product_Label}</h1>
+                <h1 ng-show="{{appConfig.searchOnlyPage}}" class="slds-text-heading--medium slds-truncate" title="Product Search">{!$Label.CRM_Label_Product_Search_Page}</h1>
+              </div>
+              <p class="slds-text-body--small slds-m-top--x-small">{{ (products).length }} {!$Label.CRM_Product_found_Label}</p>
+            </div>
+            <div class="slds-col slds-align-middle">
+              <div class="slds-form--inline">
+                
+                <!--div class="slds-form-element">
+                  <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                  <div class="slds-form-element__control">
+                    <input class="slds-input" ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-keyup="$event.keyCode == 13 && refineFilters()" />
+                  </div>
+                </div -->
+                <!--Addedd by Harshad for US 1014 -->
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                    <div class="slds-form-element__control">
+                        <textarea id="searchtextarea" class="slds-textarea" ng-model="search.text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-keyup="$event.keyCode == 13 && refineFilters()" rows="1" style="resize:none"></textarea>
+                    </div>
+                </div>                
+
+                <div class="slds-form-element slds-button-group slds-button-space-left slds-medium-show" role="group">
+                  <button class="slds-button slds-button--icon-border" ng-click="toggleSearch()" ng-class="{'slds-is-selected': sidebarOn}">
+                    <svg aria-hidden="true" class="slds-button__icon">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#filterList'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">{!$Label.CRM_Search_Label_on_Add_Product_Page}</span>
+                  </button>
+                </div>
+                
+                <div class="slds-form-element slds-button-group slds-button-space-left slds-medium-show" role="group">
+                  <button ng-click="setViewMode('grid')" ng-class="{'slds-is-selected': viewMode == 'grid'}" class="slds-button slds-button--icon-border">
+                    <svg aria-hidden="true" class="slds-button__icon">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#tile_card_list'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">{!$Label.CRM_Tiles_Button_On_Add_Product_Page}</span>
+                  </button>
+                  <button ng-click="setViewMode('list')" ng-class="{'slds-is-selected': viewMode == 'list'}" class="slds-button slds-button--icon-border">
+                    <svg aria-hidden="true" class="slds-button__icon">
+                      <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#list'}}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">{!$Label.CRM_List_Button_On_Add_Product_Page}</span>
+                  </button>
+                </div>
+                
+                <div class="slds-form-element slds-m-around--small" ng-hide="{{appConfig.searchOnlyPage}}"> 
+                  <div class="slds-button-group slds-button-space-left" role="group">
+                    <button ng-disabled="viewMode=='grid'" class="slds-button slds-button--neutral slds-button--small" ng-click="addAllSelected()">{!$Label.CRM_Add_All_Selected_Button_on_Add_Product_Page}</button>
+                    <button ng-disabled="!(products && products.length>0)" ng-click="saveData(true)" class="slds-button slds-button--neutral">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                    <button ng-disabled="!(products && products.length>0)" ng-click="saveData(false)" class="slds-button slds-button--neutral">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+                  </div>
+                </div>
+                
+                <!-- US-525 change : Pricebook Selection -->
+                <div class="slds-form-element" ng-show="{{appConfig.searchOnlyPage}}">
+                  <label class="slds-form-element__label">{!$label.CRM_Label_Pricebook_On_Product_Search_Page}</label>
+                  <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select class="slds-select" ng-model="appConfig.priceBookId" ng-options="opt.value as opt.label for opt in selectOptions.pricebooks">
+                    </div>
+                  </div>
+                </div>          
+
+              </div>
+            </div>
+          </div>
+        </div>
+        </script>
+
+</apex:component>

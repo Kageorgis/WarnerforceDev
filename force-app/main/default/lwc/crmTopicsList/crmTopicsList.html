@@ -1,0 +1,24 @@
+<template>
+    <lightning-card title="Topics" icon-name="standard:topic">
+        <div slot="actions">
+            <lightning-input type="search" placeholder="Search" value={searchText} onchange={handleFilterChange}>
+            </lightning-input>
+        </div>
+        <p>
+            <template if:true={loaded}>
+                <div style={componentHeight}>
+                        <lightning-datatable key-field="id" data={topics} columns={columns} show-row-number-column
+                            hide-checkbox-column>
+                        </lightning-datatable>
+                </div>
+            </template>
+        </p>
+        <lightning-card>
+            <template if:false={loaded}>
+                <div style={componentHeight}>
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                </div>
+            </template>
+        </lightning-card>
+    </lightning-card>
+</template>

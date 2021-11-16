@@ -1,0 +1,285 @@
+<apex:page standardController="Promotion__c" extensions="WB_ValidatePromotionController,WB_CommitPromotionController" sidebar="false" showHeader="false" applyHtmlTag="true" applyBodyTag="true" lightningStylesheets="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" charset="utf8" >
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+    
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+    
+    <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'moment/moment.js')}"/>
+    <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+    
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+    
+    <script src="/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+    <script src="/soap/ajax/35.0/apex.js" type="text/javascript"></script>
+    <style>
+        .wordWrapClass {
+        text-overflow: ellipsis;
+        white-space: nowrap !important;
+        max-width: 20px;    
+        }
+        .slds .slds-notify--toast {
+        margin: 8px 8px 5px;   
+        }
+        .handsontable thead th {
+        background-color: #4F6A92 !important;
+        color: white !important;
+        }
+        .slds .slds-page-header{
+        padding: 11px !important;
+        }
+        html body.sfdcBody{
+        padding:0px;
+        }
+        .slds-lookup{
+        width: 240px;
+        }
+        .slds .slds-pill{
+        height: 27px !important;
+        line-height: 1.25 !important;  
+        padding-left: 14px;
+        }
+        .slds .slds-lookup__item > a, .slds .slds-dropdown__item > a{
+        padding: 6px 0px 6px 12px !important;
+        }
+        #spinnerText{
+        font-size: 18px;
+        }
+    </style>
+    <script type="text/javascript"> 
+    
+    sforce.connection.sessionId = '{!$Api.Session_ID}';
+    
+    /* Pass a few dynamic parameters */
+    angular.module("appConfig", [])     
+    .service("appConfig", function() {
+        return {
+            promotionId: '{!Promotion__c.Id}', 
+            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+            ptPTDChunkSize : '{!ptPTDChunkSize}',
+            commitThresholdSize : '{!commitThresholdSize}',
+        };
+    });
+    
+    angular.module("promoTitleDetails", ['appConfig', 'crm-components','ngLocale'])
+    .controller("promoTitleDetailsController", ['$scope', '$timeout', 'appConfig','$locale', function($scope, $timeout, appConfig,$locale) {
+        
+        var handsonLocale = new Set(['bg','cs-CZ','da-DK','de-AT','de-CH','de-DE','de-LI','el','en-AU','en-GB','en-IE','en-NZ','en-US','en-ZA',
+                                     'es-AR','es-CL','es-CO','es-CR','es-ES','es-MX','es-NI','es-PE','es-PR','es-SV','et-EE','fa-IR','fi-FI',
+                                     'fil-PH','fr-CA','fr-CH','fr-FR','he-IL','hu-HU','id','it-CH','it-IT','ja-JP','ko-KR','lv-LV','nb','nb-NO',
+                                     'nl-BE','nl-NL','nn','pl-PL','pt-BR','pt-PT','ro-RO','ru-RU','ru-UA','sk-SK','sl','sr-Cyrl-RS','sv-SE','th-TH',
+                                     'tr-TR','uk-UA','zh-CN','zh-MO','zh-SG','zh-TW']);
+        
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.appConfig = appConfig;
+        $scope.promotionTitleDetails = [];
+        var initalHeight = ($(window).height() - $('#headerDiv').height() - 26);
+        $scope.height = initalHeight;
+        $scope.showHidetable = false;
+        $scope.displaySection = false;
+        $scope.ptdmsg ='TEMP CAP records creation is in process.';
+        $scope.ptdmsgClose = 'Please don\'t close the window.'
+        
+        $scope.vvRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            return td;
+        };
+        
+        $scope.init = function(){
+            $scope.commitPromotion('{!Promotion__c.Id}');
+        };
+        
+        $scope.commitPromotion = function(promotionId){
+            console.log('In commitPromotion');
+            $scope.msgText = null;
+            $scope.showSpinner = true;
+            $scope.spinnerText = 'Loading...';
+            WB_CommitPromotionController.findDeltaPTD(promotionId,appConfig.commitThresholdSize, function(result, event){
+                if (!event.status){
+                    $scope.$apply(function(){
+                        $scope.msgText = event.message;
+                        if($scope.msgText.includes('timeout'))
+                        {
+                            $scope.msgText = 'There is a server issue, please try again.';
+                        }
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                    });
+                }
+                else
+                {
+                    var isCountMore = result.isCountMore;
+                    var isError = result.isError;
+                    if(isCountMore)
+                    {
+                        console.log('In callPromotionCommitBatch Pass');
+                        $scope.$apply(function(){
+                            $scope.msgText = 'You will recieve an email for TEMP CAP creation.';
+                            $scope.msgSeverity = 'success';
+                            $scope.showSpinner = false;
+                        });
+                        setTimeout(function(){
+                            //$scope.navigateToURL(sforce.one.navigateToSObject(promotionId,'detail'));
+                            $scope.navigateToURL(promotionId);
+                        }, 3000);
+                    }
+                    else
+                    {
+                        if(isError)
+                        {
+                            $scope.$apply(function(){
+                                $scope.msgText = 'Please fix all Validation errors prior committing the Promotion.';
+                                $scope.msgSeverity = 'error';
+                                $scope.showSpinner = false;
+                            });
+                        }
+                        else
+                        {
+                            WB_CommitPromotionController.createTEMPCAP(promotionId, function(result, event){
+                                if (!event.status){
+                                    $scope.$apply(function(){
+                                        $scope.msgText = event.message;
+                                        if($scope.msgText.includes('timeout'))
+                                        {
+                                            $scope.msgText = 'There is a server issue, please try again.';
+                                        }
+                                        $scope.msgSeverity = 'error';
+                                        $scope.showSpinner = false;
+                                    });
+                                }
+                                else
+                                {
+                                    $scope.navigateToURL(promotionId);
+                                }
+                            },{
+                                escape: false,
+                                timeout: 120000,
+                                buffer: false
+                            });
+                        }
+                    }
+                }
+            },{
+                escape: false,
+                timeout: 120000,
+                buffer: false
+            });
+        };
+        
+        /*$scope.navigateToURL = function(url) {
+            console.log('url==='+url);
+            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+            
+            if ($scope.isLightningExperienceOrSf1) {
+                sforce.one.navigateToURL(url);
+            } else {
+                document.location.href = url;
+            }
+        };*/
+        
+        $scope.navigateToURL = function(promoId) {
+            console.log('promoId==='+promoId);
+            window.open('/lightning/r/Promotion__c/'+promoId+'/view?fr=1','_self');
+        };
+        
+        $scope.showHideModal = function(modalId,mode){
+            $scope.msgText = '';
+            jQuery('#'+modalId).toggleClass('slds-fade-in-open');
+            jQuery('#backDrop').toggleClass('slds-backdrop--open');
+            if(mode == 'close'){
+                console.log('inside the modal close');
+            }
+        }; 
+        
+        function setHeight() {
+            $scope.height = (initalHeight - $("#msgDiv").height());
+            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+            $("#tableDiv").css("height",$scope.height);
+        };
+        
+    }
+                                               ]);//end of angular class
+    </script>
+</head>
+
+<body>
+    <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="promoTitleDetails" ng-controller="promoTitleDetailsController" ng-init="init()" class="slds" ng-cloak="ngCloak">
+        <!-- ===========================Spinner================================= -->   
+        <div class="spinnerModel" ng-show="showSpinner">
+            <div class="spinnerContent slds-spinner--large">
+                <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                <div id="spinnerText">{{spinnerText}}</div>
+            </div>
+        </div>
+        <!-- ===========================Spinner================================= -->
+        <div id="headerDiv" class="slds-page-header" role="banner">
+            <nav class="slds-m-bottom--m-small" role="navigation">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                    <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Promotion__c.View,Id)}">{!$label.WB_Promotion_Back_Button}</a></li>
+                </ol>
+            </nav>
+        </div>
+        <!-- ===========================Exception=============================== -->
+        <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+            <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small slds-theme--alert-texture" role="alert">
+                <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid" ng-show="msgText">
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                    </svg>
+                    <div class="slds-col slds-align-middle">
+                        <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===========================Exception=============================== -->
+        
+        <div id="PTDCreation" class="slds-grid">
+            <div class="slds-col slds-align-middle">
+                <center>
+                    <p class="slds-col slds-text-heading--small" style="font-size: 22px !important;">{{ptdmsgClose}}</p>
+                    <p class="slds-col slds-text-heading--small" style="font-size: 22px !important;">{{ptdmsg}}</p>
+                </center>
+            </div>    
+        </div>
+    </div>
+    
+</body>    
+
+</html>
+</apex:page>

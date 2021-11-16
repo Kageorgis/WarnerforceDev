@@ -1,0 +1,51 @@
+<aura:component>
+    <aura:attribute name="recordsPerPage" type="Integer" default="10"/>
+    <aura:attribute name="totalPages" type="Integer" default="0"/>
+    <aura:attribute name="currentPage" type="Integer" default="1"/>
+    <aura:attribute name="startPage" type="Integer" default="1"/>
+    <aura:attribute name="endPage" type="Integer" default="10"/>
+    <aura:attribute name="filterData" type="sObject"/>
+    <aura:attribute name="len" type="integer"/>
+    <aura:attribute name="check" type="boolean"/>
+    <aura:attribute name ="searchPagination" type="Boolean" />
+    <aura:attribute name="slNo" type="Integer" default="1"/>
+    <aura:attribute name="PaginationData" type="sObject"/>
+    <aura:attribute name="spinner" type="Boolean" />
+    <aura:handler name="change" value="{!v.PaginationData}" action="{!c.doinit}"/>
+    <aura:handler name="init" value="{! this }" action="{! c.doinit }"/>
+    <aura:handler name="changeData" event="c:ComponentEventForRefresh" action="{!c.handleSearchComponent}"/>
+    <aura:method name="onchange" action="{!c.doinit}"/>
+    
+    <div class="slds-grid">
+        <div class="slds-col slds-size_1-of-2 no-of-records-label">
+            <lightning:layoutItem>
+                <div class="slds-text-heading--label">
+                    Total Number of Records: {!v.len}
+                </div>
+            </lightning:layoutItem>
+        </div>
+        <div class="slds-col slds-size_1-of-2">
+            <div class="slds-grid records-per-page">
+                <div class="slds-col slds-size_1-of-3">
+                    <lightning:select name="selectItem" aura:id="selectItem" label="Records" variant="label-hidden" onchange="{!c.changeRecordsPerPage}">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </lightning:select>
+                </div>
+                <div class="slds-col slds-size_2-of-3 page-number">
+                    <lightning:layout horizontalAlign="center" >
+                        <lightning:layoutItem>
+                            <lightning:buttonIcon iconName="utility:chevronleft" variant="bare" onclick="{!c.previous}" alternativeText="Previous" disabled="{!v.currentPage == 1}" />
+                            <span style="font-size:18px;"> 
+                                <aura:text value="{!' '+v.currentPage+' of '+v.totalPages+' '}"/> 
+                            </span> 
+                            <lightning:buttonIcon iconName="utility:chevronright"  variant="bare" onclick="{!c.next}" alternativeText="Next" disabled="{!v.currentPage == v.totalPages || !v.totalPages == 0}" />
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </div>
+            </div>
+        </div>
+    </div>  
+</aura:component>

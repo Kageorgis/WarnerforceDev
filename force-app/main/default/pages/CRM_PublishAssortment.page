@@ -1,0 +1,136 @@
+<apex:page standardController="Bundle__c"
+    extensions="CRM_PublishAssortmentsController"
+    applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false" title="{!$ObjectType.Bundle__c.Label}">
+
+<html
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+
+            <script type="text/javascript">
+            angular.module('PublishAssortmentsApp', [])
+                .controller('PublishAssortmentsCtrl', function($scope) {
+                    $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                    $scope.showSpinner = true;
+                    $scope.spinnerText = 'Processing';
+                    $scope.msgText;
+                    $scope.msgSeverity;
+
+                    $scope.BackToOrder= function(url) {
+                           $scope.navigateToURL(url); 
+                        };
+    
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                            
+                            if ($scope.isLightningExperienceOrSf1)
+                                sforce.one.navigateToURL(url);
+                            else
+                                document.location.href = url;
+                        };
+                    
+                    $scope.publishAssortment = function(){
+                        $scope.spinnerText = 'Please wait while processing your request';
+                        
+                        CRM_PublishAssortmentsController.publishAssortment('{!Bundle__c.Id}', function(result, event){
+                            console.log(result);
+                            // ERROR CONDITION
+                            if (!event.status) {
+                                $scope.$apply(function(){
+                                    $scope.msgText = event.message;
+                                    $scope.msgSeverity = 'error';
+                                    $scope.showSpinner = false;
+                                });
+                            }
+                            
+                            else {
+                                $scope.$apply(function(){
+                                    $scope.msgText = 'Request to Generate/Update has been successfully submitted.\n You will receive the confirmation email once it is done.';
+                                    $scope.msgSeverity = 'success';
+                                    $scope.showSpinner = false;
+                                });
+                            }
+                        }, {
+                            escape: false,
+                            timeout: 120000,
+                            buffer: false
+                        });
+                    };
+                });
+
+            </script>
+        </head>
+        <body>
+            <div class="slds" xmlns:ng="http://angularjs.org" id="ng-app" ng-init="publishAssortment()" ng-app="PublishAssortmentsApp" ng-controller="PublishAssortmentsCtrl" ng-cloak="ngCloak">
+
+                <div class="slds-page-header" role="banner">
+                  <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text"></p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Bundle__c.Tab, $ObjectType.Bundle__c)}">{!$ObjectType.Bundle__c.labelPlural}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="/{!Bundle__c.Id}">{!Bundle__c.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_PublishAssortmentTitle}">{!$Label.CRM_PublishAssortmentTitle}</h1>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-no-flex slds-align-bottom">
+                        <div class="slds-button-group" role="group">
+                            <button class="slds-button slds-button--neutral" ng-click="BackToOrder('{!URLFOR($Action.Bundle__c.View,Id)}')" >{!$Label.CRM_PublishAssortment_Btn_Back}</button>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="slds-size--1-of-1 slds-spinner--medium" ng-show="showSpinner">
+                    <div class="slds-text-heading--small">
+                        <img style="height:36px" src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" /> {{spinnerText}} ...
+                    </div>
+                </div>
+
+                <div ng-hide="showSpinner" class="slds-size--1-of-1 slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert" rendered="display">
+                    <div class="notify__content slds-grid">
+                        <svg aria-hidden="true" class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex">
+                            <use xlink:href="{!URLFOR($Resource.SLDS0120)}/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                        </svg>
+                        <div class="slds-col slds-align-middle">
+                          <h2 class="slds-text-heading--small">{{msgText}}</h2>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 
+                <div class="slds-grid">
+                    <div ng-show="failedAssortments.length > 0" class="slds-size--1-of-1">
+                        <table class="slds-table slds-table--bordered"> 
+                            <tr class="slds-text-heading--label">
+                                <th class="slds-cell-shrink">{!$ObjectType.Bundle__c.fields.Name.Label}</th>
+                                <th class="slds-cell-shrink">Error</th>
+                            </tr>
+                            <tr class="slds-hint-parent" ng-repeat="assortments in failedAssortments">
+                                <td class="slds-truncate" data-label="{!$ObjectType.Bundle__c.fields.Name.Label}">
+                                    <a href="/{{assortments.id}}">{{assortments.name}}</a>
+                                </td>
+                                <td class="slds-truncate" data-label="Error Message">{{assortments.error}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                 -->
+                 
+            </div>
+        </body>
+    </html>
+
+</apex:page>

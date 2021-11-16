@@ -1,0 +1,71 @@
+<aura:component  implements="force:hasRecordId,force:lightningQuickActionWithoutHeader,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,lightning:isUrlAddressable" access="global" >
+	
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"  />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="pageReference" type="Object"/>     
+    <aura:attribute name="Spinner" type="Boolean" default="true"/>
+     <aura:attribute name="FormLoadComplete" type="Boolean"/>
+   <aura:attribute name="saveNewFlag" type="Boolean" default="false"/>
+    <lightning:navigation aura:id="navService"/>
+    
+    <div class="slds-is-relative">
+    <aura:if isTrue="{!v.Spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+       <div class="slds-spinner--brand  slds-spinner slds-spinner--large slds-is-relative" role="alert">
+         <span class="slds-assistive-text">Loading</span>
+         <div class="slds-spinner__dot-a"></div>
+         <div class="slds-spinner__dot-b"></div>
+       </div>
+    </div>
+</aura:if>    
+    <center>
+    <h2 class="inlineTitle slds-p-top--large slds-p-horizontal--medium slds-p-bottom--medium slds-text-heading--medium" >New Contact Assignment</h2>
+        </center>
+        <lightning:messages />  
+    <div>
+        <h3 class="slds-section__title slds-theme--shade primaryPaletteBorder test-id__section-header-container">
+         <span class="test-id__section-header-title section-header-title slds-p-horizontal--small slds-truncate">Information</span></h3>
+         <br/>
+        <lightning:recordEditForm  aura:id="editForm" 
+        objectApiName="Contact_Assignment__c"
+         onsuccess="{!c.handleSuccess}"
+         onload = "{!c.handleLoad}"                        
+         onsubmit = "{!c.handleSubmit}"                  
+       >  
+ 
+            <div class="slds-grid slds-grid_vertical">
+                <div class="slds-col ">
+                    <lightning:inputField aura:id="ectrackerField" fieldName="EC_Tracker__c"/>
+                </div>
+                      <div class="slds-col">
+                    <lightning:inputField aura:id="accntField" fieldName="Account__c"/>
+                </div>
+                 
+                  <div class="slds-col ">
+                    <lightning:inputField onchange="{!c.hideSpinneronInput}" aura:id="conField"  fieldName="Contact__c" />    
+                </div>
+                         <div class="slds-col">
+                    <lightning:inputField aura:id="field"   fieldName="Role__c"/>
+                </div>
+
+ 				 <div class="slds-col ">
+                    <lightning:inputField  aura:id="field"  fieldName="CurrencyIsoCode"/>
+                </div>
+
+                 
+            </div> 
+            <div class="inlineFooter">
+        <div class= "modal-footer slds-modal__footer slds-size_1-of-1">
+                <lightning:button variant="neutral" label="Cancel" title="Cancel" type="text" onclick="{!c.handleCancel}"/>
+             <lightning:button variant="neutral" label="Save &amp; New" type="text" onclick="{!c.handleSaveNew}"/>
+               <lightning:button variant="brand" label="Save" title="Submit" type="submit"/>
+               </div>
+    </div>
+       
+               
+    </lightning:recordEditForm> 
+             </div>
+  </div>
+</aura:component>

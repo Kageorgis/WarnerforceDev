@@ -1,0 +1,16 @@
+<design:component label="Custom App Page without header">
+    <flexipage:template >
+        <flexipage:region name="firstLine" defaultWidth="LARGE" />
+        <flexipage:region name="left" defaultWidth="LARGE">
+            <flexipage:formfactor type="MEDIUM" width="LARGE"/>
+        </flexipage:region>
+        
+        <flexipage:region name="center" defaultWidth="LARGE">
+            <flexipage:formfactor type="MEDIUM" width="LARGE"/>
+        </flexipage:region>
+               
+        <flexipage:region name="right" defaultWidth="LARGE">
+            <flexipage:formfactor type="MEDIUM" width="LARGE"/>
+        </flexipage:region>
+    </flexipage:template>
+</design:component>

@@ -1,0 +1,14 @@
+<apex:page StandardController="Local_Title__c" tabStyle="Local_Title__c" showheader="false">
+
+<head>  
+    <script type="text/javascript">
+        function pageLoad()
+        {
+            alert('You donot have sufficient right to create Local Data');
+            window.top.location.href ='{!$Label.Redirect_Localized_Title}';  
+        } 
+        window.onload = pageLoad;
+    </script>
+</head>
+
+</apex:page>

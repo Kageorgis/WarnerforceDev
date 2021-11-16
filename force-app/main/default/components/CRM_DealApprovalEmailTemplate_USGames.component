@@ -1,0 +1,56 @@
+<apex:component controller="CRM_DealApprovalEmailTemplateCtrlUSGames" access="global">
+	
+	<apex:attribute assignTo="{!deal}" name="dealRec" type="Opportunity" required="true" description="Id Of Deal" access="global"/>
+	
+	<br/><br/>{!$Label.CRM_Deal_Product_Information}<br/><br/>
+	<table class="dealInfoTbl">
+		<tr>
+			<td class="labelCol">{!$ObjectType.Product2.Fields.Name.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.ProductCode.Label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Start_Date__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.End_Date__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Reason__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Comments__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.POS_Rebate__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.POS_Forecast__c.label}</td>
+			<td class="labelCol">{!$ObjectType.OpportunityLineItem.Fields.Co_op_Requested_Amount__c.label}</td>
+		</tr>
+		<apex:repeat value="{!DealProducts}" var="key">
+			<tr>
+				<td>{!DealProducts[key].Product2.Name}</td>
+				<td>{!DealProducts[key].ProductCode}</td>
+				<td>
+					<apex:outputText value="{0,date,short}">
+						<apex:param value="{!DealProducts[key].Start_Date__c}"/>
+					</apex:outputText>
+				</td>
+				<td>
+					<apex:outputText value="{0,date,short}"> 
+						<apex:param value="{!DealProducts[key].End_Date__c}"/>
+					</apex:outputText>
+				</td>
+				<td>{!DealProducts[key].Reason__c}</td>
+				<td>{!DealProducts[key].Comments__c}</td>
+				<td>
+					<apex:outputText value="{0,number,###,###,###.00}">
+						<apex:param value="{!DealProducts[key].POS_Rebate__c}" />
+					</apex:outputText>
+				</td> 
+				<td>
+					<apex:outputText value="{0,number,###,###,###}">
+						<apex:param value="{!DealProducts[key].POS_Forecast__c}" />
+					</apex:outputText>
+				</td>  
+				<td>
+					<apex:outputText value="{0,number,###,###,###.00}">
+						<apex:param value="{!DealProducts[key].Co_op_Requested_Amount__c}" />
+					</apex:outputText>
+				</td> 
+			</tr>
+		</apex:repeat>
+	</table>
+	<p>
+		<apex:outputlink value="{!LEFT($Api.Partner_Server_URL_270,FIND('.com',$Api.Partner_Server_URL_270)+4)+deal.id}">{!$Label.CRM_Click_Here_ApproveReject}</apex:outputlink>
+	</p> 
+	<p>{!$Label.CRM_Request_Approval_2}</p>
+</apex:component>

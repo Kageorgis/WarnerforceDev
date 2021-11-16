@@ -1,0 +1,44 @@
+<!--
+Page- WB_Manage_ScheduleInfo
+Version- 1.0
+Creation Date- 07 AUG 2015
+Author- Prachi Gadewar
+Last Modified Date - 
+Last Modified by  - 
+Description- Update more than one announcement type scheduling information.
+-->
+<apex:page standardController="Announcement_Rule__c" extensions="WB_Manage_ScheduleInfo_Controller" tabStyle="Announcement_Rule__c" recordSetVar="Announcement__c" docType="html-5.0" showHeader="true" sidebar="false">
+<apex:form >
+    <apex:sectionHeader title="Manage Schedule" />
+    <apex:pageMessages id="errMsg"/>
+     
+    <apex:pageBlock rendered="{!showTable}" > 
+        <apex:pageBlockSection columns="1" title="Announcement Type records for updating the Schedule information ">
+            <apex:pageBlockTable value="{!listAnnouncementTypeToProcess}" var="AnnouncementsType">
+                <apex:column value="{!AnnouncementsType.Announcement_Type__c}" headerValue=" Announcement Name" />     
+                <apex:column value="{!AnnouncementsType.Account__c}" />
+                <apex:column value="{!AnnouncementsType.Schedule_Type__c}"/>
+                <apex:column value="{!AnnouncementsType.Daily_Schedule_Days__c}"/>
+                <apex:column value="{!AnnouncementsType.Weekly_Monthly_Schedule_Days__c}" />
+                <apex:column value="{!AnnouncementsType.Schedule_Time__c}" />
+                <apex:column value="{!AnnouncementsType.Active__c}" />
+                <apex:column title="Title Name" headerValue="Announcement Type">
+                    <apex:outputLink value="/{!AnnouncementsType.id}">{!AnnouncementsType.name}</apex:outputLink>
+                </apex:column> 
+            </apex:pageBlockTable>
+        </apex:pageblockSection>
+    </apex:pageBlock>
+    
+    <apex:pageBlock rendered="{!showTable}" >
+        <apex:pageBlockSection title="Schedule fields" columns="1">
+            <apex:inputField value="{!Announcement_Rule__c.Schedule_Type__c}"/>
+            <apex:inputField value="{!Announcement_Rule__c.Daily_Schedule_Days__c}"/>
+            <apex:inputField value="{!Announcement_Rule__c.Weekly_Monthly_Schedule_Days__c}"/>
+            <apex:inputField value="{!Announcement_Rule__c.Schedule_Time__c}"/>
+            <apex:inputField value="{!Announcement_Rule__c.Active__c}"/>
+        </apex:pageBlockSection>
+        <apex:commandButton action="{!UpdateRecords}" title="Update" value="Update" style="margin:1em; margin-left :35em;"/>
+        <apex:commandButton action="{!Cancel}" title="Cancel" value="Cancel" style="align:middle;"/>
+    </apex:pageBlock>
+</apex:form>
+</apex:page>

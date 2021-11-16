@@ -1,0 +1,92 @@
+<aura:component description="cp_addPropertiesModal" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction,lightning:actionOverride,lightning:isUrlAddressable" access="global" controller="cp_recordTypeModal">
+
+
+    <aura:attribute name="isOpenProp" type="boolean" default="false" />
+    <aura:attribute name="isOpenRetl" type="boolean" default="false" />
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="selectedLookUpRecords" type="sObject[]" default="[]"/>
+    <aura:attribute name="selectedAccountRecords" type="sObject[]" default="[]"/>
+    <aura:attribute name="record" type="Object"
+                    description="The record object to be displayed"/>
+    <aura:attribute name="simpleRecord" type="Object" default="Name" description="A simplified view record object to be displayed"/>
+    <aura:attribute name="recordError" type="String"
+                    description="An error message bound to force:recordData"/>
+
+    <force:recordData aura:id="record"
+                      layoutType="FULL"
+                      recordId="{!v.recordId}"
+                      targetError="{!v.recordError}"
+                      targetRecord="{!v.record}"
+                      targetFields ="{!v.simpleRecord}"
+                      mode="VIEW"/>
+<lightning:layout>
+    <lightning:layoutItem size="12" class="slds-text-align--right">
+    <lightning:buttonGroup>
+    <lightning:button name="propButton" variant="neutral"
+                      label="Add Properties"
+                      title="Add Properties"
+                      onclick="{!c.openModal}" />
+        <lightning:button name="retlButton" variant="neutral"
+                          label="Add Retailers"
+                          title="Add Add Retailers"
+                          onclick="{!c.openModal}" />
+    </lightning:buttonGroup>
+    </lightning:layoutItem>
+</lightning:layout>
+
+    <!-- Model Box Start -->
+    <aura:if isTrue="{!v.isOpenProp}">
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" >
+                <div class="slds-modal__header">
+
+                    <h2 id="header43" class="slds-text-heading--medium">Add Properties to <b>{!v.simpleRecord.Name}</b></h2>
+                </div>
+
+                <div class="slds-modal__content slds-p-around--medium" style="height: 450px">
+                    <div class="slds-grid slds-wrap">
+
+                          <c:cp_addProperties objectAPIName="Property__c"
+                                              IconName="standard:proposition"
+                                              lstSelectedRecords="{!v.selectedLookUpRecords}"
+                                              label="Search for a Property" />
+
+                    </div>
+                </div>
+
+                <div class="slds-modal__footer">
+                    <lightning:button class="slds-button slds-button--neutral" onclick="{!c.closeModal}">Cancel</lightning:button>
+                    <lightning:button class="slds-button slds-button--brand" onclick="{!c.createRecord}">Next</lightning:button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open"></div>
+    </aura:if>
+    <aura:if isTrue="{!v.isOpenRetl}">
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" >
+                <div class="slds-modal__header">
+
+                    <h2 id="header43" class="slds-text-heading--medium">Add Retailers to <b>{!v.simpleRecord.Name}</b></h2>
+                </div>
+
+                <div class="slds-modal__content slds-p-around--medium" style="height: 450px">
+                    <div class="slds-grid slds-wrap">
+
+                        <c:cp_addRetailers objectAPIName="Account"
+                                           IconName="standard:account"
+                                           lstSelectedRecords="{!v.selectedAccountRecords}"
+                                           label="Search for a Retailer"/>
+
+                    </div>
+                </div>
+
+                <div class="slds-modal__footer">
+                    <lightning:button class="slds-button slds-button--neutral" onclick="{!c.closeModal}">Cancel</lightning:button>
+                    <lightning:button class="slds-button slds-button--brand" onclick="{!c.createRetailers}">Next</lightning:button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open"></div>
+    </aura:if>
+</aura:component>

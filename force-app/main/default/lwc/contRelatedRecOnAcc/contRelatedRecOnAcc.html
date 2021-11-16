@@ -1,0 +1,69 @@
+<template>
+    <template if:true={contactRecs}>
+        <article class="slds-box" style="padding: 0;">
+            <div class="slds-p-around_small slds-page-header slds-is-relative slds-grid" style="display: flex;align-items: flex-start;">
+                <lightning-icon size="small" icon-name="standard:contact" alternative-text="Contact" title="Contact" ></lightning-icon>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                      <p class="slds-card__header-link slds-truncate slds-p-left_small" title={cardTitle}>
+                        <span>{cardTitle}</span>
+                      </p>
+                    </h2>
+                </div>
+                <div>
+                    <!--lightning-button label="New" onclick={showcreateContactComponent}></lightning-button>
+                    <c-create-contact-component if:true={showSearchComponentFlag} onchild={handleChildEvent}></c-create-contact-component-->
+                    <lightning-button label="New" onclick={createContactAction}></lightning-button>
+                </div>
+            </div>
+            <div class="slds-border_top slds-media__body slds-grid slds-wrap">
+                <template for:each={showContactRecs} for:item="contRec">
+                    <div style="display: flex;overflow: hidden;width: 32%;align-items: flex-start;" key={contRec.Id} class="slds-col slds-size_1-of-3 slds-p-around_small">
+                        <lightning-icon style="display: table;" icon-name="standard:contact" alternative-text="Contact" title="Contact" ></lightning-icon>
+                        <div style="overflow: hidden;width: 80%;">
+                            <a class="slds-p-horizontal_small" href={contRec.redirectURL} title={contRec.Name} target="_self" tabindex="0">{contRec.Name}</a>
+                            <table class="slds-p-horizontal_small slds-grid">
+                                <tr>
+                                    <td class="slds-col slds-size_1-of-3">
+                                        Title:
+                                    </td>
+                                    <td class="slds-col slds-size_2-of-3" style="white-space: nowrap;text-overflow: ellipsis;">
+                                        <p class="slds-p-horizontal_small">{contRec.Title}</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="slds-col slds-size_1-of-3">
+                                        Email:
+                                    </td>
+                                    <td class="slds-col slds-size_2-of-3" style="white-space: nowrap;">
+                                        <p class="slds-p-horizontal_small">
+                                            <lightning-formatted-email value={contRec.Email} hide-icon></lightning-formatted-email></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="slds-col slds-size_1-of-3">
+                                        Phone:
+                                    </td>
+                                    <td class="slds-col slds-size_2-of-3">
+                                        <p class="slds-p-horizontal_small">{contRec.Phone}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div>
+                            <lightning-button-menu icon-size="x-small" alternative-text="Show More" style="position: absolute;">
+                                <lightning-menu-item value={contRec.Id} label="Edit" onclick={editContactAction} name="editAction"></lightning-menu-item>
+                                <lightning-menu-item value={contRec.Id} label="Delete" onclick={handleClick} name="deleteAction"></lightning-menu-item>
+                            </lightning-button-menu>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div slot="footer" class="slds-card__footer">
+                <lightning-button variant="base" label="View All" title="View All" onclick={handleNavigate} class="slds-m-left_x-small"></lightning-button>
+            </div>
+        </article>
+        <c-delete-contact-confirm-modal visible={isDialogVisible} name="deleteCompModal" onclick={handleClick}></c-delete-contact-confirm-modal>
+    </template>
+    <!--c-cont-related-recs-data-table viewallprop={isViewAllProp} contrecs={contactRecs}></c-cont-related-recs-data-table-->
+</template>

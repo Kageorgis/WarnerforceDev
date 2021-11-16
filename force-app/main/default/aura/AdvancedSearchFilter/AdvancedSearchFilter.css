@@ -1,0 +1,56 @@
+.THIS .filter-css{
+    margin-top: 147px;
+    margin-left: -135px;
+}
+.THIS.slds-modal__container{
+    max-width: 70px !important;
+    width:70px !important;
+}
+.THIS .drop-down-css{
+    display: flex;
+    margin: auto;
+    margin-left: -25px !important;
+}
+.THIS .data-in-drop-down {
+    padding-top: 3px;
+    display: table-cell;  
+}
+.THIS .slds-checkbox_faux{
+    width: 20px;
+    height:20px;
+}
+.THIS .check-box-style{
+    width:25%;
+    margin-left:15px;
+}
+.THIS .slds-dropdown-trigger_click.slds-is-open .slds-dropdown{
+    width: -webkit-fill-available;
+}
+.THIS .add-padding{
+    padding-left: 287px; 
+    margin-top: -66px;
+}
+.THIS .auto-fit{
+    width: fit-content;
+    padding-left: inherit;
+    padding-top: inherit;
+}
+.THIS .margin{
+    margin-top : 16px;
+}
+.THIS .slds-modal__container{ 
+        height : auto; width: 70%; max-width: 70rem; 
+} 
+.THIS .modal-body{ 
+        height : 40rem !important; 
+        max-height: 40rem !important; 
+}
+.THIS .slds-modal__footer{ 
+        display: inline !important; 
+}
+.THIS .slds-modal__content{
+        max-height :300px;height:300px;overflow-y :visible !important;
+}
+.THIS .slds-dropdown-trigger{
+        height:29.5px;
+}

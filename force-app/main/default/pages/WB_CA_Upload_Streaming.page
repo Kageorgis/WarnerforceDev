@@ -1,0 +1,144 @@
+<apex:page standardController="CA_Upload__c" extensions="WB_CA_Upload_Streaming_Controller" readOnly="true">
+
+        <apex:includeScript value="{!$Resource.jquery_1_5_1}"/>
+        <apex:includeScript value="{!$Resource.json2}"/>
+        <apex:includeScript value="{!$Resource.cometd}"/>
+        <apex:includeScript value="{!$Resource.jquery_cometd}"/>
+        <apex:stylesheet value="{!$Resource.circle}" />
+        <apex:includeScript value="{!$Resource.progress_circle}"/>
+        <script type="text/javascript">
+                                                     
+            (function($){
+                $(document).ready(function() {
+                                   
+                    // Connect to the CometD endpoint
+                    $.cometd.init({
+                            url: window.location.protocol+'//'+window.location.hostname+'/cometd/23.0/',
+                            requestHeaders: { Authorization: 'OAuth {!$Api.Session_ID}'}
+                        });
+                    // Subscribe to a topic. JSON-encoded update will be returned
+                    // in the callback
+                    $.cometd.subscribe('/topic/CAUploadSummaryData', function(message) {
+                        
+                        $('#'+message.data.sobject.Id).css('display','block');
+                        $('#Total').text(JSON.stringify(message.data.sobject.Total_Stream__c));
+                        $('#TotalSuccessful').text(JSON.stringify(message.data.sobject.Total_Successful_Stream__c));
+                        $('#TotalFailed').text(JSON.stringify(message.data.sobject.Total_Fail_Stream__c));
+                        $('#Status').text(JSON.stringify(message.data.sobject.Upload_Status__c).replace(/\"/g, ""));
+                        
+                        var totalUploaded = parseFloat(message.data.sobject.Total_Stream__c);
+                        var totalSuccessful = parseFloat(message.data.sobject.Total_Successful_Stream__c);
+                        var totalFailed = parseFloat(message.data.sobject.Total_Fail_Stream__c);
+                        var totalProcessed = totalSuccessful + totalFailed;
+                        var totalPercent = (totalProcessed / totalUploaded * 100).toFixed(0);
+
+                        $('#circle').progressCircle({nPercent        : totalPercent,
+                                                     showPercentText : true,
+                                                     circleSize      : 100,
+                                                     thickness       : 5
+                                                   });
+                        
+                        if(JSON.stringify(message.data.sobject.Upload_Status__c).indexOf("Completed") >= 0){
+                            $('#'+message.data.sobject.Id+'_icon').attr('src','{!URLFOR($Resource.complete_icon)}');
+                            $("#CARecords").load(location.href + " #CARecords");
+                        }
+                        
+                    });
+                });
+            })(jQuery)
+           function disconnect() {
+               $.cometd.disconnect();
+           }
+           window.onbeforeunload = disconnect;
+        </script>    
+        
+        <style type="text/css">
+        .blink {
+            -webkit-animation: blink .3s linear infinite;
+            -moz-animation: blink .3s linear infinite;
+            -ms-animation: blink .3s linear infinite;
+            -o-animation: blink .3s linear infinite;
+             animation: blink .3s linear infinite;
+        }
+        @-webkit-keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 1; }
+            50.01% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @-moz-keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 1; }
+            50.01% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @-ms-keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 1; }
+            50.01% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @-o-keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 1; }
+            50.01% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 1; }
+            50.01% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        
+        </style>
+
+
+         <apex:form >
+            <apex:pageBlock title="Status of your upload request...">
+                <apex:pageBlockTable value="{!summaryData}" var="summary" >
+                    <apex:column >
+                        <img id="{!summary.Id}_icon" src="{!IF(summary.Upload_Status__c != 'Completed',URLFOR($Resource.pending_icon),URLFOR($Resource.complete_icon))}"/>
+                    </apex:column>
+                    <apex:column value="{!summary.Name}">
+                        <apex:facet name="header">{!$ObjectType.CA_Upload__c.fields.Name.label}</apex:facet>
+                    </apex:column>                
+                    <apex:column value="{!summary.Upload_Time__c}">
+                        <apex:facet name="header">{!$ObjectType.CA_Upload__c.fields.Upload_Time__c.label}</apex:facet>
+                    </apex:column>
+                    <apex:column > 
+                        <div id="Total">Please Wait...</div>
+                        <apex:facet name="header">Total Read</apex:facet>
+                    </apex:column>                                    
+                    <apex:column > 
+                        <div id="TotalSuccessful">Please Wait...</div>
+                        <apex:facet name="header">Total Successful</apex:facet>
+                    </apex:column>                                         
+                    <apex:column > 
+                        <div id="TotalFailed">Please Wait...</div>
+                        <apex:facet name="header">Total Failed</apex:facet>
+                    </apex:column> 
+                    <apex:column > 
+                        <div id="Status" style="color:green;">Please Wait...</div>
+                        <apex:facet name="header">{!$ObjectType.CA_Upload__c.fields.Upload_Status__c.label}</apex:facet>
+                    </apex:column>                         
+                    <!--                    
+                    <apex:column rendered="{!IF(summary.Upload_Status__c == 'Completed',true,false)}">
+                        <div id="{!summary.Id}" style="{!IF(summary.Upload_Status__c != 'Completed',"display:none","display:block")}">
+                            <a href="/servlet/servlet.FileDownload?file={!linkForAttachment}" styleClass="btn">Download Error File</a><br/>
+                        </div>
+                    </apex:column>
+                    -->
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+            <br/><br/>
+            <div id="CARecords"> 
+                Click <a href="/servlet/servlet.FileDownload?file={!linkForAttachment}" styleClass="btn"> here</a> to download the Error file once the status has been changed to Completed!
+            </div>
+            <br/><br/>
+            Alternatively, you can wait for email confirming the completion of the process, then revisit the Import Client Avails page and click Upload Results tab to download failed records, if any..
+            <br/><br/><br/>
+            <!--<div id="Content"><b><u>Status Change history: </u></b></div>-->
+            <div id="circle"></div>
+    </apex:form>
+    </apex:page>

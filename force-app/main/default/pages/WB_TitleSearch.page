@@ -1,0 +1,286 @@
+<apex:page controller="WB_TitleSearchControllerSelectable" sidebar="false" id="WB_TitleSearchPage">
+
+    <apex:form id="searchTitle">
+        <style>
+            /* This is for the full screen DIV */
+
+            .popupBackground {
+                /*Background color */
+                background-color: black;
+                opacity: 0.20;
+                filter: alpha(opacity=20);
+                /* Dimensions */
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 998;
+                position: absolute;
+                /* Mouse */
+                cursor: wait;
+            }
+
+            /* This is for the message DIV */
+
+            .PopupPanel {
+                /* Background color */
+                // border: solid 2px blue;
+                background-color: white;
+
+                /* Dimensions */
+                left: 50%;
+                width: 200px;
+                margin-left: -100px;
+                top: 50%;
+                height: 50px;
+                margin-top: -25px;
+                z-index: 999;
+                position: fixed;
+                /* Mouse */
+                cursor: pointer;
+            }
+        </style>
+        <script type="text/javascript">
+            function doSearch() {
+                searchServer(
+                    document.getElementById("title").value,
+                    document.getElementById("mpm").value,
+                    document.getElementById("season").value,
+                    document.getElementById("digitalPlanning").options[document.getElementById("digitalPlanning").selectedIndex].value,
+                    document.getElementById("physicalPlanning").options[document.getElementById("physicalPlanning").selectedIndex].value,
+                    document.getElementById("vv").value,
+                    //document.getElementById("studio").options[document.getElementById("studio").selectedIndex].value
+                    document.getElementById("studio").value
+                );
+            }
+        </script>
+
+        <script>
+            function rpClick() {
+                var titleIds = "{!JSENCODE(ids)}";
+                //alert(titleIds );
+                if (titleIds == '') {
+                    alert('Please select at least one row');
+                }
+            }
+    < !--Start A: Ishwar - 20 - Jan - 15 To click Search, when Enter is pressed-- >
+                function noenter(e) {
+                    if (window.event) {
+                        key = window.event.keyCode; //IE
+                    }
+                    else {
+                        key = e.which; //firefox
+                    }
+                    if (key == 13) {
+                        var ele = document.getElementById('WB_TitleSearchPage:searchTitle:searchTitleBlock:criteria:searchButton');
+                        ele.click();
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                < !--End A-- >
+        </script>
+        <apex:pageMessages id="pageMessages" />
+        <apex:actionStatus id="loadingText" stopText="">
+            <apex:facet name="start">
+                <div>
+                    <div class="popupBackground" />
+                    <div class="PopupPanel">
+                        <table border="0" width="100%" height="100%">
+                            <tr>
+                                <td align="center">
+                                    <b>Please Wait.....</b>
+                                </td>
+                            </tr>
+                            <!-- <tr>
+                            <td align="center"><img src="{!$Resource.ProgressBar}"/></td>
+                        </tr> -->
+                        </table>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction name="searchServer" action="{!runSearch}" rerender="results,errors,rpbutton">
+            <apex:param name="title" value="" />
+            <apex:param name="mpm" value="" />
+            <apex:param name="season" value="" />
+            <apex:param name="digitalPlanning" value="" />
+            <apex:param name="physicalPlanning" value="" />
+            <apex:param name="vv" value="" />
+            <apex:param name="studio" value="" />
+        </apex:actionFunction>
+        <apex:pageMessages id="errors" />
+        <apex:pageBlock title="Search for a Title" mode="edit" id="searchTitleBlock">
+            <table width="100%" border="0">
+                <tr>
+                    <td width="200" valign="top">
+                        <apex:pageBlock title="Parameters" mode="edit" id="criteria">
+                            <table cellpadding="2" cellspacing="2">
+                                <tr>
+                                    <td style="font-weight:bold;">Title
+                                        <br/>
+                                        <input type="text" id="title" onkeypress="return noenter(event);" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">MPM
+                                        <br/>
+                                        <input type="text" id="mpm" onkeypress="return noenter(event);" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">Season
+                                        <br/>
+                                        <input type="text" id="season" onkeypress="return noenter(event);" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">Digitial Planning
+                                        <br/>
+                                        <select id="digitalPlanning">
+                                            <option value=""></option>
+                                            <apex:repeat value="{!DigPicklist}" var="tech">
+                                                <option value="{!tech}">{!tech}</option>
+                                            </apex:repeat>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">Physical Planning
+                                        <br/>
+                                        <select id="physicalPlanning">
+                                            <option value=""></option>
+                                            <apex:repeat value="{!PhyPicklist}" var="tech">
+                                                <option value="{!tech}">{!tech}</option>
+                                            </apex:repeat>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">Studios
+                                        <br/>
+                                        <!--ER-007018-select id="studio">
+                                            <option value=""></option>
+                                            <apex:repeat value="{!studio}" var="stu">
+                                                <option value="{!stu}">{!stu}</option>
+                                            </apex:repeat>
+                                        </select-->
+                                        <input type="text" id="studio" onkeypress="return noenter(event);" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;">Video Version
+                                        <br/>
+                                        <input type="text" id="vv" onkeypress="return noenter(event);" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:commandbutton value="Search" id="searchButton" onclick="doSearch()" rerender="pageMessages" status="loadingText" />
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:commandbutton value="Create Release Plans" id="rpbutton" action="{!createRP}" disabled="{!total_size = 0}" oncomplete="rpClick()"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:commandbutton value="Request Video Version" id="vvButton" action="{!createRP}" disabled="true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:commandbutton value="Raise an inquiry" id="inqButton" action="{!createRP}" disabled="true" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </apex:pageBlock>
+                    </td>
+                    <td valign="top">
+                        <apex:pageBlock mode="edit" id="results">
+                            <apex:pageBlockTable value="{!cTitles}" var="title">
+                                <apex:column >
+                                    <apex:inputCheckbox value="{!title.selected}">
+                                        <!-- <apex:actionSupport event="onchange" rerender="rpbutton"/> -->
+                                    </apex:inputCheckbox>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Title" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="title" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputLink value="/{!title.tit.id}">{!title.tit.Name}</apex:outputLink>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="MPM" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="mpm" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputLink value="/{!title.tit.MPM__r.id}">{!title.tit.MPM__r.Name}</apex:outputLink>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Season" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="account.name" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputField value="{!title.tit.Season__c}" />
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Digital Planning" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="interested_technologies__c" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputField value="{!title.tit.Digital_Planning__c}" />
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Physical Planning" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="interested_technologies__c" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputField value="{!title.tit.Physical_Planning__c}" />
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Studio" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="studio__c" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputField value="{!title.tit.Studio__c}" />
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:commandLink value="Video Version" action="{!toggleSort}">
+                                            <apex:param name="sortField" value="video_version" assignTo="{!sortField}" />
+                                        </apex:commandLink>
+                                    </apex:facet>
+                                    <apex:outputField value="{!title.tit.Video_Version__c}" />
+                                </apex:column>
+
+                            </apex:pageBlockTable>
+                            <apex:pageblockbuttons location="bottom" rendered="{!total_size >0}">
+                                <apex:commandButton action="{!Beginning}" title="Beginning" value="First" disabled="{!disablePrevious}" rerender="results,errors,rpbutton"
+                                    status="loadingText" />
+                                <apex:commandButton action="{!Previous}" title="Previous" value="Previous" disabled="{!disablePrevious}" rerender="results,errors,rpbutton"
+                                    status="loadingText" />
+                                <apex:commandButton action="{!Next}" title="Next" value="Next" disabled="{!disableNext}" rerender="results,errors,rpbutton"
+                                    status="loadingText" />
+                                <apex:commandButton action="{!End}" title="End" value="Last" disabled="{!disableNext}" rerender="results,errors,rpbutton"
+                                    status="loadingText" />
+                            </apex:pageblockbuttons>
+                        </apex:pageBlock>
+                    </td>
+                </tr>
+            </table>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,38 @@
+<apex:page standardController="EC_Title_Allocation__c" extensions="WB_GenericAllocationController" standardStylesheets="false">
+<apex:form >
+<apex:pageBlock >
+ <apex:pageblockButtons >
+          <apex:commandButton value="Save" title="Save" Action="{!Save}"/> 
+          <apex:commandButton value="Cancel" title="Cancel" Action="{!Cancel}"/> 
+          <apex:commandButton value="Next" title="Save" Action="{!Next}"/> 
+ </apex:pageblockButtons>
+<apex:pageBlockSection >
+<apex:pageBlockSectionItem > <apex:outputText >MPM</apex:outputText>{!mpmNames}</apex:pageBlockSectionItem> <br/>
+<apex:pageBlockSectionItem >Video Version <apex:inputField required="true" id="lookups" value="{!ecta.Title__c}" ></apex:inputField> 
+</apex:pageBlockSectionItem><br />
+<apex:pageBlockSectionItem >
+  <apex:panelGrid columns="3" id="abcd">
+                            <apex:selectList id="sel1" value="{!leftselected}" multiselect="true" style="width:400px" size="{!if(mSize > 6,mSize,6)}">
+                                <apex:selectOptions value="{!unselectedvalues}" />
+                            </apex:selectList>
+                            
+                            <apex:panelGroup >
+                                <br/>
+                                <apex:image value="{!$Resource.multiselected}">
+                                     <apex:actionSupport event="onclick" action="{!selectclick}" reRender="abcd"/>
+                                </apex:image>
+                                <br/><br/>
+                                <apex:image value="{!$Resource.multiunselected}" >
+                                      <apex:actionSupport event="onclick" action="{!unselectclick}" reRender="abcd"/>
+                                </apex:image>
+                            </apex:panelGroup>
+                            
+                        <apex:selectList id="sel2" value="{!rightselected}" multiselect="true" style="width:400px" size="{!if(mSize > 6,mSize,6)}">
+                            <apex:selectOptions value="{!SelectedValues}" />
+                        </apex:selectList>
+        </apex:panelGrid>
+</apex:pageBlockSectionItem>
+</apex:pageBlockSection>
+</apex:pageBlock>
+</apex:form> 
+</apex:page>

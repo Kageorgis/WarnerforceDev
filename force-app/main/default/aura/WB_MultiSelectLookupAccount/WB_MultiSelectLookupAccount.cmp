@@ -1,0 +1,52 @@
+<aura:component controller="WB_MultiSelectLookupAccount" implements="flexipage:availableForAllPageTypes,force:hasRecordId">
+    
+    <aura:attribute name="passLstCountries" type="sObject[]" default="[]"/>
+    <aura:attribute name="lstSelectedRecords" type="sObject[]" default="[]"/>
+    <aura:attribute name="listOfSearchRecords" type="List" />
+    <aura:attribute name="SearchKeyWord" type="string"/>
+    <aura:attribute name="IconName" type="string" default=""/>
+    <aura:attribute name="label" type="string" default="Accounts"/>
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="Message" type="String" default=""/>
+    
+    <aura:handler name="oSelectedRecordEvent" event="c:WB_SelectedRecordsEvent" action="{!c.handleComponentEvent}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <!--aura:handler event="force:refreshView" action="{!c.Save}" /-->
+    
+    <div  class="slds-border_top slds-border_top slds-border_bottom slds-border_right slds-border_left slds-p-around_small slds-form-element">
+        <lightning:card title="Accounts">
+            <aura:set attribute="actions">
+                <lightning:button label="Clear All" title="ClearAll" onclick="{! c.clearAll }"/>
+                <!--lightning:button label="Save" title="Save" onclick="{! c.save }"/-->
+            </aura:set>
+            <div class="slds-grid">
+                <div onmouseleave="{!c.onblur}" class="slds-wrap slds-m-left_large slds-box slds-col slds-size_2-of-8 " style="height:87.5%;width: 30%;">
+                    <div aura:id="lookup" class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right slds-lookup slds-is-close">
+                        <label class="">{!v.label}</label>
+                        <ui:inputText click="{!c.onfocus}"
+                                      updateOn="keyup"
+                                      keyup="{!c.keyPressController}"
+                                      class="slds-m-top_x-small slds-lookup__search-input slds-input"
+                                      value="{!v.SearchKeyWord}"
+                                      placeholder="Search"/>
+                        <ul style="min-height:170px;width:100%;margin-top:0px !important" class="slds-scrollable_y slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu slds" role="listbox">
+                            <lightning:spinner class="slds-hide" variant="brand" size="small" aura:id="mySpinner"/>
+                            <center> {!v.Message}</center>
+                            <aura:iteration items="{!v.listOfSearchRecords}" var="singleRec">
+                                <c:WB_MultiSelectLookupResults oRecord="{!singleRec}" IconName="{!v.IconName}"/> 
+                            </aura:iteration>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="slds-col_bump-left slds-m-right_medium slds-col slds-size_5-of-8 slds-scrollable_y slds-box" style="height: 15rem;">
+                    <lightning:spinner aura:id="spinnerAccounts" class="slds-hide" alternativeText="Loading" size="medium" />
+                    <aura:iteration items="{!v.lstSelectedRecords}" var="sr">
+                        <lightning:pill class="slds-m-around_xx-small" label="{!sr.Name}" name="{!sr.Id}" onremove="{! c.clear }">
+                        </lightning:pill>
+                    </aura:iteration>
+                </div>
+            </div>
+        </lightning:card>
+    </div>
+</aura:component>

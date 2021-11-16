@@ -1,0 +1,11 @@
+<apex:page standardController="Announcement__c">
+  <!-- Begin Default Content REMOVE THIS -->
+  <script>
+  window.onload = pageLoad;
+  function pageLoad(){
+      alert('{!$Label.Announcement_Creation_Rights}');
+      window.top.location.href ='{!$Label.Announcement_Re_Direct}';
+  }
+  </script>
+  
+</apex:page>

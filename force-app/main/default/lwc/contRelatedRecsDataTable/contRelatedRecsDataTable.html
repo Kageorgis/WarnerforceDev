@@ -1,0 +1,39 @@
+<template>
+    <div class="slds-page-header_joined slds-page-header slds-page-header--object-home" style="background-color: rgb(242, 242, 242);">
+        <div class="slds-grid">
+            <div class="slds-col slds-has-flexi-truncate firstHeaderRow">
+                <lightning-tile>
+                    <nav role="navigation" aria-label="Breadcrumbs">
+                        <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+                            <li class="slds-breadcrumb__item slds-line-height--reset">
+                                <a title="Accounts" href="/lightning/o/Account/home">Accounts</a>
+                            </li>
+                            <li class="slds-breadcrumb__item slds-line-height--reset">
+                                <a title={accName} href={accNavURL}>{accName}</a>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="slds-page-header__title listViewTitle slds-truncate" title="Contacts">Contacts</h1>
+                </lightning-tile>
+            </div>
+            <div class="slds-col slds-no-flex slds-grid slds-align-top slds-p-bottom--xx-small test-lvmForceActionsContainer" >
+                <lightning-button label="New" onclick={createContactAction}></lightning-button>
+            </div>
+        </div>
+    </div>
+    <!--lightning-card-->
+        <!--template if:false={isLoaded}>
+            <div class="spinner_class_div">
+                <lightning-spinner class="spinner_class" alternative-text="Loading" variant="brand">
+                </lightning-spinner>
+            </div>
+        </template-->
+        <lightning-datatable
+            key-field="Id"
+            data={contactRecs}
+            show-row-number-column
+            hide-checkbox-column
+            columns={columns}>
+        </lightning-datatable>
+    <!--/lightning-card-->
+</template>

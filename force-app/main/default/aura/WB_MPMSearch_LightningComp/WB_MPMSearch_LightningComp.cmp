@@ -1,0 +1,9 @@
+<aura:component controller="WB_MPMSearchController" implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction">
+    <aura:attribute name="mpmNum" type="string" />
+    <aura:attribute name="selectedRecordType" type="string" />
+    <aura:attribute name="recordTypeId" type="Id"/>
+    <aura:attribute name="mpmId" type="Id"/>    
+    <aura:attribute name="wrapperData" type="List" />   <!--  MPMSearchWrapper -->
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>    
+</aura:component>

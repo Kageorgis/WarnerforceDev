@@ -1,0 +1,35 @@
+<!--
+   @Author Cognizant 
+   @name WB_ViewRights_On_Title_Lightning.
+   @CreateDate 23 Jan 2018
+   @Description - Visualforce button for View Rights button on Title
+   @Version <1.0>
+   @Requirement ER-1660
+-->
+
+<apex:page standardController="Title__c" extensions="WB_View_Rights">
+      
+<script type = "text/javascript">
+
+ function pageLoad(){
+     var id = '{!id}';
+     var detectUserUI = "{!$User.UIThemeDisplayed}";
+    
+     if(detectUserUI == 'Theme3'){
+       window.open('apex/wb_viewrights_on_title?id='+id,'_parent');  
+     }
+     
+     else if(detectUserUI == 'Theme4d'){
+        var newWin = window.open('apex/wb_viewrights_on_title?id='+id+'&CallingFrom=viewall','_blank');
+        
+            if(!newWin || newWin.closed || typeof newWin.closed=='undefined'){ 
+                alert('Please allow the pop-up and Refresh the Page.');
+            }else{
+                history.back();
+            }
+     }
+ }
+    window.onload = pageLoad;
+</script>     
+
+</apex:page>

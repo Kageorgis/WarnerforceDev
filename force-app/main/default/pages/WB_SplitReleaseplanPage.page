@@ -1,0 +1,42 @@
+<apex:page StandardController="Commercial_Avail__c" tabStyle="Commercial_Avail__c" recordSetVar="Title__c" extensions="WB_SplitReleaseplanController" action="{!deleteRPSplitRec}">
+<apex:sectionHeader title="" subtitle="Release Plan Split Wizard" />
+<apex:form >  
+  <apex:pageblock >
+  <apex:pageMessages ></apex:pageMessages>
+  <apex:pageBlockSection title="List Of Selected Release Plans" columns="1" collapsible="false">
+                   <apex:pageBlockTable value="{!lst_releaseplandetails}" var="RP" width="500PX" rules="rows">
+                    <apex:column title="Release Plan Id" headerValue="Release Plan Id">
+                        <apex:outputLink value="/{!RP.id}">{!RP.Name}</apex:outputLink>
+                    </apex:column>
+                    <apex:column value="{!RP.Title__c}"/> 
+                    <apex:column value="{!RP.Country_Lookup__c}"/> 
+                    <apex:column value="{!RP.Languages__c}"/>
+                    <apex:column value="{!RP.Language_Type__c}"/>
+                    <apex:column value="{!RP.Channel__c}"/>
+                    <apex:column value="{!RP.Format__c}"/>                    
+                    <apex:column value="{!RP.Exclusive_Date__c}"/>
+                    <apex:column value="{!RP.Rights_End__c}"/>                    
+                    <apex:column value="{!RP.Start_Date__c}"/>
+                    <apex:column value="{!RP.End_Date__c}"/>
+                    <apex:column value="{!RP.Status__c}"/>
+                    </apex:pageBlockTable>
+                    
+                </apex:pageBlockSection>  
+     </apex:pageblock>
+   <apex:pageMessage summary="If user doesn't enter any value,there will be no change to Language Type or Status" severity="normal" strength="3" />       
+  <apex:pageblock >     
+      <apex:pageBlockSection title="Enter the value for release plan split" columns="2" collapsible="false">
+          <apex:inputField value="{!Commercial_Avail__c.RP_Split_Date__c}" label="Date" />
+          <apex:inputField value="{!Commercial_Avail__c.Status__c}"/>
+          
+          <br/>        
+          <apex:inputField value="{!Commercial_Avail__c.Language_Type__c}" label="New Language Type"/>
+         
+      </apex:pageBlockSection>  
+       
+ </apex:pageblock>
+    <apex:commandButton value="Split Release Plans"  style="margin:1em; margin-left :35em;" action="{!splitReleasePlan}"/>      
+   <apex:commandButton value="Cancel" action="{!Bulkcancel}" />  
+   
+</apex:form>  
+</apex:page>

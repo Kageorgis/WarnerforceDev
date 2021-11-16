@@ -1,0 +1,36 @@
+.THIS.c-container{
+  /* background: rgb(243, 242, 242);*/
+    background:white;
+    padding-bottom: 1%;
+}
+
+.THIS .spinner-style, .THIS .scroll-height{
+    height:100%;
+}
+
+.THIS .header-style th {
+    color: white;
+    background-color: #005fb2;
+}
+
+.THIS .table-style td, .THIS .table-style th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.THIS .overlap-msg{
+    padding-left: 43px;
+}
+
+.THIS.morethan10k-msg{
+    padding-left: 12px;
+    padding-top: 10px;
+    font-size:19px;
+}
+
+.THIS.moreorlessthan50k-msg{
+    padding-left: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size:18px; 
+}

@@ -1,0 +1,164 @@
+<apex:component >
+    <style>
+        #innerMainDiv{
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        #wb-listview{
+            overflow: auto;
+            padding: 0;
+            min-height:300px;
+        }
+        #addSearchProductPopUp .slds-modal__header{
+            padding: 10px !important;
+        }
+        #innerHeader{
+            border-top-right-radius: 0px !important;
+            border-top-left-radius: 0px !important;
+            border-bottom: 1px solid #d8dde6 !important;
+        }
+    </style>
+    <script type="text/ng-template" id="add-search-products-view.html">
+             
+        <div id="addSearchProductPopUp" ng-show="addSearchProdFlag">
+            <div aria-hidden="false" role="dialog" class="slds-modal slds-modal--large slds-fade-in-open">
+                <div id="mainDiv" class="slds-modal__container" style="padding: 45px 0px;">
+                    <div class="slds-modal__header">
+                        <h2 class="slds-text-heading--medium" ng-bind-html="{!$Label.CRM_Add_Product_Label}">{!$Label.CRM_Add_Product_Label}</h2>
+                        <button class="slds-button slds-button--icon-inverse slds-modal__close" ng-click="showAndHideAddSearchProductScreen(false)">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+                                <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                    </div>
+                    <!---------------Search Product Section----------------->
+                    <div id="innerHeader" class="slds-modal__header slds-grid">
+                        <div class="slds-col slds-no-flex slds-align-Center slds-form--inline">
+                            <!-- div class="slds-form-element">
+                                <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                                <div class="slds-form-element__control">
+                                    <input class="slds-input slds-input--small"  ng-model="searchText" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-keyup="$event.keyCode == 13 && searchProducts()"/>
+                                </div>
+                            </div -->
+                            <!--Addedd by Harshad for US 1014 -->
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                                <div class="slds-form-element__control">
+                                    <textarea id="searchtextarea" class="slds-textarea"  ng-model="searchText" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-keyup="$event.keyCode == 13 && searchProducts()" rows="1" style="resize:none"/>
+                                </div>
+                            </div> 
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">     
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <button ng-click="searchProducts()" class="slds-button slds-button--neutral">{!$Label.CRM_UploadExtractTactic_Search_btn}</button>
+                                        <button ng-click="addProducts()" class="slds-button slds-button--neutral">{!$Label.CRM_UploadExtractTactic_Add_Selected_Btn}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Addedd by Harshad for US 1014 -->
+                            <div class="slds-form-element">
+                            	<div ng-show="pageMsg" class="slds-size--1-of-2 slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                            		<span class="slds-assistive-text">Info</span>
+                        			<button class="slds-button slds-notify__close" ng-click="pageMsg=''">
+                            			  <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                            				<use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                            			  </svg>
+                        			      <span class="slds-assistive-text">Close</span>
+                        			</button>
+                        			<div class="notify__content slds-grid">
+                        			  <div class="slds-col slds-text-heading--small ">{{pageMsg}}</div>
+                        		  </div>
+                            	</div>
+                            </div>                            
+                            
+                            <div class="slds-button-group" role="group">
+                            </div>
+                        </div> 
+                    </div>    
+                    <!---------------Search Product Section----------------->
+                   
+                    
+                    <!---------------Product Search ListView Section Start------------------>
+                    <div id="wb-listview" class="slds-modal__content">
+                      <!-- ===========================Exception=============================== -->
+                        <div Id="msgDiv" ng-show="msgTextDialog"  class="slds-grid">
+                            <div class="slds-col slds-notify  slds-theme--{{msgSeverityDialog}} slds-notify--toast slds-box--x-small slds-theme--alert-texture" role="alert">
+                                <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                    </svg>
+                                    <span class="slds-assistive-text">Close</span>
+                                </button>
+                                <div class="notify__content slds-grid" ng-show="msgTextDialog"> 
+                                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverityDialog == 'error'">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                                    </svg> 
+                                    <div class="slds-col slds-align-middle">
+                                        <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgTextDialog}}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ===========================Exception=============================== --> 
+                        <table id="wb-listtable" class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                            <thead>
+                                <tr class="slds-text-heading--label">
+                                    <th scope="col" ng-hide="appConfig.isActivated">
+                                        <label class="slds-checkbox" for="select-all">
+                                            <input name="checkbox" type="checkbox" id="select-all" ng-model="isMasterChecked" ng-click="checkUncheckAll()"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select all</span>
+                                        </label>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Product2.fields.Name.Label}</span>
+                                    </th>
+                                    <th scope="col" ng-if ="appConfig.displayQtyCol">
+                                        <span class="slds-truncate">{!$ObjectType.OpportunityLineItem.fields.Quantity.Label}</span> 
+                                    </th> 
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Product2.fields.ProductCode.Label}</span>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Product2.fields.Product_Format__c.Label}</span>
+                                    </th> 
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Product2.fields.Street_Date__c.Label}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="slds-hint-parent" ng-repeat="prod in productList">
+                                    <td class="slds-row-select">
+                                        <label class="slds-checkbox" for="select-row-{{$index}}">
+                                            <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="prod.isSelected"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select row-{{$index}}</span>
+                                        </label> 
+                                    </td>
+                                    <td class="slds-truncate" data-label="{!$ObjectType.Product2.fields.Name.Label}" role="row">
+                                        <a href="/{{prod.product.productId}}" target="_blank" ng-bind-html="{{prod.product.name}}" title="{{prod.product.name}}">{{prod.product.name}}</a>
+                                    </td>
+                                    <!-- US#909 Ankita for Quantity -->
+                                    <td data-label="Quantity" ng-if ="appConfig.displayQtyCol">
+                                        <div id="quantityDiv" ng-class="{'slds-has-error': (prod.product.quantityForProd <0)}">
+                                            <input class="slds-input slds-input--small" integer-input="true" ng-show= "appConfig.displayQtyCol" style="width:80px;" ng-model="prod.product.quantityForProd"/>
+                                        </div>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Product2.fields.ProductCode.Label}"><span class="slds-truncate" >{{prod.product.productCode}}</span></td>
+                                    <td data-label="{!$ObjectType.Product2.fields.Product_Format__c.Label}"><span class="slds-truncate">{{prod.product.format}}</span></td>
+                                    <td data-label="{!$ObjectType.Product2.fields.Street_Date__c.Label}"><span class="slds-truncate">{{prod.product.streetDate | date: UserDateFormat}}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!---------------Product Search ListView Section End-------------------->
+                </div>
+            </div>
+            <div class="slds-modal-backdrop slds-modal-backdrop--open"></div>
+        </div>
+       
+    </script>
+</apex:component>

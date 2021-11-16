@@ -1,0 +1,102 @@
+<apex:page standardController="Client_Avail__c" extensions="WB_RePriceClientAvails_Controller" tabStyle="Client_Avail__c" recordSetVar="Commercial_Avail__c" doctype="html-5.0" action="{!deleteClientAvailRec}">
+<!-- <html> -->
+<!-- <body> -->
+
+<input id="hiddenElementId" type="hidden" />
+<apex:sectionHeader title="RePrice Wizard" />
+<apex:pageMessages id="showmessage" escape="false"></apex:pageMessages>
+
+<apex:pageBlock rendered="{!!hidePageBlocks}">
+    
+    <apex:pageBlockSection id="section1" showHeader="true" title="Client Avail Record for Repricing" columns="1" rendered="{!clientAvailScroller}">
+        <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;" layout="block">
+            <apex:pageBlockTable value="{!selectedClientAvail_list}" var="clientAvail">
+                <apex:column value="{!clientAvail.Name}"/>
+                <apex:column value="{!clientAvail.Client__c}"/>
+                <apex:column value="{!clientAvail.Commercial_Avail__r.Title__c}"/>
+                <apex:column value="{!clientAvail.Release_Plan_Country__c}"/>
+                <apex:column value="{!clientAvail.Release_Plan_Language__c}"/>
+                <apex:column value="{!clientAvail.RP_Language_Type__c}"/>
+                <apex:column value="{!clientAvail.Release_Plan_Channel__c}"/>
+                <apex:column value="{!clientAvail.Release_Plan_Format__c}"/>
+                <apex:column value="{!clientAvail.Start_Date__c}"/>
+                <apex:column value="{!clientAvail.End_Date__c}"/>
+                <apex:column value="{!clientAvail.Status__c}"/>
+                <apex:column value="{!clientAvail.Local_Title__r.Price_Code__c}"/>
+                <apex:column value="{!clientAvail.Price_Tier_Text__c}"/>
+                <apex:column value="{!clientAvail.Price__c}"/>
+                <apex:column value="{!clientAvail.SR_Price__c}"/>
+                <apex:column value="{!clientAvail.Episode_Price_Tier__c}"/>
+                <apex:column value="{!clientAvail.Episode_Price__c}"/>
+                <apex:column value="{!clientAvail.SR_Per_Episode__c}"/>
+            </apex:pageBlockTable>
+        </apex:outputpanel>
+    </apex:pageBlockSection>
+    <apex:pageBlockSection id="section2" showHeader="true" title="Client Avail Record for Repricing" columns="1" rendered="{!!clientAvailScroller}">
+        <apex:pageBlockTable value="{!selectedClientAvail_list}" var="clientAvail">
+            <apex:column value="{!clientAvail.Name}"/>
+            <apex:column value="{!clientAvail.Client__c}"/>
+            <apex:column value="{!clientAvail.Commercial_Avail__r.Title__c}"/>
+            <apex:column value="{!clientAvail.Release_Plan_Country__c}"/>
+            <apex:column value="{!clientAvail.Release_Plan_Language__c}"/>
+            <apex:column value="{!clientAvail.RP_Language_Type__c}"/>
+            <apex:column value="{!clientAvail.Release_Plan_Channel__c}"/>
+            <apex:column value="{!clientAvail.Release_Plan_Format__c}"/>
+            <apex:column value="{!clientAvail.Start_Date__c}"/>
+            <apex:column value="{!clientAvail.End_Date__c}"/>
+            <apex:column value="{!clientAvail.Status__c}"/>
+            <apex:column value="{!clientAvail.Local_Title__r.Price_Code__c}"/>
+            <apex:column value="{!clientAvail.Price_Tier_Text__c}"/>
+            <apex:column value="{!clientAvail.Price__c}"/>
+            <apex:column value="{!clientAvail.SR_Price__c}"/>
+            <apex:column value="{!clientAvail.Episode_Price_Tier__c}"/>
+            <apex:column value="{!clientAvail.Episode_Price__c}"/>
+            <apex:column value="{!clientAvail.SR_Per_Episode__c}"/>
+        </apex:pageBlockTable>
+    </apex:pageBlockSection>
+    
+    <!-- 
+    <apex:pageBlockSection id="section1" showHeader="true" title="Client Avail Record for Repricing" columns="1" rendered="{!clientAvailScroller}">
+        <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;" layout="block">
+        <apex:pageBlockTable value="{!selectedClientAvail_list}" var="clientAvail">
+            <apex:repeat value="{!$ObjectType.Client_Avail__c.fieldsets.RePriceClientAvailsController}" var="fieldValue">
+                <apex:column value="{!clientAvail[fieldValue]}">
+                    <!-- <apex:outputLink value="/{!clientAvail.Id}">{!clientAvail.name}</apex:outputLink>  -- >
+                </apex:column>
+            </apex:repeat>
+        </apex:pageBlockTable>
+        </apex:outputpanel>
+    </apex:pageBlockSection>
+     -->
+    <!-- 
+    <apex:pageBlockSection id="section2" showHeader="true" title="Client Avail Record for Repricing" columns="1" rendered="{!!clientAvailScroller}">
+        <apex:pageBlockTable value="{!selectedClientAvail_list}" var="clientAvail">
+            <apex:repeat value="{!$ObjectType.Client_Avail__c.fieldsets.RePriceClientAvailsController}" var="fieldValue">
+                <apex:column value="{!clientAvail[fieldValue]}">
+                    <!-- <apex:outputLink value="/{!clientAvail.Id}">{!clientAvail.name}</apex:outputLink>  -- >
+                </apex:column>
+            </apex:repeat>
+        </apex:pageBlockTable>
+    </apex:pageBlockSection>
+    -->
+</apex:pageBlock>
+
+<apex:form >
+<apex:pageBlock rendered="{!!hidePageBlocks}">
+    <apex:pageBlockSection title="Pricing fields" showHeader="true" columns="2">
+        <apex:inputField value="{!Client_Avail__c.Effective_Price_Date__c}" label="Effective Price Date"/>
+        <apex:inputField value="{!Client_Avail__c.Price_Tier_Text__c}" label="Price Tier"/>
+        <apex:inputField value="{!Client_Avail__c.Use_Price_Codes__c}" label="Use Price Codes where available"/>
+        <apex:inputField value="{!Client_Avail__c.Price__c}" label="WS Cost"/><br/>
+        <apex:inputField value="{!Client_Avail__c.SR_Price__c}" label="SR Price"/><br/>
+        <apex:inputField value="{!Client_Avail__c.Episode_Price_Tier__c}" label="Episode Price Tier"/><br/>
+        <apex:inputField value="{!Client_Avail__c.Episode_Price__c}" label="Episode Price"/><br/>
+        <apex:inputField value="{!Client_Avail__c.SR_Per_Episode__c}" label="SR Per Episode"/>
+    </apex:pageBlockSection>
+    <apex:commandButton value="Update Price" style="margin:1em; margin-left :35em;" id="button1" action="{!updateprice}"/>
+    <apex:commandButton value="Cancel" action="{!Bulkcancel}" style="align:middle;" id="button3" />   
+</apex:pageBlock>
+</apex:form>
+<!-- </body> -->
+<!-- </html> -->
+</apex:page>

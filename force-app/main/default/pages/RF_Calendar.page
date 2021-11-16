@@ -1,0 +1,28 @@
+<apex:page showHeader="true" showChat="false" sidebar="false" controller="RF_CalendarController" >
+<div style="min-height:1000px;">
+<SLCA2:calendar namespace="SLCA2"
+    calendar="{!listIds}"
+    enabled=""
+    createable=""
+    settings="[]"
+    userAdditionalSettings="{}" 
+    view=""
+    date=""
+    filter="{}" 
+    urlparams=""
+    css="" 
+    readonly="{
+        edit            : true, 
+        create          : true, 
+        detail          : true, 
+        move            : true, 
+        hover           : true, 
+        contextEvent    : true, 
+        contextCalendar : true, 
+        contextArea     : true,
+        cloneSharing    : true
+    }"
+    func="{}">
+</SLCA2:calendar>
+</div>
+</apex:page>

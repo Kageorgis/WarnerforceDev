@@ -1,0 +1,59 @@
+<apex:page sidebar="false" controller="WB_CommunityKeyTabs_Controller" lightningStylesheets="true">    
+    <script>window.sldsPath = '{!URLFOR($Resource.SLDS, 'assets/icons')}'</script>
+    
+    <style type="text/css">
+         #layoutholder td[title=Filters]{
+            display: none;
+        }
+        .dhtmlxLayoutPolyContainer_dhx_web>tbody>tr:nth-child(-n+2) {
+            display:none;
+        }
+        .tab {
+            margin-top: 1%;
+            margin-left: 0.3em;
+            border-radius: .50rem .50rem 0 0;
+        }
+       .changeTemplate {
+            background:#eef1f6; font-weight: 700;
+            border-radius: .50rem .50rem 0 0;
+            height: 2.2rem;
+        }
+        .changeTemplate:hover {
+            text-decoration: none; color: #4bc076;
+        }
+        .slds-active{
+            background: #a7b8d1 ; color: white !important;
+        }
+    </style>
+   
+    <div class="slds-tabs--scoped">
+      <ul class="slds-tabs--scoped__nav" role="tablist">
+        <li class="slds-tabs--scoped__nav tab" role="presentation">
+            <a class="slds-tabs--scoped__link changeTemplate slds-active" role="tab" tabindex="0" temmplate-id="{!keyRightTab1}">Upcoming</a>
+            </li>
+        <li class="slds-tabs--scoped__nav tab" role="presentation">
+            <a class="slds-tabs--scoped__link changeTemplate" role="tab" tabindex="-1" temmplate-id="{!keyRightTab2}">Recent Past</a>
+        </li>
+        <li class="slds-tabs--scoped__nav tab" role="presentation">
+            <a class="slds-tabs--scoped__link changeTemplate" role="tab" tabindex="-1" temmplate-id="{!keyRightTab3}">Expiring</a>
+        </li>
+        <li class="slds-tabs--scoped__nav tab" role="presentation">
+            <a class="slds-tabs--scoped__link changeTemplate" role="tab" tabindex="-1" temmplate-id="{!keyRightTab4}">Changed in Last 30 Days</a>
+        </li>
+      </ul>
+    </div>
+                    
+    <PowerGrid:PowerGrid gridTemplateId="{!rightsGrid}" />
+    
+    <script>
+        $(function() {
+            $('.changeTemplate').click(function(){
+                $('.changeTemplate').removeClass("slds-active");
+                $('#query_panel_template_sel').val($(this).attr('temmplate-id')).change();
+                beginNewSearch('mygrid', 'Rights__c');
+                $(this).addClass("slds-active");
+            });
+        });
+    </script>
+    <link href="{!URLFOR($Page.PowerLoader__FrameworkCustomCSS)}" rel="STYLESHEET" type="text/css" />
+</apex:page>

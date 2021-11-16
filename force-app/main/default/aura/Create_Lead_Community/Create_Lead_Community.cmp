@@ -1,0 +1,99 @@
+<aura:component controller="Create_Lead_Community_Controller" implements="forceCommunity:availableForAllPageTypes" access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <aura:attribute name="isModalOpen" type="boolean" default="false"/>
+    <aura:attribute name="Company" type="String" default="" />
+    <aura:attribute name="LastName" type="String" default="" />
+    <aura:attribute name="BrandName" type="String" default="" />
+    <aura:attribute name="Salutation" type="String" default="" />
+    <aura:attribute name="FirstName" type="String" default="" />
+    <aura:attribute name="phone" type="String" default="" />
+    <aura:attribute name="BrandCategory" type="String" default=""/>
+    <aura:attribute name="Email" type="String" default="" />
+    <aura:attribute name="Title" type="String" default="" />
+    <aura:attribute name="TimingofIntegration" type="String" default="" />
+    <aura:attribute name="Budget" type="String" default="" />
+    <aura:attribute name="KeyMessages" type="String" default="" />
+    <aura:attribute name="importantthings" type="String" default="" />
+    <aura:attribute name="DetailsofMarketing" type="String" default="" />
+    <aura:attribute name="MainKPIs" type="String" default="" />
+    <aura:attribute name="PriorityElements" type="String" default="" />
+    <aura:attribute name="Options" type="List" />
+
+    <button class="slds-button slds-button--brand actionButton uiButton fullwidth" type="button" onclick="{! c.openModel }">
+        <span class=" label bBody" dir="ltr">CLICK HERE TO WORK WITH ELLEN</span>
+    </button>
+    <div class="slds-m-around_xx-large">
+        <aura:if isTrue="{!v.isModalOpen}">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModel }" alternativeText="close" variant="bare-inverse" class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Complete your Brand Pitch</h2>
+                    </header>
+
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <form>
+                            <lightning:input aura:id="formlead" type="text" value="{! v.FirstName}" name="FirstName" label="Contact First Name"  required="true" />
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.LastName}" name="LastName" label="Contact Last Name" required="true" />
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.Title}" name="Title" label="Title" />
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.Email}" name="Email" label="Email"  required="true"/>
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.phone}" name="phone" label="Phone" />
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.Company}" name="Company" label="Company" required="true" />
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.BrandName}" name="Brand Name" label="What is the name of your Brand/Product?" required="true"/>
+
+                            <lightning:select aura:id="formlead" value="{! v.BrandCategory}" name="BrandCategory" label="Please select a category for your Brand/Product" required="true">
+                                <option text="-- None --" value=""/>
+                                <aura:iteration items="{!v.Options}" var="item">
+                                    <option text="{!item.label}" value="{!item.value}" selected="{item.selected}"/>
+                                </aura:iteration> 
+                            </lightning:select>
+
+                            <lightning:input aura:id="formlead" type="text" value="{! v.TimingofIntegration}" name="TimingofIntegration" label="What is your ideal timing for a partnership with ELLEN?" />
+                            
+                            <lightning:input aura:id="formlead" type="text" value="{! v.Budget}" name="Budget" label="What is the budget for this RFP?" />
+                            
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-3"> What are the most important things we should know about your brand?</label>
+                                <lightning:inputRichText value="{! v.importantthings}" label="What are the most important things we should know about your brand?" />
+                            </div>
+
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-3">Please share any details about your marketing campaign (i.e. campaign flighting, key dates, themes)</label>
+                                <lightning:inputRichText value="{! v.DetailsofMarketing}" label="Please share any details about your marketing campaign (i.e. campaign flighting, key dates, themes)" />
+                            </div>
+
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-3">Please list 2-3 key brand message points</label>
+                                <lightning:inputRichText value="{! v.KeyMessages}" label="Please list 2-3 key brand message points" />
+                            </div>
+                            
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-3">What are your main KPIs for this campaign/How will the brand evaluate success?</label>
+                                <lightning:inputRichText value="{! v.MainKPIs}" label="What are your main KPIs for this campaign/How will the brand evaluate success?" />
+                            </div>
+
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="text-input-id-3">Are there priority elements the brand would like to see included in the proposal (i.e. On-Air Integration, Custom Digital Content, Social Contest, Digital Media, etc.)?</label>
+                                <lightning:inputRichText value="{! v.PriorityElements}" label="Are there priority elements the brand would like to see included in the proposal (i.e. On-Air Integration, Custom Digital Content, Social Contest, Digital Media, etc.)?" />
+                            </div>
+                            
+                        </form>
+                    </div>
+                    
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{! c.closeModel }"/>
+                        <lightning:button variant="brand" label="Confirm" title="OK" onclick="{!c.clickCreate}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </div>
+</aura:component>

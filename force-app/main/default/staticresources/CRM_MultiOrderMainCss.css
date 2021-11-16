@@ -1,0 +1,143 @@
+.handsontable {
+  font-size:11px
+}
+.handsontable tbody tr td:first-child{
+    background-color: #DDDDDD;
+}
+.handsontable .relative {
+    text-align: left
+}
+
+.handsontable col.rowHeader {
+    width: 200px !important;
+}
+
+.handsontable thead th {
+    background-color: #4F6A92;
+    color: white
+}
+
+.handsontable tbody th {
+    background-color: #A7B8D1
+}
+
+.handsontable td {
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+    border-bottom:1px solid #ababab;
+    border-right:1px solid #ababab;
+}
+
+.has-changed {
+	color: red;
+}
+.handsontable tr:first-child td:first-child{
+	background-color: #1F4987;
+    color: white;
+}
+
+.handsontable tr:first-child td {
+	background-color: #1F4987;
+    color: white;
+}
+
+.total-row {
+    font-weight: bold
+}
+
+.spinnerModel {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 99999;
+    height: 100%;
+    width: 100%;
+}
+
+.spinnerContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+}
+
+.handsontable td{
+    padding: 0 4px 0 4px !important;
+}
+
+.handsontable tbody tr:nth-child(2) td {
+    background-color: #4F81BD;
+    color: white;
+}
+.handsontable tr:nth-child(2) td:first-child{
+	background-color: #4F81BD;
+    color: white;
+}
+
+.htContextMenu table tbody tr td{
+	background: white !important;
+	padding: 4px 6px 0 6px !important;
+    color: black !important;
+}
+.htContextMenu table tbody tr td:hover{background: #e9e9e9 !important;}
+.htContextMenu table tbody tr td.zeroclipboard-is-hover{background: #e9e9e9;}
+.wtHolder{height: 235px;}
+.slds-popover {
+	  position: relative;
+	  border-radius: 4px;
+	  width: 470px;
+	  min-height: 32px;
+	  z-index: 6000;
+	  background: #16325c;
+	  display: inline-block;
+	  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.16);
+	  border: 1px solid #d8dde6;
+}
+
+.slds-popover__body {
+	  font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+	  font-size: 13px;
+	  position: relative;
+	  color: white;
+}
+
+.slds-popover[class*="theme--"] {
+  	border: 0;
+}
+
+.slds-popover--tooltip {
+	  width: auto;
+	  max-width: 470px;
+	  background: #16325c;
+	  border: 0;
+}
+
+.slds-popover--tooltip .slds-popover__body {
+	  font-size: 12px;
+	  color: white;
+}
+.slds-nubbin--left:before {
+	  width: 16px;
+	  height: 16px;
+	  position: absolute;
+	  -webkit-transform: rotate(45deg);
+	  transform: rotate(45deg);
+	  content: '';
+	  background-color: inherit;
+	  top: 40%;
+	  left: -8px;
+	  margin-top: -8px;
+}
+.slds td {
+    text-align: right !important;
+}#spinnerText{
+	font-size: 18px !important;
+	width: 142px;
+    margin-left: -34px;
+    text-align: center;
+}

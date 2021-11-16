@@ -1,0 +1,32 @@
+<aura:component controller="ImportExcelController"
+                implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:isUrlAddressable" access="global">
+    <aura:attribute name="fullData" type="string"/>
+    <aura:attribute name="columnName" type="sObject"/>
+    <aura:attribute name="dealRecordType" type="String"/>
+    <aura:attribute name="objectId" type="String"/>
+    <aura:attribute name="dealId" type="String"/>
+    <aura:attribute name="status" type="String" default='Failed'/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="disableExport" type="Boolean" default="false"/>
+
+    <!--ER-007269-Added attribute to hold value as true if deal created for JV sale org-Start-->
+    <aura:attribute name="isJVSalesOrg" type="Boolean" default="False"/>
+    <!--ER-007269-Added attribute to hold value as true if deal created for JV sale org-End-->
+
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:handler name="change" value="{!v.recordId}" action="{!c.reInit}" />
+    <div class="slds-is-relative">
+        <aura:if isTrue="{!v.spinner}">
+            <div class="spinner spinner-style">
+                <lightning:spinner alternativeText="Loading" size="medium" variant="brand"/>
+            </div> 
+        </aura:if>
+        <div class="slds-text-heading_large"><strong><center>{!$Label.c.CRM_ExportErrorReport_header}</center></strong><br></br></div>
+        <aura:if isTrue="{!v.disableExport}">
+            <div>{!$Label.c.CRM_ExportErrorReport_Message}</div>
+        </aura:if>
+        <aura:if isTrue="{!and(not(v.disableExport),v.fullData.length > 0) }">
+            Export here: <lightning:button onclick="{!c.downloadExportFile}">{!$Label.c.CRM_Export_File_Button_Label}</lightning:button>
+        </aura:if>
+    </div>
+</aura:component>

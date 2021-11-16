@@ -1,0 +1,51 @@
+<apex:component >
+<script type="text/ng-template" id="add-products-grid-view.html">
+
+            <div id="wb-gridview" class="slds-grid slds-wrap slds-m-top--medium slds-grid--align-spread" ng-show="viewMode == 'grid'" infinite-scroll="increaseTotalDisplayed()" infinite-scroll-distance="3">
+                <div class="slds-col--padded  wb-item slds-media slds-col-rule--bottom slds-m-bottom--medium" ng-repeat="current in products | limitTo:totalDisplayed">
+                  <div class="slds-media__figure">
+                    <a href="javascript:void(0)" ng-click="showMoreInfoPopup(current)">
+                        <img src="{{current.imageUrl}}" alt="{{current.name}}" />
+                    </a>
+                  </div>
+                  <div class="slds-media__body">
+                    <p>
+                      <a href="javascript:void(0)" ng-click="showMoreInfoPopup(current)" ng-bind-html="current.name"></a>
+                      <span class="slds-icon__container" title="Product Out Of Stock." ng-show="{{current.stockWarning}}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-warning slds-icon--x-small">
+                          <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#warning'}}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Product Out of stock</span>
+                      </span>
+                      <!-- US#232 start -->
+                      <span class="slds-icon__container" title="Distribution Chain Status NOT IN Initial,Active,On Hold or Plant Status NOT IN Active,Sell Off/Sell Down,Released for 3rd Party" ng-show="{{current.SAPAndPlantStatusWarning}}">
+                            <svg aria-hidden="true" class="slds-icon slds-icon-text-warning slds-icon--x-small">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#warning'}}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Distribution Chain Status NOT IN Initial,Active,On Hold or Plant Status NOT IN Active,Sell Off/Sell Down,Released for 3rd Party</span>
+                      </span>
+                      
+                      <!-- US#232 end-->
+                    </p>
+                    <p>{{current.productCode}}</p>
+                    <p>{{current.format}}</p>
+                    <p>{{current.listPrice | currency: ''+current.currencyCode+' ':2}}</p>
+                    <p ng-hide="{{appConfig.searchOnlyPage}}">
+                      <button ng-click="current.quantity=1;" ng-hide="current.quantity > 0" class="slds-button slds-button--neutral slds-button--small">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left" style="fill:#008E00">
+                          <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#new'}}"></use>
+                        </svg>
+                        {!$Label.CRM_Add}
+                      </button>
+                      <button ng-click="current.quantity=0;" ng-show="current.quantity > 0" class="slds-button slds-button--neutral slds-button--small">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left" style="fill:#960000">
+                          <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#delete'}}"></use>
+                        </svg>
+                        {!$Label.CRM_Remove}
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              </div>
+</script>
+</apex:component>

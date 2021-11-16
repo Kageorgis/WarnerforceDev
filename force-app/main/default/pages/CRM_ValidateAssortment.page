@@ -1,0 +1,456 @@
+<apex:page standardController="Bundle__c" extensions="CRM_ValidateAssortmentCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <head>
+          <script>
+            
+            /* Login to sforce proxy service */
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            
+            angular.module('crmAssortApproval', ['appConfig'])
+                            .controller("crmAssortApprovalController", function($scope, $filter,appConfig) {
+                                 $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                                 $scope.appConfig = appConfig;
+                                 $scope.raiseAlert;
+                                 $scope.msgText;
+                                 $scope.msgSeverity;
+                                 $scope.msgUptodate; 
+                                 $scope.showSpinner = false;
+                                 $scope.lineItems = [];
+                                 $scope.updatedLineItems = [];
+                                 $scope.overlappinglineItems = {};
+                                 $scope.warnings = [];
+                                 $scope.warningsExist = false;
+                                    $scope.getLineItems = function(assId) {
+                                       CRM_ValidateAssortmentCtrl.getLineItems(assId,
+                                              function(result, event) {
+                                                  $scope.lineItems=result;
+                                                  console.log('getLineItems',$scope.lineItems);
+                                              }
+                                       );
+                                    };
+                                    $scope.errorMsg;
+                                    var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                                
+                                    $scope.refreshPricing = function(){
+                                        $scope.showSpinner = true;
+                                        CRM_ValidateAssortmentCtrl.refreshProductPrices(
+                                            ['{!Bundle__c.Id}'],
+                                            function(result, event) {
+                                                console.log(result);
+                                                console.log(event);
+                                                //console.log('****isUpdateFlag',result.isUpdateflag);
+                                                
+                                                if (event.type === 'exception') {
+                                                    if(event.message === 'Prices are up to date'){
+                                                        $scope.msgUptodate = true;
+                                                    }
+                                                    else{
+                                                        $scope.errorMsg = event.message; 
+                                                    }
+                                                }
+                                                else if(event.status) {
+                                                    
+                                                }
+                                                $scope.showSpinner = false;
+                                                $scope.$apply();
+                                            }
+                                        )
+                                    }
+                                    $scope.getOverlappingItems = function(assId,url) {
+                                           console.log('-entered-'+$scope.appConfig.isEntryCriteriaFailed+'--'+$scope.appConfig.isClientUnavail);
+                                           if(!$scope.appConfig.isEntryCriteriaFailed && !$scope.appConfig.isClientUnavail) {
+                                               $scope.showSpinner = true;
+                                               CRM_ValidateAssortmentCtrl.getOverlappingAssProducts(assId,
+                                                      function(result, event) {
+                                                          console.log(result, event);
+                                                          
+                                                          if (event.status){
+                                                                $scope.overlappinglineItems=result.mapWrapper;
+                                                                console.log('$scope.overlappingAssProducts',$scope.overlappingAssProducts);
+                                                                console.log('$scope.overlappinglineItems',$scope.overlappinglineItems);
+                                                                $scope.raiseAlert = result.showMessage;
+                                                                $scope.warnings = result.assortWarnings;
+                                                                if($scope.warnings.length === 0){
+                                                                    $scope.warningsExist = false;
+                                                                }
+                                                                else{
+                                                                    $scope.warningsExist = true;
+                                                                }
+                                                                console.log('getWarnings',$scope.warnings);
+                                                          }
+                                                          else {
+                                                                $scope.msgText =event.message;
+                                                                $scope.msgSeverity='error';
+                                                          }  
+                                                          $scope.showSpinner = false;
+                                                          $scope.$apply();
+                                                          console.log('==='+$scope.raiseAlert);
+                                                          /*if(event.status && !$scope.raiseAlert) {
+                                                              $scope.navigateToURL(url);
+                                                          }*/
+                                                      }
+                                               );
+                                           }
+                                     };
+                                     
+                                    $scope.myfilter = function(findKey) {
+                                        console.log('in myfilter');
+                                        var array = [];
+                                        for(var key in $scope.overlappinglineItems) {
+                                          console.log('***key**',key);
+                                          console.log('***findKey**',findKey);
+                                          if(findKey==key) {
+                                              array.push($scope.overlappinglineItems[key]);
+                                          }
+                                        }
+                                        return $filter('filter')(array, $scope.query);
+                                    };
+                                    
+                                    
+                                    $scope.BackToAssortment= function(url) {
+                                        console.log('-back-url->'+ url);
+                                        $scope.navigateToURL(url);
+                                    };
+                                    
+                                    
+                                      $scope.navigateToURL = function(url) {
+                                        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                                    
+                                        if ($scope.isLightningExperienceOrSf1) {
+                                            sforce.one.navigateToURL(url);
+                                        }
+                                        else {
+                                            console.log(url);
+                                            document.location.href = url;
+                                        }
+                                      };
+                            });
+          </script>
+                    <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+                    <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+                    <apex:stylesheet value="{!URLFOR($Resource.CRM_DealApproval, 'DealApproval.css')}" />  
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+                      <!--<apex:includeScript value="{!URLFOR($Resource.CRM_DealApproval, 'DealApproval.js')}" /> -->
+                      <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+                      <apex:includeScript value="../../soap/ajax/35.0/connection.js" />
+                      <script>
+                            
+                            /* Pass a few dynamic parameters */
+                            angular.module("appConfig", [])
+                             .service("appConfig", function() {
+                                 return {
+                                     recordId: '{!Bundle__c.Id}',
+                                     assortCurrencyCode:'{!Bundle__c.CurrencyISOCode} '
+                                };
+                            });
+                            
+                            
+                      </script> 
+          </head>
+          <body style="padding:0px"> 
+                  <div class="slds" ng-app="crmAssortApproval" ng-controller="crmAssortApprovalController" ng-init="refreshPricing();getLineItems('{!Bundle__c.id}');getOverlappingItems('{!Bundle__c.id}','{!URLFOR($Action.Bundle__c.View,Id)}');">
+            <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <nav class="slds-m-bottom--xx-small" role="navigation">
+                            <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                            <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Bundle__c.Tab, $ObjectType.Bundle__c)}'">{!$ObjectType.Bundle__c.labelPlural}</a>
+                                </li>
+                                <li class="slds-list__item slds-text-heading--label">
+                                    <a href="{!URLFOR($Action.Bundle__c.View,Id)}">{!Bundle__c.Name}</a>
+                                </li>
+                            </ol>
+                        </nav>
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <h1 class="slds-text-heading--medium slds-truncate" title="Edit Products">Validate Assortment</h1> <!--{!$Label.CRM_Update_Price_Title}-->
+                        </div>
+                    </div>
+                                      <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                                       <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                          
+                                          <div class="slds-button-group slds-button-space-left" role="group">
+                                              <!--<button ng-show="!appConfig.isTerritoryFrance && raiseAlert && !appConfig.isTerritoryGermany" ng-click="saveAndSendForApproval('{!bundle__c.id}','{!URLFOR($Action.Bundle__c.View,Id)}')" class="slds-button slds-button--neutral">{!$Label.CRM_Approval_Button_Submit_for_Approval}</button>-->
+                                              <button class="slds-button slds-button--neutral" ng-click="BackToAssortment('{!URLFOR($Action.Bundle__c.View,Id)}')">Back to Assortment</button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="slds-button-group" role="group">
+                                      </div>
+                                </div>
+                </div>
+            </div>
+            <div class="slds-grid" ng-show="warningsExist">
+                     <div class="slds-col slds-notify slds-theme--warning slds-notify--toast slds-box--x-small" role="alert">
+                        <div class="notify__content slds-grid">
+                             <table>
+                                  <tr class="slds-cell-shrink slds-grid" ng-repeat="warning in warnings" ng-show="warningsExist">
+                                      <td class="slds-cell-shrink">
+                                          <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                          </svg>
+                                      </td> 
+                                      <td> 
+                                         <h2 class="slds-text-heading--small">{{warning}}</h2>
+                                      </td> 
+                                 </tr>
+                            </table>
+                        </div>
+                </div>
+            </div>
+            
+            <div class="slds-grid">
+                <div class="slds-col slds-spinner--small" ng-show="showSpinner">
+                    <div class="slds-text-heading--small">
+                       <img style="height:36px" src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" />
+                       {!$Label.CRM_Update_Price_InProgress}
+                    </div> 
+                </div>
+              <div ng-hide="showSpinner" class="slds-col slds-notify slds-notify--toast slds-box--x-small" ng-class="{'slds-theme--error':errorMsg, 'slds-theme--success': !errorMsg}" role="alert">
+                <div class="notify__content slds-grid">
+                  <svg ng-hide="errorMsg" aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                  </svg>
+                  
+                  <svg ng-show="errorMsg" aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                  </svg>
+                  
+                  <div class="slds-col ">
+                      <h2 class="slds-text-heading--small" ng-hide="errorMsg || msgUptodate">{!$Label.CRM_Assortment_Refresh_Prices_Message}</h2>
+                      <h2 class="slds-text-heading--small" ng-show="errorMsg">{{errorMsg}}</h2>
+                      <h2 class="slds-text-heading--small" ng-show="msgUptodate">{!$Label.CRM_Validation_msg_prices_are_upto_date}</h2>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+        
+<!--              </div> <apex:form > -->
+                      <!--  <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmAssortApproval" ng-controller="crmAssortApprovalController" class="slds"  ng-cloak="ngCloak"><!--ng-init="getLineItems('{!Bundle__c.id}');getOverlappingItems('{!Bundle__c.id}','{!URLFOR($Action.Bundle__c.View,Id)}');"-->
+                        <!-- ===========================Spinner================================= -->   
+                        <div class="spinnerModel" ng-show="showSpinner">
+                          <div class="spinnerContent slds-spinner--large">
+                            <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+                          </div>
+                        </div>
+                        
+                        <!-- =========================== HEADER BANNER ================================--> 
+                        <div class="slds-page-header" role="banner">
+                            <div class="slds-grid">
+                                <div class="slds-col slds-has-flexi-truncate">
+                                   <!-- <nav class="slds-m-bottom--xx-small" role="navigation">
+                                        <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                            <li class="slds-list__item slds-text-heading--label">
+                                                <a href="{!URLFOR($Action.Bundle__c.Tab, $ObjectType.Bundle__c)}'">{!$ObjectType.Bundle__c.labelPlural}</a>
+                                            </li>
+                                            <li class="slds-list__item slds-text-heading--label">
+                                                <a href="{!URLFOR($Action.Bundle__c.View,Id)}">{!Bundle__c.Name}</a>
+                                            </li>
+                                        </ol>
+                                    </nav>-->
+                                    <!--<div class="slds-col slds-has-flexi-truncate">
+                                        <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Approval_Page_Heading_Deal_Approval}">Assortment Approval</h1>
+                                    </div>-->
+                                        
+                                </div>
+                                <!--<div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                                       <div class="slds-form-element">
+                                        <div class="slds-form-element__control">
+                                          
+                                          <div class="slds-button-group slds-button-space-left" role="group">
+                                              <!--<button ng-show="!appConfig.isTerritoryFrance && raiseAlert && !appConfig.isTerritoryGermany" ng-click="saveAndSendForApproval('{!bundle__c.id}','{!URLFOR($Action.Bundle__c.View,Id)}')" class="slds-button slds-button--neutral">{!$Label.CRM_Approval_Button_Submit_for_Approval}</button>
+                                              <button class="slds-button slds-button--neutral" ng-click="BackToAssortment('{!URLFOR($Action.Bundle__c.View,Id)}')">{!$Label.CRM_Approval_Button_Back_To_Deal}</button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="slds-button-group" role="group">
+                                      </div>
+                                </div>-->
+                            </div>
+                        </div>
+                        <!-- ===========================Exception================================= -->
+                         <div class="slds-grid" ng-show="msgText">
+                                 <div class="slds-col slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                                        <div class="notify__content slds-grid">
+                                              <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                              </svg>
+                                              
+                                             <div class="slds-col ">
+                                                  <h2 class="slds-text-heading--small">
+                                                     {{msgText}}
+                                                  </h2>
+                                             </div>
+                                        </div>
+                                  </div>
+                        </div>
+                           <div class="slds-grid" ng-show="raiseAlert && !msgText">
+                                         <div class="slds-col slds-notify slds-theme--error slds-notify--toast slds-box--x-small" role="alert">
+                                            <div class="notify__content slds-grid">
+                                              <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                              </svg>
+                                              
+                                             <div class="slds-col">
+                                                  <h2 class="slds-text-heading--small">{!$Label.CRM_Validation_Overlapping_Assortment_Found}</h2>
+                                             </div>
+                                             </div>
+                                    </div>
+                            </div>
+                            <div class="slds-grid" ng-hide="raiseAlert || msgText">
+                              <div ng-hide="showSpinner" class="slds-col slds-notify slds-notify--toast slds-box--x-small" ng-class="{'slds-theme--error':errorMsg, 'slds-theme--success': !errorMsg}" role="alert">
+                <div class="notify__content slds-grid">
+                  <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+                    <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                  </svg>
+                             <div class="slds-col ">
+                      <h2 class="slds-text-heading--small" ng-hide="errorMsg">{!$Label.CRM_Validation_No_Overlapping_Assortment_Found}</h2>
+                  </div>
+                  </div>
+                  </div>
+                   </div>
+                  
+                              
+                         <!-- ===========================Current Assortment Details================================-->
+                                <div class="slds-m-around--large" ng-show="raiseAlert">
+                                        <div class="slds-grid slds-section-title--divider">
+                                            <h1 class="slds-text-heading--small slds-truncate" title="{!$Label.CRM_Approval_Section_Heading_Current_Deal}">Current Assortment Details</h1>
+                                        </div>
+                                         <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                                            <thead>
+                                                    <tr class="slds-text-heading--label">
+                                                             <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Name.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Assortment_Status__c.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Start_Date__c.label}</span>
+                                                            </th>
+                                                            <th class="slds-cell-shrink" scope="col">
+                                                                <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.End_Date__c.label}</span>
+                                                            </th>
+                                                    </tr>
+                                             </thead>
+                                             <tbody>
+                                                    <tr> 
+                                                           
+                                                            <th data-label="{!$ObjectType.Bundle__c.fields.Name.label}" role="row" >  
+                                                                <span class="slds-truncate"> 
+                                                                    <a href="/{!assortmentRecord.id}" tabindex="-1" role="presentation">{!assortmentRecord.name}</a>
+                                                                </span> 
+                                                            </th>
+                                                            <td data-label="{!$ObjectType.Bundle__c.fields.Assortment_Status__c.label}"> <span class="slds-truncate">{!bundle__c.Assortment_Status__c}</span> </td>
+                                                            <td data-label="{!$ObjectType.Bundle__c.fields.Start_Date__c.label}"> 
+                                                                <span class="slds-truncate">
+                                                                    <apex:outputText value="{0,date,MM/dd/yyyy}">
+                                                                         <apex:param value="{!Bundle__c.Start_Date__c}" />
+                                                                    </apex:outputText>
+                                                                </span> 
+                                                            </td>
+                                                            <td data-label="{!$ObjectType.Bundle__c.fields.End_Date__c.label}" > 
+                                                                <span class="slds-truncate">
+                                                                    <apex:outputText value="{0,date,MM/dd/yyyy}">
+                                                                         <apex:param value="{!Bundle__c.End_Date__c}" />
+                                                                    </apex:outputText>
+                                                                </span> 
+                                                            </td>
+                                                    </tr> 
+                                                    <tr>
+                                                                    <td colspan="5">
+                                                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal" >
+                                                                            <thead>
+                                                                                    <tr class="slds-text-heading--label">
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">{!$ObjectType.Product2.fields.Name.label}</span>
+                                                                                        </th>
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">{!$ObjectType.Bundle_Product__c.fields.Assortment_Price__c.label}</span>
+                                                                                        </th> 
+                                                                                        <th class="slds-cell-shrink" scope="col">
+                                                                                                <span class="slds-truncate">Overlapping Assortment</span>
+                                                                                        </th>
+                                                                                    </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                            <tr class="slds-hint-parent" ng-repeat="lineItem in lineItems" ng-show="{{ myfilter(lineItem.productId).length > 0 }}">
+                                                                                                     <td data-label="{!$ObjectType.Product2.fields.Name.Label}" role="row" >
+                                                                                                        <span class="slds-truncate"><a href="/{{lineItem.productId}}" tabindex="-1" role="presentation">{{lineItem.productName}}</a></span>
+                                                                                                     </td>
+                                                                                                     <!-- <td data-label="{!$ObjectType.Bundle_Product__c.fields.Assortment_Price__c.Label}" >
+                                                                                                        <div class="slds-form-element">
+                                                                                                          <div class="slds-form-element__control" ng-class="{'slds-has-error': lineItem.promotedPrice == null || lineItem.promotedPrice == undefined}">
+                                                                                                            <input class="slds-input slds-input--small" type="number" ng-model="lineItem.promotedPrice"  ng-disabled="lineItem.accountPrice <= 0" style="width: 70px" ng-change="lineItem.isDirtyRow = true;handlePriceChange(lineItem, 'promoPriceChange');"/>
+                                                                                                          </div>
+                                                                                                        </div>
+                                                                                                      </td>-->
+                                                                                                      <td data-label="{!$ObjectType.Bundle_Product__c.fields.Assortment_Price__c.label}"> 
+                                                                                                          <span class="slds-truncate">{{lineItem.promotedPrice | currency : appConfig.assortCurrencyCode : 2}}</span>
+                                                                                                      </td>
+                                                                                                    
+                                                                                                    <td data-label="Overlapping Assortments"> 
+                                                                                                          <!--================================================================================================================ -->
+                                                                                                                <div> 
+                                                                                                                        <table class="slds-table slds-table--bordered slds-table--stacked-horizontal">
+                                                                                                                                    <thead>
+                                                                                                                                            <tr class="slds-text-heading--label">
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Name.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Assortment_Status__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                        <span class="slds-truncate">{!$ObjectType.Bundle_Product__c.fields.Assortment_Price__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.Start_Date__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                                <th class="slds-cell-shrink" scope="col">
+                                                                                                                                                    <span class="slds-truncate">{!$ObjectType.Bundle__c.fields.End_Date__c.label}</span>
+                                                                                                                                                </th>
+                                                                                                                                            </tr>
+                                                                                                                                    </thead>
+                                                                                                                                    <tbody ng-repeat="overlappingAssProducts in myfilter(lineItem.productId)">
+                                                                                                                                                     <tr ng-repeat="item in overlappingAssProducts track by $index">
+                                                                                                                                                            <td data-label="{!$ObjectType.Bundle__c.fields.Name.label}"> 
+                                                                                                                                                                <span class="slds-truncate"><a href="/{{item.assProductRecord.Bundle__c}}" tabindex="-1" role="presentation">{{item.assProductRecord.Bundle__r.Name}}</a></span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Bundle__c.fields.Assortment_Status__c.label}"> <span class="slds-truncate">{{item.assProductRecord.Bundle__r.Assortment_Status__c}}</span> </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Bundle_Product__c.fields.Assortment_Price__c.label}"> 
+                                                                                                                                                                <span class="slds-truncate">{{item.assProductRecord.Assortment_Price__c  | currency : appConfig.assortCurrencyCode : 2}}</span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Bundle__c.fields.Start_Date__c.label}"> 
+                                                                                                                                                                    <span class="slds-truncate">{{item.assStartDate}}</span>
+                                                                                                                                                            </td>
+                                                                                                                                                            <td data-label="{!$ObjectType.Bundle__c.fields.End_Date__c.label}" >
+                                                                                                                                                                <span class="slds-truncate">{{item.assEndDate}}</span> 
+                                                                                                                                                            </td>
+                                                                                                                                                     </tr>   
+                                                                                                                                    </tbody>
+                                                                                                                            </table>
+                                                                                                                    
+                                                                                                                </div>
+                                                                                                          <!--================================================================================================================ -->
+                                                                                                    </td>
+                                                                                            </tr>  
+                                                                            </tbody>
+                                                                    </table>
+                                                                    </td>
+                                                    </tr>
+                                            </tbody>        
+                                        </table>
+                                        
+                                </div>
+                        
+                    </div>
+<!--                 </apex:form>  -->
+            </body>
+    </html>
+</apex:page>

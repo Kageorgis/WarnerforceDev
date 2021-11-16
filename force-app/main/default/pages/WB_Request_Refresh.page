@@ -1,0 +1,158 @@
+<apex:page controller="WB_Request_Refresh_Controller" standardStylesheets="true">
+<apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />   
+    
+ 
+    <style>
+        body .bPageBlock .pbBody .red .pbSubheader{
+        background-color:#be5e5e;
+        }
+        
+       
+    </style>
+    <apex:outputPanel id="pannel">
+        <apex:pageBlock rendered="{!isBatchProcessing}">
+            <br/><br/><br/><br/>
+            <apex:outputLabel value="Your Request has been Submitted and processing through Batch. Please close this page." style="font-size: 20px;"/>
+            <br/><br/><br/><br/>
+        </apex:pageBlock>
+        
+        <apex:actionStatus id="loadingstatus">
+            <apex:facet name="start" >
+                <div class="waitingSearchDiv"  style="background-color: #fbfbfb;height: 100%;opacity:0.65;width:100%;filter: alpha(opacity=50);">
+                     <div class="waitingHolder" style="top:200px; width: 100px;">
+                        <img src="/img/loading.gif" />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        <apex:pageBlock >
+        <apex:form id="CommGrid" rendered="{!!isBatchProcessing}">
+        <apex:outputPanel styleClass="red" layout="block" rendered="{!mpmScroller}">
+            <apex:pageBlockSection title="List Of Selected MPMs" columns="1"  collapsible="false">
+                <apex:outputpanel id="myPanel" style="overflow:auto;height:250px;" layout="block" >
+                    <apex:pageBlockTable value="{!lstSelectedMPM}" var="MPM" width="500PX" rules="rows">
+                       <!--ER-000959 Start: headerValues added along with new field  Record Type-->
+                        <apex:column title="MPM Name" headerValue="VV/MPM">
+                            <apex:outputLink value="/{!MPM.id}">{!MPM.Name}</apex:outputLink>
+                        </apex:column>                        
+                        <apex:column headerValue="Title/MPM Description" value="{!MPM.MPM_Short_Desc__c}" />
+                        <apex:column headerValue="Record Type">
+                            <apex:outputText value="MPM"/>
+                        </apex:column>
+                        <!--ER-000959 End-->
+                        <apex:column value="{!MPM.Production_Year__c}" />
+                        <apex:column value="{!MPM.Status__c}" />
+                        <apex:column value="{!MPM.Film_Color__c}" />
+                        <apex:column value="{!MPM.Generic__c}" />
+                        <!--<apex:column value="{!MPM.First_Available_Date__c}" />-->
+                    </apex:pageBlockTable>
+                </apex:outputpanel>
+            </apex:pageBlockSection> 
+        </apex:outputPanel>
+            
+        <apex:outputPanel styleClass="red" layout="block" rendered="{!!mpmScroller}">
+            <apex:pageBlockSection title="List Of Selected MPMs" columns="1"  collapsible="false">
+                <apex:outputpanel id="myPanel" layout="block" >
+                    <apex:pageBlockTable value="{!lstSelectedMPM}" var="MPM" width="500PX" rules="rows">
+                        <!--ER-000959 Start: headerValues added along with new field  Record Type-->
+                        <apex:column title="MPM Name" headerValue="VV/MPM">
+                            <apex:outputLink value="/{!MPM.id}">{!MPM.Name}</apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Title/MPM Description" value="{!MPM.MPM_Short_Desc__c}" />
+                        <apex:column headerValue="Record Type">
+                            <apex:outputText value="MPM"/>
+                        </apex:column> 
+                         <!--ER-000959 End-->
+                        <apex:column value="{!MPM.Production_Year__c}" />
+                        <apex:column value="{!MPM.Status__c}" />
+                        <apex:column value="{!MPM.Film_Color__c}" />
+                        <apex:column value="{!MPM.Generic__c}" />
+                        <!--<apex:column value="{!MPM.First_Available_Date__c}" />-->
+                    </apex:pageBlockTable>
+                </apex:outputpanel>
+            </apex:pageBlockSection> 
+        </apex:outputPanel>    
+        
+         <apex:outputPanel id="filterSection" styleClass="red" layout="block">
+            <apex:pageBlockSection id="top" title="Select Rights Group and Channel" columns="2" collapsible="false">
+                <apex:inputCheckbox styleClass="selectRightsGroup"  label="Select All Rights Groups" style="float:left;" value="{!isAllRightsGroupSelected}" onchange="selAllRytGrp();">
+                </apex:inputCheckbox>
+                <apex:inputCheckbox styleClass="selectChannel" label="Select All Channels" style="float:left;" value="{!isAllChannelSelected}" onchange="selAllChnl();">
+                </apex:inputCheckbox>
+                <c:MultiSelectPicklist aLeftOptions="{!allRightsGroup}" aRightOptions="{!selectedRightsGroup}" size="7" width="150px" leftLabel="Available Rights Group" rightLabel="Selected Rights Group" id="availableCountry"/>
+                <c:MultiSelectPicklist aLeftOptions="{!allChannels}" aRightOptions="{!selectedRightsChannel}" size="7" width="150px" leftLabel="Available Channels " rightLabel="Selected Channels" id="channel"/>  
+            </apex:pageBlockSection>
+            <apex:actionFunction name="SelectAllRightsGroup" action="{!selectAllRightsGroup}" status="copyRightsGroup"></apex:actionFunction>
+            <apex:actionFunction name="selectAllChannel" action="{!selectAllChannel}" status="copyChannel" ></apex:actionFunction>
+        </apex:outputPanel>
+        
+        <apex:outputPanel styleClass="red" layout="block">
+            <apex:pageBlockSection title="Rights Query Start Date default is 1/1/2010" columns="1" collapsible="false">
+                <apex:inputField value="{!objRights.Rights_Query_Start_Date__c}"></apex:inputField>
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        
+        <apex:commandButton value="Rights Request" style="align:middle;margin-left:40em;margin-top: 3em;" rerender="pannel" action="{!RequestRefresh}" status="loadingstatus" />
+        <apex:commandButton value="Cancel" style="align:middle;margin-left:2em;margin-top: 3em;" onclick="window.top.close();" />
+        
+    </apex:form>  
+        </apex:pageBlock>
+    </apex:outputPanel>
+    <script>
+        try{
+            function selAllRytGrp(){
+                SelectAllRightsGroup();
+            }
+            function selAllChnl(){
+                selectAllChannel();
+            }
+            // for Rights group MultiSelect picklist
+            $($('.rightArrowIcon')[0]).click(function(){
+                    setTimeout(function(){ 
+                        if($('.multilist')[0].length == 0){
+                            $('.selectRightsGroup').prop('checked', true);
+                        }
+                        if($('.multilist')[0].length > 0 && $('.multilist')[1].length > 0){
+                            $('.selectRightsGroup').prop('checked', false);
+                        }
+                    }, 500);
+                });
+            $($('.leftArrowIcon')[0]).click(function(){
+                    setTimeout(function(){ 
+                        if($('.multilist')[1].length == 0){
+                            $('.selectRightsGroup').prop('checked', false);
+                        }
+                        if($('.multilist')[0].length > 0 && $('.multilist')[1].length > 0){
+                            $('.selectRightsGroup').prop('checked', false);
+                        }
+                    }, 500);
+                });
+            
+            // for channel MultiSelect picklist
+            $($('.rightArrowIcon')[1]).click(function(){
+                 setTimeout(function(){ 
+                    if($('.multilist')[2].length == 0){
+                        $('.selectChannel').prop('checked', true);
+                    }
+                    if($('.multilist')[2].length > 0 && $('.multilist')[3].length > 0){
+                        $('.selectChannel').prop('checked', false);
+                    }
+                }, 500);
+                });
+            $($('.leftArrowIcon')[1]).click(function(){
+                 setTimeout(function(){ 
+                    if($('.multilist')[3].length == 0){
+                        $('.selectChannel').prop('checked', false);
+                    }
+                    if($('.multilist')[2].length > 0 && $('.multilist')[3].length > 0){
+                        $('.selectChannel').prop('checked', false);
+                    }
+                }, 500);
+            });
+        }
+        catch(ex){}
+    </script>
+   
+</apex:page>

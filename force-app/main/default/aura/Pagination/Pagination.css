@@ -1,0 +1,11 @@
+.THIS .no-of-records-label{
+    margin-top: 31px;
+    padding-left: 43px;
+}
+.THIS .records-per-page{
+    width:31%;
+    float:right;
+}
+.THIS .page-number{
+    margin-top: 18px;
+}

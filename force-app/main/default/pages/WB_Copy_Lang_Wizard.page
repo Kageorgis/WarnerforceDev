@@ -1,0 +1,117 @@
+<!--
+Version- 1.0
+Creation Date- 6 DEC 2016
+Author- Preeti Jha
+Description- As per CRRTS Phase 2 requirment, this controller has the functionality of Copy Cleared languages.
+-->
+
+<apex:page controller="WB_Copy_Language_RL_Controller" >
+    
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/jquery-1.10.2.min.js')}"/>
+<!--<apex:stylesheet value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/CSS/fixedHeader.dataTables.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/CSS/jquery.dataTables.min.css')}" />
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/jquery.dataTables.min.js')}"/>
+
+<apex:includeScript value="{!URLFOR($Resource.Language_Readiness_JS_CSS, 'Language_Readiness_JS_CSS/JS/dataTables.fixedHeader.min.js')}"/>
+-->
+<!--<apex:includeScript value="{!URLFOR($Resource.jQuery_BlockUI_Plugin, 'jQueryBlockUIPlugin.js')}"/>-->
+     
+    
+<script>
+
+    /* j$= jQuery.noConflict();
+     
+     j$(document).ready(function(){
+      searchTable('{!strSearch}');  
+      
+      var table = j$('[id $=TitleTable]').DataTable({
+      
+           paging: false,
+           bFilter: false,
+           bInfo: false
+     });
+    
+       new j$.fn.dataTable.FixedHeader( table );
+       
+      j$('[id $=id_search]').keyup(function()
+        {
+            if(j$(this).val() == '')
+                searchTable('{!strSearch}');
+            //else
+             //   searchTable(j$(this).val());
+        });
+        
+    });
+    
+    
+    function searchTable(inputVal)
+    {
+        var table = j$('[id $=TitleTable]');
+        table.find('tr').each(function(index, row)
+        {
+            var allCells =j$(row).find('td');
+            if(allCells.length > 0)
+            {
+                var found = false;
+                allCells.each(function(index, td)
+                {
+                    var regExp = new RegExp(inputVal, 'i');
+                    if(regExp.test(j$(td).text()))
+                    {
+                        found = true;
+                        return false;
+                    }
+                });
+                if(found == true)j$(row).show();else j$(row).hide();
+            }
+        });
+    }*/
+    function searchTitles(e) {
+    if (e.keyCode == 13) {
+        searchTitle();
+        return false;
+    }
+}
+    
+</script>
+
+<apex:form >
+    <apex:pageMessages id="errMsg"></apex:pageMessages> 
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+            <apex:commandButton value="Copy Languages" action="{!processSelected}" rerender="table,errMsg"/>
+            <apex:commandButton value="Cancel" action="{!Cancel}" /> 
+        </apex:pageBlockButtons>
+        <apex:actionFunction name="searchTitle" action="{!doSearch}" rerender="TitleTable" status="counterStatus"/>
+        <div align= "left" ><apex:inputText value="{!searchValue}" id="id_search" onkeypress="return searchTitles(event)"></apex:inputText>
+        <apex:actionStatus startText="Processing the stuff " stopText=" Done " id="counterStatus" > 
+             <apex:facet name="start" >Searching... <img src="/apexpages/devmode/img/saveStatus.gif" /></apex:facet> 
+             <apex:facet name="stop"> 
+               <apex:commandButton value="Search" action="{!doSearch}"  status="counterStatus" rerender="TitleTable"/>
+             </apex:facet> 
+         </apex:actionStatus> 
+        </div>
+        
+        <!--<div align= "right" > Search Title: &nbsp;&nbsp; <apex:inputText id="id_search"> </apex:inputText></div>-->
+         
+         
+        <apex:pageBlockTable value="{!Titles}" var="title" id="TitleTable">
+            <apex:column >
+                <apex:inputCheckbox value="{!title.isChecked}"/>
+            </apex:column>
+            <apex:column headerValue="Title" style="font:bold">
+                <apex:outputLink target="_blank" value="/{!title.titles.Id}">{!title.titles.Name}</apex:outputLink>
+            </apex:column>
+              <apex:column value="{!title.titles.MPM__c}" headerValue="MPM" style="font:bold"/>
+            <apex:column value="{!title.titles.Video_Version__c}" headerValue="Video Version" style="font:bold"/>
+            <apex:column value="{!title.provisionalCount}" headerValue="Provisional Languages" style="font:bold"/>
+            <apex:column value="{!title.countLang}" headerValue="Cleared Languages" style="font:bold"/>
+            <apex:column value="{!title.titles.Digital_Planning__c}" headerValue="Digital Planning" style="font:bold"/>
+            <apex:column value="{!title.titles.Physical_Planning__c}" headerValue="Physical Planning" style="font:bold"/>
+          
+                      
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+</apex:form>
+  
+</apex:page>

@@ -1,0 +1,4 @@
+<apex:page showHeader="false" showChat="false" standardController="Account" sidebar="false"> <SLCA2:calendar namespace="SLCA2"
+calendar="{!$Setup.CRM_Calendar_Settings__c.Account_Calendar_Ids__c}"
+settings="['l_ds','c_t', 'r_d', 'r_w', 'r_c','r_a','r_s']" urlparams="sb=2&url=0&v=g&g_v=week&g_p=03&pv1={!Account.Id}">
+</SLCA2:calendar> </apex:page>

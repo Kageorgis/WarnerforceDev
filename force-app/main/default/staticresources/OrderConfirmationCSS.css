@@ -1,0 +1,50 @@
+@page{
+	margin:0.25in;
+}
+ 
+body {
+	font-family: Helvetica, Arial, Sans-Serif;
+}
+.mainContainer {
+	width:100%;
+	padding: 5px;
+}
+table.customerDetail {
+}
+
+table.customerDetail .dataCol {
+	text-align: left;
+}
+table.customerDetail .labelCol {
+	text-align: right;
+}
+.comments-row {
+	padding:5px;
+	border:1px solid #000000;
+	font-size:12px;
+}
+
+.order-products {
+	width:100%;
+	border-collapse: collapse;
+}
+
+.order-products td {
+	border:1px solid black;
+	font-size:11px;
+	padding: 5px;
+}
+.para{
+	font-size:9px;
+	text-align:justify;
+	padding:0px;
+}
+.page-break {
+	display:block;
+	page-break-after:always;
+}
+.font-9{
+	font-size:7px;
+	padding:0px;
+}
+

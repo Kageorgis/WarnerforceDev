@@ -1,0 +1,44 @@
+<apex:page standardController="EC_Account_Allocation__c" recordSetVar="ECAllocation" extensions="WB_ECAccountAllocationDelete"> 
+<apex:includeLightning />
+<div id="lightning" />
+<script type = "text/javascript">
+    
+    function pageLoad(){
+        var ECAllocationCount1 = {!ECAllocationListSize};
+        var ECPieceId1 = "{!ECPieceId}";
+        var detectUserUI = "{!$User.UIThemeDisplayed}"
+        
+        if(detectUserUI == 'Theme3'){
+            if(ECAllocationCount1 > 0){
+                var confirm = window.confirm('Are you sure you want to delete all the records?');
+                if(confirm){
+                    callApexMethod();
+                }else{
+                    callApexMethodToRedirect();
+                }
+           }else{
+              alert('No records to delete');
+              callApexMethodToRedirect();
+          }  
+        }   
+       
+       if(detectUserUI == 'Theme4d'){
+            $Lightning.use("c:WB_DeleteAllocation_Button_App", function() {
+            $Lightning.createComponent("c:WB_DeleteAllocation_Button_Comp",
+                        {"ECAllocationCount" : ECAllocationCount1,"ECPId" : ECPieceId1},
+                       "lightning",
+                       function(cmp){
+                            //console.log('>>>>> App is hosted');
+                       });
+            }); 
+        }    
+     }
+    
+    window.onload = pageLoad;
+</script>
+
+<apex:form >
+    <apex:actionFunction name="callApexMethod" action="{!delECAllocation}"/> 
+    <apex:actionFunction name="callApexMethodToRedirect" action="{!redirectToECP}"/>
+</apex:form>
+</apex:page>

@@ -1,0 +1,173 @@
+<aura:component implements="lightning:isUrlAddressable,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="CRM_UploadComponentController" >
+    <aura:attribute name="checklength" type="Boolean" default="false"/>
+    <aura:attribute name="data" type="sObject"/>
+    <aura:attribute name="editedRecords" type="Map"/>
+     <aura:attribute name="editedErrorMap" type="Map"/>
+    <aura:attribute name="filterData" type ="sObject"/>
+    <aura:attribute name="opportunity" type ="sObject"/>
+    <aura:attribute name="columns" type="Object"/>
+    <aura:attribute name="showSaveCancelBtn" type="boolean" default="false" />
+    <aura:attribute name="dataRefresh" type="boolean" default="false" />
+    <aura:attribute name="FileList" type="Object"/>
+    <aura:attribute name="sNo" type="Integer"/>
+    <aura:attribute name="objectId" type="String" />
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="fieldValue" type="Object"/>
+    <aura:attribute name= "delSelectedRecIds" type="List" />
+    <aura:attribute name="searchText" type = "String" />
+    <aura:attribute name="slNo" type="Integer" default="1"/>
+    <aura:attribute name="PaginationData" type="sObject"/>
+    <aura:attribute name="length" type="integer"/>
+    <aura:attribute name="searchPagination" type="Boolean" default="false"/>
+    <aura:attribute name="isSpinner" type="Boolean" default= "false"/>
+    <aura:attribute name="fullData" type="sObject"/>
+    <aura:attribute name="CoopReasonTaticList" type="String[]"/>
+    <aura:attribute name="url" type="String"/>
+    <aura:attribute name="labelString" type="String" />
+    <aura:attribute name="fieldSetName" type = "String" />
+    <aura:attribute name="sObjectName" type = "String" />
+    <aura:attribute name="queryFieldName" type="List" default="[]" />
+    <aura:attribute name="ChildCall" type="Boolean" default = "false" />
+    <aura:attribute name="badgelist" type="List" default ="[]"/>
+    <aura:attribute name="searchedData" type ="List" default ="[]" />
+    <aura:attribute name="showError" type="Boolean" default = "false" />
+    <aura:attribute name="deleteCancel" type="Boolean" default="false"/>
+    <aura:attribute name="validationError" type="String" />
+    <aura:attribute name="disableDelete" type="Boolean" default="False"/>
+    <aura:attribute name="permissionDetails" type="sObject" />
+    <aura:attribute name="refreshObjectId" type="String" />
+    <!--W-017642-Added attribute to hold value as true if deal created for JV sale org-Start-->
+    <aura:attribute name="isJVSalesOrg" type="Boolean" default="False"/>
+    <!--W-017642-Added attribute to hold value as true if deal created for JV sale org-End-->
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:handler name="change" value="{!v.searchText}" action="{!c.handleSearch}" />
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.reInit}" />
+   <!-- <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <lightning:spinner aura:id="spinner"  alternativeText="Loading" size="large" variant="brand" class="slds-hide"/>-->
+    <aura:if isTrue="{!v.spinner}">
+        <div class="spinner spinner-style">
+            <lightning:spinner alternativeText="Loading" size="large" variant="brand"/>
+        </div>
+    </aura:if>
+    <aura:if isTrue="{!v.showError}">
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium" aria-modal="true">
+        <div class="slds-modal__container error-container">
+            <header class="slds-modal__header slds-modal__header_empty">
+                <lightning:buttonIcon iconName="utility:close" variant="bare" onclick="{!c.handleCloseModal}"
+                                              alternativeText="Close" class="slds-modal__close" />                
+            </header>
+            <div class="slds-modal__content slds-p-around_medium error-container-content">
+                <p><ui:outputText value="{!v.validationError}"/></p>
+            </div>
+            </div>
+        </section>
+            <div class="slds-backdrop "></div>
+    </aura:if>
+    <!-- Import Fuctionality -->
+   <div>
+    <div class="slds-page-header" id="headerDiv" role="banner">
+    <div class="slds-grid">
+       <div class="slds-col slds-size_5-of-6" >
+         <aura:if isTrue="{!not(empty(v.objectId))}">
+        <c:ImportExcelComponent objectId="{!v.objectId}" sObjectName="{!v.sObjectName}" />
+           </aura:if>
+        </div>
+        <div class="slds-col slds-size_1-of-6 export-button">
+            <c:ExportFile fullData="{!v.fullData}" columnName="{!v.columns}" opptName="{!v.opportunity.Name}" spinner="{!v.spinner}"/>  
+        </div>
+    </div>
+    </div>
+    <div class="c-container">
+        <lightning:layout verticalAlign="end" class="slds-m-around_small">
+            <lightning:layoutItem flexibility="auto" padding="horizontal-small">
+                <lightning:button onclick="{!c.delSelectedRecord}" disabled="{!v.disableDelete ? true : false}">Delete</lightning:button>
+                <aura:if isTrue="{!v.deleteCancel}"><lightning:button label="Cancel" onclick="{!c.cancel}"/></aura:if>
+                <aura:if isTrue="{!v.showSaveCancelBtn}">
+                    <lightning:buttonGroup class="slds-align">
+                        <lightning:button label="Cancel" onclick="{!c.cancel}"/>
+                        <lightning:button label="Save" onclick="{!c.save}" variant="success"/>
+                    </lightning:buttonGroup>
+                </aura:if> 
+            </lightning:layoutItem>
+            <lightning:layoutItem size ="5" padding="horizontal-small">
+        		<aura:if isTrue="{!v.searchedData.length > 0 }" >
+                  <aura:iteration items="{!v.searchedData}" var = "searchValues" >
+                      <div> {!v.searchedData} {!searchValues.key.label}  :
+                          <aura:iteration items="{!searchValues.value}" var = "v">{!v},</aura:iteration></div>
+                </aura:iteration>
+            		<a onclick = "{!c.clearAll}">{!$Label.c.CRM_Clear_All_Button}</a>
+        		</aura:if>
+            </lightning:layoutItem>
+            <!--  <lightning:layoutItem alignmentBump="left"><lightning:buttonIcon iconName="utility:search" variant="bare" alternativeText="Search" class="slds-input__icon">Search</lightning:buttonIcon>
+            </lightning:layoutItem>-->
+            <lightning:layoutItem  padding="horizontal-small" alignmentBump="left" >
+                <lightning:input name="search" value="{!v.searchText}" onchange="{!c.handleSearch}"  placeholder="Search"/>
+            </lightning:layoutItem>
+            
+            <div class="slds-align-space advanced-search"></div>
+             <!--Advanced Search Filter -->
+            <aura:if isTrue="{!and(v.fullData , v.fullData.length)}">                
+               <lightning:button variant="brand"  label="Advanced Search" onclick ="{!c.advancedSearch}"/>
+                   <c:AdvancedSearchFilter aura:id="advancedSearch" fullData ="{!v.fullData}"
+                                           data ="{!v.data}"
+                                           columns = "{!v.columns}" 
+                                           opptId = "{!v.objectId}"
+                                           sObjectName ="{!v.sObjectName}"
+                                           queryFieldName = "{!v.queryFieldName}"
+                                           ChildCall = "{!v.ChildCall}"
+                                           filterData ="{!v.filterData}"
+                                           searchedData ="{!v.searchedData}"
+                                           length="{!v.length}"
+                                           badgelist="{!v.badgelist}"
+                                           />
+            </aura:if>
+        </lightning:layout>
+        <!-- Pagination  -->
+        <aura:if isTrue="{!or(and(v.data,v.length),v.searchPagination) }">
+            <c:Pagination aura:id="ser" PaginationData = "{!v.data}" slNo="{!v.slNo}"  filterData="{!v.filterData}" len="{!v.length}" spinner="{!v.spinner}" />
+        </aura:if>
+        <div class="slds-m-around_large ">  
+           <div class="slds-scrollable_x scroll-height">                 
+			 <table class="slds-table slds-table--bordered slds-table_cell-buffer table-style" >
+                <thead>
+                    <tr class ="slds-text-heading--label header-style">
+                        <th class="slds-cell-shrink " scope="col" ><div class="slds-truncate ">S.No</div></th>
+                        <th></th>
+                        <aura:iteration items="{!v.columns}" var ="col" >                            
+                            <th class="slds-cell-shrink  " scope="col"><div class="slds-truncate ">{!col.label} </div></th>
+                        </aura:iteration>
+                    </tr>
+                </thead>                
+                <tbody aura:id="refresh">                    
+                    <aura:iteration items="{!v.filterData}" var = "records" indexVar="sNo">
+                        <tr class="slds-hint-parent" >
+                            <td class="slds-cell-shrink" data-label="Select Row"><div class="slds-truncate">
+                                <ui:outputText value="{!sNo + v.slNo}"/> 
+                                <aura:if isTrue="{!records.validation!=null}"> 
+                                     <lightning:buttonIcon iconName="utility:error" value="{!records}"
+                                                           onclick="{!c.showRecordError}" alternativeText="Error" title="Error" class="error-icon" />
+                                </aura:if>
+                                </div></td>
+                            <td><ui:inputCheckbox aura:id="checkbox" text = "{!records}" value="" /></td>                            
+                              <aura:iteration items="{!v.columns}" var="col" indexVar="fld">
+                                  <td>
+                                       <c:CRM_UploadDataTableInlineComponent sNo="{!sNo}" 
+                                                     records="{!records}" 
+                                                     columns="{!col}"
+                                                     CoopReasonTaticList ="{!v.CoopReasonTaticList}"
+                                                     showSaveCancelBtn= "{!v.showSaveCancelBtn}"
+                                                     editedRecords="{!v.editedRecords}"
+                                                     opportunity="{!v.opportunity}"/>
+                                </td>
+                            </aura:iteration>
+                        </tr>                        
+                    </aura:iteration>
+                </tbody>                   
+             </table>
+           </div>            	
+        </div>
+    </div>
+        
+</div>
+</aura:component>

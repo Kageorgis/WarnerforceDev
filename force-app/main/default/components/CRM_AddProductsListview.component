@@ -1,0 +1,117 @@
+<apex:component >
+<script type="text/ng-template" id="add-products-list-view.html">
+            <div id="wb-listview" ng-show="viewMode == 'list'">
+                <table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal" id="tblProduct">
+                  <thead>
+                    <tr class="slds-text-heading--label" >
+                      <th class="slds-cell-shrink" scope="col" ng-hide="{{appConfig.searchOnlyPage}}">
+                        <label class="slds-checkbox" for="select-all">
+                        <input name="checkbox" type="checkbox" id="select-all" onclick="checkUncheckAll()" />
+                        <span class="slds-checkbox--faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">select all</span>
+                        </label>
+                      </th>
+                      <th class="slds-is-sortable" ng-class="{'ascending': search.sortByField=='Product2.Name' }" scope="col" ng-click="sortProducts('Product2.Name')">
+                        <span>{!$ObjectType.Product2.fields.Name.Label}</span>
+                        <button class="slds-button slds-button--icon-bare slds-button--icon-border-small">
+                          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                            <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#arrow' + (search.sortByField=='Product2.Name' && search.sortOrder=='DESC'? 'down' : 'up')}}"></use>
+                          </svg>
+                          <span class="slds-assistive-text">Sort</span>
+                        </button>   
+                      </th>
+                      <th scope="col">
+                        <span>{!$ObjectType.Product2.fields.ProductCode.Label}</span>
+                      </th>
+                      <th scope="col" id="colHdr_product_format">
+                        <span>{!$ObjectType.Product2.fields.Product_Format__c.Label}</span>
+                      </th>
+                      <!--Start - US#1015:Product language column-->
+                      <th scope="col" ng-show="isDigital">
+                        <span>Language</span>
+                      </th>
+                      <!--End - US#1015:Product language column-->
+                      <th class="slds-is-sortable" ng-class="{'ascending': search.sortByField=='Product2.Street_Date__c' }" scope="col" ng-click="sortProducts('Product2.Street_Date__c')">
+                        <span>{!$ObjectType.Product2.fields.Street_Date__c.Label}</span>
+                        <button class="slds-button slds-button--icon-bare slds-button--icon-border-small">
+                          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                            <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#arrow' + (search.sortByField=='Product2.Street_Date__c' && search.sortOrder=='DESC'? 'down' : 'up') }}"></use>
+                          </svg>
+                          <span class="slds-assistive-text">Sort</span>
+                        </button>   
+                      </th>
+                      <th scope="col">
+                        <span>{{'{!$ObjectType.OpportunityLineItem.fields.ListPrice.Label}'}}</span>
+                      </th>
+                      <th scope="col" id="colHdr_estimatedStock" ng-if="appConfig.isGerman">
+                        <span>Estimated Stock</span>
+                      </th>
+                      <th scope="col" id="colHdr_lastPromotedPrice" ng-if="appConfig.isGerman && showDetail">
+                        <span>Last Promoted Price</span>
+                      </th>
+                       <th scope="col" id="colHdr_threeMonthOrderHistory" ng-if="appConfig.isGerman && showDetail">
+                        <span>3 Month Order History</span>
+                      </th>
+                      <th scope="col" ng-hide="{{appConfig.searchOnlyPage}}">
+                        <span>{!$Label.CRM_Label_Action}</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="slds-hint-parent" ng-repeat="current in products">
+                      <td class="slds-row-select" ng-hide="{{appConfig.searchOnlyPage}}">
+                        <label class="slds-checkbox" for="select-row-{{$index}}">
+                        <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="current.isSelected" />
+                        <span class="slds-checkbox--faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">select row1</span>
+                        </label>
+                      </td>
+                      <th data-label="{!$ObjectType.Product2.fields.Name.Label}" role="row" >
+                        <span class="slds-icon__container" title="Product Out Of Stock." ng-show="{{current.stockWarning}}">
+                            <svg aria-hidden="true" class="slds-icon slds-icon-text-warning slds-icon--x-small">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#warning'}}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Product Out of stock</span>
+                        </span>
+                        <!-- US#232 start -->
+                        <span class="slds-icon__container" title="Distribution Chain Status NOT IN Initial,Active,On Hold or Plant Status NOT IN Active,Sell Off/Sell Down,Released for 3rd Party." ng-show="{{current.SAPAndPlantStatusWarning}}">
+                            <svg aria-hidden="true" class="slds-icon slds-icon-text-warning slds-icon--x-small">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/utility-sprite/svg/symbols.svg#warning'}}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Distribution Chain Status NOT IN Initial,Active,On Hold or Plant Status NOT IN Active,Sell Off/Sell Down,Released for 3rd Party</span>
+                        </span>
+                        <!-- US#232 end -->
+                        <a href="javascript:void(0)" class="slds-truncate" ng-click="showMoreInfoPopup(current)"  ng-bind-html="current.name"></a>
+                      </th>
+                      <td data-label="{!$ObjectType.Product2.fields.ProductCode.Label}" role="row"><span>{{current.productCode}}</span></td>
+                      <td data-label="{!$ObjectType.Product2.fields.Product_Format__c.Label}"><span>{{current.format}}</span></td>
+                      <!--Start - US#1015:Product language column-->
+                      <td data-label="Language" ng-show="isDigital"><span>{{current.languageCode}}</span></td>
+                      <!--End - US#1015:Product language column-->
+                      <td data-label="{!$ObjectType.Product2.fields.Street_Date__c.Label}"><span>{{current.streetDate | date:'MM/dd/yyyy'}}</span></td>
+                      <td data-label="List Price"><span>{{current.listPrice | currency:''+current.currencyCode+' ':2}}</span></td>
+                      <td data-label="Estimated Stock" ng-if="appConfig.isGerman" ><span>{{current.stockQty| currency:''+current.currencyCode+' ':2}}</span></td>
+                      <td data-label="Last Promoted Price" ng-if="appConfig.isGerman && showDetail"><span>{{current.lastPromotedPrice | currency:''+current.currencyCode+' ':2}}</span></td>
+                      <td data-label="3 Month Order History" ng-if="appConfig.isGerman && showDetail"><span>{{current.threeMonthOrderHistory | currency:''+current.currencyCode+' ':2}}</span></td>
+                      <td data-label="{!$Label.CRM_Label_Action}" ng-hide="{{appConfig.searchOnlyPage}}">
+                        <div class="slds-form-element" style="min-width:120px;">
+                          <button ng-click="current.quantity=1;" ng-hide="current.quantity > 0" class="slds-button slds-button--neutral slds-button--small">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left" style="fill:#008E00">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#new'}}"></use>
+                            </svg>
+                            {!$Label.CRM_Add}
+                          </button>
+                          <button ng-click="current.quantity=0;" ng-show="current.quantity > 0" class="slds-button slds-button--neutral slds-button--small">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--left" style="fill:#960000">
+                              <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#delete'}}"></use>
+                            </svg>
+                            {!$Label.CRM_Remove}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+</script>
+</apex:component>

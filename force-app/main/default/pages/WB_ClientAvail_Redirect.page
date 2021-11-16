@@ -1,0 +1,40 @@
+<apex:page standardController="Client_Avail__c" tabStyle="Client_Avail__c" extensions="WB_ClientAvail_Redirect_Controller"  >
+<html>
+<body>
+    <apex:sectionHeader title="Exception" subtitle="Release Plan exception records"/>
+    <apex:form >     
+        <apex:pageBlock >
+        <!--<apex:pageMessage summary="{!recordCount}" severity="3" />-->
+            <apex:pageBlockSection id="noMatchCommercialSec" title="Client avails will not be generated for the following since no accounts were found:" columns="1" collapsible="false" rendered="{!flagNotZeroReleasePlan}" > 
+                
+                    <apex:pageBlockTable value="{!clientAvailException_list}" var="cavl_lst1">
+          
+                        <apex:column value="{!cavl_lst1.Release_Plan_Number__c}"/>
+                        <apex:column value="{!cavl_lst1.Title__c}" />
+                        <apex:column value="{!cavl_lst1.Account__c}" />
+                        <apex:column value="{!cavl_lst1.Content_Type__c}"/>
+                        <apex:column value="{!cavl_lst1.Country__c}"/>
+                        <apex:column value="{!cavl_lst1.Language__c}"/>
+                        <apex:column value="{!cavl_lst1.Language_Type__c}"/>
+                        <apex:column value="{!cavl_lst1.Channel__c}"/>
+                        <apex:column value="{!cavl_lst1.Format__c}"/>
+                        <apex:column value="{!cavl_lst1.Avail_Start__c}"/>
+                        <apex:column value="{!cavl_lst1.Avail_End__c}"/>
+                        <apex:column value="{!cavl_lst1.Status__c}"/>
+                        <apex:column value="{!cavl_lst1.Reason__c}" headerValue="Reason"/>
+                    
+                    </apex:pageBlockTable>
+                    <apex:commandButton value="OK" style="margin:1em; margin-left:35em; " id="create_button2" action="{!okbutton}"  />        
+            </apex:pageBlockSection> <br></br>
+            
+            <apex:outputPanel id="NoMIsmatchFound" rendered="{!flagZeroReleasePlan}">            
+                <apex:outputText >
+                    <center><b> No Mismatch found between Account and Release Plan selected</b></center>
+                </apex:outputText><br></br>
+                <apex:commandButton value="OK" style="margin:1em; margin-left:35em;" id="create_button2" action="{!okbutton}" />
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</body>
+</html>
+</apex:page>

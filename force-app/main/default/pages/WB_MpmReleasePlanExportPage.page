@@ -1,0 +1,82 @@
+<apex:page StandardController="Title__c" tabStyle="Title__c" recordSetVar="Title__c"  extensions="WB_MpmReleasePlanExport" cache="false" showHeader="false">
+<apex:pageMessages />
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script>
+    jQuery(document).ready(function() {
+        jQuery('.list tbody tr').each(function(){
+            var rtLifeCycle = $(this).find('td:eq(5)').text();
+            if(rtLifeCycle == 'Active No Rights'){
+                jQuery( this ).css('background-color','#A9A9A9');
+                // jQuery( this ).find('a,span').css("color","#F44336");
+            }
+           
+            /*else if(rtLifeCycle == 'Active TBD'){ 
+                jQuery( this ).css('background-color','#EEE13F');
+            }else if(rtLifeCycle == 'Active Current'){
+                jQuery( this ).css('background-color','#ADFF2F');
+            }else if(rtLifeCycle == 'Active Future'){
+                jQuery( this ).css('background-color','#228B22');
+            }*/
+            
+            else if(rtLifeCycle == 'History Expired'){
+                jQuery( this ).css('background-color','#DCDCDC');
+                //jQuery( this ).find('a,span').css("color","#F44336");
+            }
+                
+                else{
+                //No background change. Do Nothing.
+            }
+            
+        });
+    });
+</script>  
+<apex:form >
+    <apex:pageBlock id="pageBlockId" rendered="{!rightsDisplayBlock}" >
+        <apex:pageBlockSection title="List Of Rights" columns="1">
+            <apex:outputpanel id="myPanel" layout="block" >
+                <div align="left" >
+                    <apex:commandbutton value="Export To Excel" action="{!exportToExcel}"/> 
+                    <apex:actionStatus startText="Processing the stuff " stopText=" Done " id="counterStatus" > 
+                        <apex:facet name="start" >Refreshing... <img src="/apexpages/devmode/img/saveStatus.gif" /></apex:facet> 
+                        <apex:facet name="stop"> 
+                            <apex:commandbutton value="Request Refresh" action="{!RequestRefresh}" status="counterStatus" reRender="pageBlockTableId"/>
+                    </apex:facet> 
+            </apex:actionStatus>
+                </div>
+                <div style="overflow:auto;width:86%;">
+                <apex:pageBlockTable value="{!rightsList}" var="rights" width="500PX" rules="rows" border="1" id="pageBlockTableId">
+                    <!--ER-000959 Start: headerValues added along with new field  Record Type-->
+                    <apex:column headerValue="VV/MPM " value="{!rights.VV_MPM__c}" />
+                    <apex:column headerValue="Title/MPM Description" value="{!rights.Title_MPM_Description__c}" />
+                    <apex:column headerValue="Record Type" value="{!rights.RecordType.Name}" />
+                    <!--ER-000959 End--> 
+                    <apex:column value="{!rights.Rights_Group__c}"/> 
+                    <apex:column value="{!rights.Channel__c}"/>
+                    <apex:column value="{!rights.Status__c}" />
+                    <apex:column value="{!rights.RT_Lifecycle__c}" />
+                    <apex:column value="{!rights.Request_Refresh__c}" />
+                    <apex:column value="{!rights.Date_Last_Changed__c}" />
+                    <apex:column value="{!rights.Notes__c}" />
+                    <apex:column value="{!rights.Rights_Start__c}" /> 
+                    <apex:column value="{!rights.Rights_End__c}" />
+                    <apex:column value="{!rights.Rights_Start_2__c}" /> 
+                    <apex:column value="{!rights.Rights_End_2__c}" />
+                    <apex:column value="{!rights.Rights_Start_3__c}" />
+                    <apex:column value="{!rights.Rights_End_3__c}" /> 
+                    <apex:column value="{!rights.Rights_Start_4__c}" /> 
+                    <apex:column value="{!rights.Rights_End_4__c}" />
+                    <apex:column value="{!rights.Rights_Start_5__c}" /> 
+                    <apex:column value="{!rights.Rights_End_5__c}" />
+                    <apex:column title="Rights Name" headerValue="Rights">
+                    <apex:outputLink value="/{!rights.id}">{!rights.name}</apex:outputLink>
+                    </apex:column>           
+                    
+                </apex:pageBlockTable>
+              </div>      
+            </apex:outputPanel> 
+              
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    
+</apex:form>
+</apex:page>

@@ -1,0 +1,7 @@
+<apex:page standardController="Opportunity">
+  <apex:form >
+     
+        <apex:outputText style="color:red;width:100%;font-size: large;font-weight: 700;display: flex;justify-content: center;" value="{!$Label.CRM_POS_DFI_Pricing_Date_Mismatch_Warning_Msg}" />
+    
+   </apex:form>
+</apex:page>

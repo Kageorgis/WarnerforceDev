@@ -1,0 +1,49 @@
+<apex:page controller="WBCP_SendEmailController">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <apex:includeLightning />
+        <apex:slds />
+            <style>
+            .hideSpinner{
+                display:none;
+            }
+    </style>
+    <script type = "text/javascript">
+        function pageLoad(){
+        $Lightning.use("c:WBCP_SendMassEmailApp", function() {
+            $Lightning.createComponent(
+                "c:WBCP_SendMassEmail",
+                {
+                    "aura:id":"massEmail",
+                    "showModal":'true',
+                    "mapContactEmailId":'{!JSENCODE(mapContactEmailId)}',
+                    "listViewId":'{!JSENCODE(listViewId)}',
+                },
+                "addProdModal",
+                function(newButton, status, errorMessage) {
+                    $("#spinnerDiv").addClass("hideSpinner");
+                }
+            );
+        });  
+    }     
+    window.onload = pageLoad; 
+    </script>
+</head>
+<body>
+    <div class="slds">
+        <!-- ===========================Add Product Modal================================= -->
+        <div id="addProdModal"></div>
+        <!-- ===========================Spinner================================= -->   
+        <div role="status" id="spinnerDiv" class="slds-spinner slds-spinner_large slds-spinner_brand">
+            <span class="slds-assistive-text">Loading...</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        <!-- ===========================Spinner================================= -->  
+    </div>
+</body>
+</html>
+</apex:page>

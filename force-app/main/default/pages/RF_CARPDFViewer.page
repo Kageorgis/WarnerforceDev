@@ -1,0 +1,134 @@
+<apex:page readOnly="true" standardController="CAR__c" applyHtmlTag="false" sidebar="false" showHeader="false" cache="true"  renderAs="advanced_pdf">    
+    <html>
+        <head>
+            <style>
+                 @page {
+        			size:A4 portrait;
+        			border: 1px solid black;    
+   				 }
+                table {
+                border-collapse: collapse;
+                border: 1px solid black;
+                } 
+                
+                th,td {
+                border: 1px solid black;
+                }
+                
+                table.a {
+                table-layout: auto;
+                width: 100%;  
+                }
+                table.fixed{
+               
+                table-layout:fixed;
+                border-spacing: 0px;
+                margin-left:auto;
+                margin-right:auto;
+                }
+                table.fixed td{
+                word-wrap: break-all;
+                word-wrap: break-word;
+                }
+                table.fixed span{
+               	word-wrap-break-all;
+                word-wrap:break-word;
+                word-overflow-x:auto;
+                }
+            </style>
+        </head>
+       <center>    
+        <h2>Car Details </h2>
+    </center> 
+       
+    <table border="1" width="100%" >    
+        <tr>    
+            <td width="50%"><apex:outputpanel layout="block"> <b>First Name:</b> &nbsp; &nbsp; {!car__c.name}</apex:outputpanel></td>    
+            <td width="50%"><apex:outputpanel layout="block"><b>Account ID:</b> &nbsp; &nbsp; {!car__c.Account__r.name}</apex:outputpanel></td> 
+        </tr>    
+       <tr>
+         <td><apex:outputpanel layout="block"><b>CAR ID:</b> &nbsp; &nbsp; {!car__c.CAR_ID__c}</apex:outputpanel></td>    
+         <td><apex:outputpanel layout="block"> <b>Requesting Group:</b> &nbsp; &nbsp; {!car__c.Requesting_Group__c}</apex:outputpanel></td>
+        </tr>
+         <tr>
+         <td><apex:outputpanel layout="block"> <b>Country:</b> &nbsp; &nbsp; {!car__c.Country__r.name}</apex:outputpanel></td>    
+         <td><apex:outputpanel layout="block"> <b>Status:</b> &nbsp; &nbsp; {!car__c.Status__c}</apex:outputpanel></td>
+        </tr>
+         <tr>
+         <td><apex:outputpanel layout="block"> <b>Language:</b> &nbsp; &nbsp; {!car__c.Language__r.Name}</apex:outputpanel></td>    
+         <td><apex:outputpanel layout="block"> <b>Reason:</b> &nbsp; &nbsp; {!car__c.Reason__c}</apex:outputpanel></td>
+        </tr>
+        <tr>
+         <td><apex:outputpanel layout="block"> <b>RF Studio:</b> &nbsp; &nbsp; {!car__c.RF_Studios__c}</apex:outputpanel></td>    
+         <td><apex:outputpanel layout="block"> 
+             <b>Due Date:</b> &nbsp; &nbsp; <apex:outputText value="{0, date, MM/dd/yyyy}">
+                   								 <apex:param value="{!CAR__c.Due_Date__c}" /> 
+                							</apex:outputText>
+             </apex:outputpanel></td>
+        </tr>
+          <tr>
+         <td><apex:outputpanel layout="block"><b>MPM:</b> &nbsp; &nbsp; {!car__c.MPM__r.Name}</apex:outputpanel></td>    
+         <td> <apex:outputpanel layout="block"> <b>Pitch Request:</b> &nbsp; &nbsp; {!car__c.Pitch_Request__c}</apex:outputpanel></td>
+        </tr>
+         <tr>
+         <td><apex:outputpanel layout="block"><b>Brand Group:</b> &nbsp; &nbsp; {!car__c.Brand_Group__c}</apex:outputpanel></td>    
+         <td> <apex:outputpanel layout="block"><b>Distributor:</b> &nbsp; &nbsp; {!car__c.RF_Studios__c}</apex:outputpanel></td>
+        </tr>  
+    </table> 
+     <center>    
+         <h4>Notes</h4>
+    </center> 
+     <table border="1" width="100%">    
+        <tr>    
+            <td width="50%"><apex:outputpanel layout="block"> <b>Notes: </b>&nbsp; &nbsp; {!car__c.Notes__c}</apex:outputpanel></td>    
+        </tr> 
+      </table>
+      <center>    
+          <h4>Timeline</h4>
+    </center> 
+     <table border="1" width="100%">    
+        <tr>    
+            <td width="50%"><apex:outputpanel layout="block"><b>First Review Date:</b> &nbsp; &nbsp; 
+                <apex:outputText value="{0, date, MM/dd/yyyy}"> <apex:param value="{!CAR__c.First_Review_Date__c}" /> </apex:outputText></apex:outputpanel></td>    
+            <td width="50%"><apex:outputpanel layout="block"> <b>Actual Start Date:</b> &nbsp; &nbsp; 
+                <apex:outputText value="{0, date, MM/dd/yyyy}"> <apex:param value="{!CAR__c.Actual_Start_Date__c}" /> </apex:outputText></apex:outputpanel></td>    
+         </tr>
+         <tr>
+            <td width="50%"><apex:outputpanel layout="block"><b>Flight Date:</b> &nbsp; &nbsp; 
+                <apex:outputText value="{0, date, MM/dd/yyyy}"> <apex:param value="{!CAR__c.Flight_Date__c}" /> </apex:outputText></apex:outputpanel></td>    
+            <td width="50%"><apex:outputpanel layout="block"><b>Approval Date:</b> &nbsp; &nbsp; 
+                <apex:outputText value="{0, date, MM/dd/yyyy}"> <apex:param value="{!CAR__c.Approval_Date__c}" /> </apex:outputText>
+				</apex:outputpanel></td>    
+         </tr> 
+      </table>
+      <center>    
+          <h4>Creative Details</h4>
+    </center>
+        <table border="1" width="100%" class="fixed">
+         <col width="150px" />
+   		<col width="150px" />
+       <tr> 
+           <td ><apex:outputpanel layout="block"><b>Suppress Integration:</b> &nbsp; &nbsp; {!car__c.Suppress_Integration__c}</apex:outputpanel></td>    
+         <td ><apex:outputpanel layout="block"> <b>Creative Owner:</b> &nbsp; &nbsp; {!car__c.Creative_Owner__c	}</apex:outputpanel></td>    
+            </tr>
+         <tr>
+            <td><apex:outputpanel layout="block"><b>File Specifications:</b>&nbsp; &nbsp; {!car__c.File_Specifications__c}</apex:outputpanel></td>              
+         	<td><apex:outputpanel layout="block"> <b>Project Overview:</b> &nbsp; &nbsp; {!car__c.Project_Overview__c}</apex:outputpanel></td>    
+            </tr> 
+         
+      </table> 
+       
+<table style="width:100%">
+  <tr>
+   <td><apex:outputpanel layout="block"> <b>Delivery Instructions:</b> &nbsp; &nbsp; {!car__c.Delivery_Instructions__c}</apex:outputpanel></td> 
+  </tr>
+  <tr>
+      <td><apex:outputpanel layout="block"> <b>Creative Direction</b>: &nbsp; &nbsp; {!car__c.Creative_Direction__c}</apex:outputpanel></td> 
+  </tr>
+    <tr>
+    <td><apex:outputpanel layout="block"> <b>Working Link:</b> &nbsp; &nbsp; {!car__c.Working_Link__c}</apex:outputpanel></td>    
+
+    </tr>
+</table>
+    </html>
+</apex:page>

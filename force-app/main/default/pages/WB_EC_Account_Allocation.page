@@ -1,0 +1,145 @@
+<apex:page standardController="EC_Account_Allocation__c" recordSetVar="ECAllocation" extensions="WB_ECAccountAllocation"> 
+     <style>
+         .custompicklist{
+            position: relative;
+            left: 274px;
+            bottom: 41px;
+            font-size: 12px;
+         }
+         .customButton{
+            position: absolute;
+            top: 19%;
+            left: 76%;
+         }
+     </style>
+ 
+ <!-- added by Shubham ER- 001633 -->
+ <apex:outputPanel id="thePanelId">
+    <script type="text/javascript">
+        function saveFuntionOfJS(){
+            var mpmID = "{!MPMId}";
+            var errorCount = {!errorCount};
+            if(errorCount == 0 && mpmID) {
+                var URLrn = '/lightning/r/MPM__c/'+mpmID+'/view?fr=1';                            
+                window.open('{!$Label.WB_BaseURL}'+URLrn,'_parent');   
+            }else if(errorCount != 0){
+                location.reload(); 
+            }
+        }
+    </script>
+ </apex:outputPanel>
+    <apex:form id="theForm" > 
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageBlock id="pageBlock"> 
+            <apex:pageblockButtons >
+                <apex:commandButton value="Cancel" title="Cancel" Action="{!Cancel}"/> 
+            </apex:pageblockButtons>
+            
+            <apex:pageblockSection title="Allocate Digital Clients to EC" columns="2" id="pageBlockSec">
+                <apex:pageBlockSectionItem id="pSectionItem1"> 
+                    
+                    <apex:outputLabel style="padding-left:120px" value="Video Version" for="vvs">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <apex:selectList id="vvs" value="{!SelectedVV}" size="1" title="Video Version">
+                            <apex:selectOptions value="{!vvs}">
+                            </apex:selectOptions>
+                        </apex:selectList> 
+                    </apex:outputLabel>
+                    <!-- added by shalini ER-000252 -->
+               
+                    <apex:outputLabel value="Override" for="overrideChkBoxId">
+                        <apex:inputCheckbox label="Override" value="{!isOverride}" id="overrideChkBoxId"  />
+                        <apex:inputField value="{!videoversionlookup.Title__c}" required="false"></apex:inputField>
+                    </apex:outputLabel>
+                </apex:pageBlockSectionItem>
+                <br/>
+                
+                <apex:pageBlockSectionItem id="pSectionItem2" rendered="{!IF(ISNULL(ECPieceId) , true , false)}" >
+                    <apex:panelGrid columns="3" id="abcd">
+                        <apex:selectList id="sel1" value="{!leftselected}" multiselect="true" style="width:250px" size="{!dgSize}">
+                            <apex:selectOptions value="{!unselectedvalues}" />
+                        </apex:selectList>
+                    
+                        <apex:panelGroup >
+                            <br/>
+                            <apex:image value="{!$Resource.multiselected}">
+                                <apex:actionSupport event="onclick" action="{!selectclick}" reRender="abcd"/>
+                            </apex:image>
+                            <br/><br/>
+                            <apex:image value="{!$Resource.multiunselected}" >
+                               <apex:actionSupport event="onclick" action="{!unselectclick}" reRender="abcd"/>
+                            </apex:image>
+                        </apex:panelGroup>
+                            
+                        <apex:selectList id="sel2" value="{!rightselected}" multiselect="true" style="width:250px" size="{!dgSize}">
+                            <apex:selectOptions value="{!SelectedValues}" />
+                        </apex:selectList>
+                    </apex:panelGrid>
+                </apex:pageBlockSectionItem>
+            
+                <apex:pageBlockSectionItem >
+                    <apex:panelGrid columns="3" style="position:relative;right:62px;font-size:12px;" rendered="{!IF(ISNULL(ECPieceId) , true , false)}" >
+                        <apex:outputLabel value=" "/>
+                        <apex:commandButton value="Allocate" title="Allocate" Action="{!Allocate}" /> 
+                        <br/>
+                        <br/> 
+                        <apex:panelGrid columns="2" >
+                            <apex:outputLabel styleClass="labelCol vfLabelColTextWrap  first" value="Business Unit"/>
+                            <apex:selectList id="BU" value="{!SelectedBU}" size="1" title="Business Unit">
+                                <apex:selectOptions value="{!BusinessUnit}"/>
+                            </apex:selectList>
+                        </apex:panelGrid>
+                        <apex:commandButton value="Automate Allocation" action="{!Redirect}"/>
+                    </apex:panelGrid>
+                    <!--added for ER-658-->
+                    <apex:outputPanel id="grup1" styleclass="custompicklist"  rendered="{!IF(ISNULL(ECPieceId) , false , true)}">
+                           <apex:outputLabel styleClass="labelCol" value="Business Unit"/>
+                            <apex:selectList id="BU1" value="{!SelectedBU}" size="1" title="Business Unit">
+                                <apex:selectOptions value="{!BusinessUnit}"/>
+                            </apex:selectList>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <apex:commandButton value="Automate Allocation" action="{!Redirect}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <!--<apex:pageBlockSectionItem id="pSectionItem3">
+                    
+                    <!--<apex:panelGrid columns="3" id="theGrid2">
+                            <apex:outputLabel styleClass="labelCol vfLabelColTextWrap  first" value="Business Unit"/>
+                            <apex:selectList id="BU" value="{!SelectedBU}" size="1" title="Business Unit">
+                                <apex:selectOptions value="{!BusinessUnit}"/>
+                            </apex:selectList>
+                            <apex:commandButton value="Automate Allocation" action="{!Redirect}"/>
+                    </apex:panelGrid> 
+               </apex:pageBlockSectionItem>-->
+            </apex:pageblockSection>
+        </apex:pageBlock>
+    
+        <apex:pageBlock rendered="{!IF(ISNULL(ECPieceId) , true , false)}">
+        <apex:pageBlockButtons >
+            <apex:commandButton value="Save" action="{!Saves}" rendered="{!$User.UIThemeDisplayed == 'Theme3'}"/> 
+            <apex:commandButton action="{!Saves}" oncomplete="saveFuntionOfJS();" value="Save" rendered="{!$User.UIThemeDisplayed == 'Theme4d'}" reRender="thePanelId"/>
+            <apex:commandButton value="Cancel" action="{!Cancel}"/> 
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockTable value="{!EcpieceList}" var="ec" id="table">
+            <apex:column ><apex:facet name="header">MPM:{!mpmNames}</apex:facet>{!ec.Name}<br />{!ec.EC_Name__c}</apex:column>
+            
+            <apex:repeat value="{!DisplayAcctfmt2}" var="afmt">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            {!afmt.Acctfmt} <br/> {!ec.Id}
+                            <apex:inputCheckbox />
+                            <apex:actionSupport event="onclick" action="{!updateAll}" rerender="table" >
+                                <apex:param name="q" value="{!afmt.Acctfmt}"/>
+                           </apex:actionSupport>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    
+                    <apex:repeat value="{!DigitalAllocation}" var="dig" id="rpt">
+                         <apex:inputCheckbox value="{!dig.checkedbox__c}" rendered="{!AND(ec.Id = dig.EC_Piece__c,dig.Format__c = afmt.Format,dig.Account__c = afmt.AcctId)}" />
+                    </apex:repeat>
+               </apex:column>
+           </apex:repeat>
+        </apex:pageBlockTable> 
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

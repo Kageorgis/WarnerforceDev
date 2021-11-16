@@ -1,0 +1,49 @@
+<apex:page standardController="Local_Title__c" extensions="WB_Pricing_Lookup_Controller" >
+<html>
+
+<body>
+    <apex:sectionHeader title="Pricing Table" />
+    <apex:form id="form1">
+    <apex:pageBlock id="priceblock" >
+    <apex:pageBlockSection id="priceblocksec" title="List of Pricing" columns="3" collapsible="false">
+    <apex:pageBlockTable value="{!sortedPricingName}" var="list_pricing"> 
+ 
+     <apex:column headervalue="Select" rendered="{!if(list_pricing=flag, true, false)}">                    
+         <apex:actionsupport action="{!selectcon}" event="onclick" rerender="allcons" >
+          
+             <input type="radio" name="<strong>selectRadio</strong>"  id="selPriceCode" checked='true'/>                    
+                     <apex:param name="conid" value="{!list_pricing}" id="RadioButtonValue1">
+                     </apex:param>
+                    
+          </apex:actionsupport>                            
+       </apex:column> 
+       <apex:column headervalue="Select" rendered="{!if(list_pricing !=flag, true, false)}" >                    
+         <apex:actionsupport action="{!selectcon}" event="onclick" rerender="allcons" >
+          
+             <input type="radio" name="<strong>selectRadio</strong>"  id="selPriceCode" />                    
+                     <apex:param name="conid" value="{!list_pricing}" id="RadioButtonValue2">
+                     </apex:param>
+                     
+          </apex:actionsupport>                            
+       </apex:column>  
+ 
+    
+    <apex:column value="{!list_pricing}" headerValue="Price Code"/> 
+
+    </apex:pageBlockTable>
+    
+    </apex:pageBlockSection>
+    <apex:commandButton value="Update" action="{!addCountry}" />
+     <apex:commandButton value="Cancel" action="{!addCountryCancel}" />
+    </apex:pageBlock> 
+
+    <font color="blue">
+    <Apex:outputText style="font-style:italic">Please contact WB Technology Solutions (WBTS) at <u><b><apex:outputlink value="mailto:WHESalesforceSupport@warnerbros.com">WHESalesforceSupport@warnerbros.com</apex:outputLink></b></u> if you would like to add any price codes that are not shown above.</Apex:outputText>
+    </font>
+          
+    </apex:form>
+    
+    
+</body>
+</html>
+</apex:page>

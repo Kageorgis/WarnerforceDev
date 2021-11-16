@@ -1,0 +1,325 @@
+<aura:component description="cp_accountRecordDetail" implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes,force:hasRecordId,force:hasSObjectName,force:lightningQuickAction,lightning:isUrlAddressable,lightning:actionOverride,lightning:hasPageReference" controller="cp_accountRecordDetailController" access="global">
+    <aura:attribute name="disabled" type="Boolean" default="false" />
+    <aura:attribute name="layoutSections" type="List" />
+    <aura:attribute name="saved" type="Boolean" default="false" />
+    <aura:attribute name="showSpinner" type="Boolean" default="true" />
+    <aura:attribute name="fieldName" type="String" default="Name" />
+    <aura:attribute name="recordTypeId" type="Id" />
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="isOpen" type="Boolean" default="false" />
+    <aura:attribute name="selectedLookUpRecords" type="sObject[]" default="[]"/>
+    <aura:attribute name="selectedAccountRecords" type="sObject[]" default="[]"/>
+    <aura:attribute name="isRetailer" type="Boolean" default="false" />
+    <aura:attribute name="options" type="List" default="[]"/>
+    <aura:attribute name="values" type="List" default="[]"/>
+    <aura:attribute name="suboptions" type="List" default="[]"/>
+    <aura:attribute name="subvalues" type="List" default="[]"/>
+    <aura:attribute name="relProps" type="List" default="[]"/>
+    <aura:attribute name="relRets" type="List" default="[]"/>
+    <aura:handler event="c:cp_accountCreateSuccesEvent" action="{!c.handleApplicationEvent}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="reRender" type="Boolean" default="true" />
+    <aura:attribute name="accountRecord" type="Object"/>
+    <aura:attribute name="recordLoadError" type="String"/>
+    <aura:registerEvent name="oSelectedRecordEvent" type="c:cp_selectedObjectRecordsEvent"/>
+
+    <force:recordData aura:id="recordLoader"
+                      recordId="{!v.recordId}"
+                      fields="Name,cp_Category_Licensee__c,cp_Sub_Category__c,Sub_Category__c, Category_Licensee__c"
+                      targetFields="{!v.accountRecord}"
+                      targetError="{!v.recordLoadError}"
+    />
+    <lightning:layout multipleRows="true">
+        <lightning:layoutItem size="9" class="slds-p-right--small">
+    <lightning:card title="Enter Account Info">
+        <aura:if isTrue="{!v.showSpinner}">
+            <lightning:spinner />
+        </aura:if>
+        <aura:if isTrue="{!!v.saved}">
+            <div class="slds-card__body slds-p-around--large">
+
+                <lightning:recordEditForm aura:id="productEditingForm"
+                                          onload="{!c.handleLoad}"
+                                          onsubmit="{!c.handleSubmit}"
+                                          onsuccess="{!c.handleSuccess}"
+                                          recordId="{!v.recordId}"
+                                          objectApiName="Account">
+                    <!-- the messages component is for error messages -->
+                    <lightning:messages />
+
+                    <aura:iteration items="{!v.layoutSections}" var="section">
+                        <div class="slds-section slds-is-open">
+                            <h3 class="slds-section__title">
+                                <aura:if isTrue="{!section.label != 'Custom Links'}">
+                                    {!section.label}
+                                </aura:if>
+
+                            </h3>
+                            <div class="slds-section__content">
+                                <lightning:layout multipleRows="{!section.totalColumns > 1 }">
+
+                                    <aura:iteration items="{!section.lstFields}" var="field">
+
+                                        <lightning:layoutItem size="{! 12/section.totalColumns }" flexibility="auto" padding="around-xsmall">
+                                            <!-- Pre-populate the title field -->
+
+
+                                            <aura:if isTrue="{!field.fieldName == 'Name'}">
+                                                <lightning:inputField fieldName="Name" />
+
+                                                <aura:set attribute="else">
+
+
+                                                    <aura:if isTrue="{!field.isRequired}">
+                                                        <lightning:inputField fieldName="{!field.fieldName}" required="true"/>
+                                                        <aura:set attribute="else">
+                                                            <aura:if isTrue="{!field.isReadOnly}">
+
+                                                                <lightning:inputField fieldName="{!field.fieldName}" disabled="true"/>
+
+                                                                <aura:set attribute="else">
+                                                                    <aura:if isTrue="{!field.fieldName == 'ParentId'}">
+                                                                                    <lightning:inputField fieldName="{!field.fieldName}" disabled="true" />
+                                                                        <aura:set attribute="else">
+                                                                            <aura:if isTrue="{!field.fieldName == 'cp_Category_Licensee__c' || field.fieldName == 'cp_Sub_Category__c' || field.fieldName == 'LOB__c' }">
+
+                                                                                <aura:set attribute="else">
+                                                                                    <lightning:inputField fieldName="{!field.fieldName}" />
+
+                                                                                </aura:set>
+
+                                                                            </aura:if>
+
+
+                                                                        </aura:set>
+                                                                    </aura:if>
+
+                                                                </aura:set>
+                                                            </aura:if>
+
+                                                        </aura:set>
+                                                    </aura:if>
+
+                                                </aura:set>
+
+                                            </aura:if>
+
+
+
+
+                                        </lightning:layoutItem>
+
+                                    </aura:iteration>
+
+                                </lightning:layout>
+                            </div>
+                        </div>
+                    </aura:iteration>
+                    <aura:if isTrue="{!v.isRetailer}">
+                        <aura:set attribute="else">
+                            <lightning:layout aura:id="CatFields">
+                                <lightning:layoutItem size="6">
+                                    <lightning:layout multipleRows="true" >
+                                        <aura:if isTrue="{!v.reRender}">
+                                            <lightning:dualListbox name="CategoryField"
+                                                                   label= "Categories (NAM)"
+                                                                   sourceLabel="Available"
+                                                                   selectedLabel="Selected"
+                                                                   options="{!v.options}"
+                                                                   value="{!v.values}"
+                                                                   onchange="{! c.handleChange }"
+                                                                   disabled="true"
+                                            />
+                                        </aura:if>
+                                    </lightning:layout>
+
+                                </lightning:layoutItem>
+                                <lightning:layoutItem size="6">
+                                    <lightning:dualListbox name="SubCategoryField"
+                                                           label= "Sub Categories (NAM)"
+                                                           sourceLabel="Available"
+                                                           selectedLabel="Selected"
+                                                           options="{!v.suboptions}"
+                                                           value="{!v.subvalues}"
+                                                           onchange="{! c.handleSubCatChange }"
+                                    />
+
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                        </aura:set>
+                    </aura:if>
+
+                    <lightning:layout verticalAlign="center" class="x-large">
+                        <lightning:layoutItem padding="around-large">
+                            <div class="slds-m-top_medium slds-text-align--center">
+                                <lightning:button disabled="{!v.disabled}" variant="neutral" name="cancel" label="cancel" onclick="{!c.goBackToRecord}" />
+                                <lightning:button disabled="{!v.disabled}" variant="brand" type="submit" name="save" label="Save" />
+                            </div>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </lightning:recordEditForm>
+                <aura:set attribute="else">
+                    <p>Saved!</p>
+                </aura:set>
+            </div>
+        </aura:if>
+    </lightning:card>
+        </lightning:layoutItem>
+        <aura:if isTrue="{!v.isRetailer}">
+
+        <aura:set attribute="else">
+
+            <lightning:layoutItem size="3">
+
+                <aura:if isTrue="{!v.recordId}">
+                    <lightning:card >
+                        <aura:set attribute="title">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__figure">
+                                    <lightning:icon iconName="standard:proposition" />
+                                </div>
+                                <div class="slds-media__body">
+                                    <h2 class="slds-card__header-title ">
+                                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Account Create?Edit">
+                                            <span>Related Properties</span>
+                                        </a>
+                                    </h2>
+                                </div>
+
+                            </header>
+                        </aura:set>
+                        <div class="slds-card__body slds-p-right--small slds-p-left--small slds-p-top--small slds-border--top">
+
+                            <ul style="min-height:40px;margin-top:0px !important" class="slds-listbox slds-listbox_vertical slds" role="listbox">
+                                <aura:iteration items="{!v.relProps}" var="prop">
+                                    <li role="presentation" class="slds-listbox__item" onclick="{!c.selectRecord}">
+        <span id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+
+            <span class="slds-media__body">
+
+                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!prop.Property__r.Name}</span>
+
+            </span>
+        </span>
+                                    </li>
+
+                                </aura:iteration>
+                            </ul>
+
+
+                        </div>
+                        <aura:set attribute="footer">
+                            <c:cp_addProperties objectAPIName="Property__c"
+                                                IconName="standard:proposition"
+                                                lstSelectedRecords="{!v.selectedLookUpRecords}"
+                                                relProps="{!v.relProps}"
+                                                label="Add a Property"/>
+                        </aura:set>
+                    </lightning:card>
+                    <lightning:card >
+                        <aura:set attribute="title">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__figure">
+                                    <lightning:icon iconName="standard:proposition" />
+                                </div>
+                                <div class="slds-media__body">
+                                    <h2 class="slds-card__header-title ">
+                                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Account Create?Edit">
+                                            <span>Related Retailers</span>
+                                        </a>
+                                    </h2>
+                                </div>
+
+                            </header>
+                        </aura:set>
+                        <div class="slds-card__body slds-p-right--small slds-p-left--small slds-p-top--small slds-border--top">
+
+                            <ul style="min-height:40px;margin-top:0px !important" class="slds-listbox slds-listbox_vertical slds" role="listbox">
+                                <aura:iteration items="{!v.relRets}" var="retl">
+                                    <li role="presentation" class="slds-listbox__item" onclick="{!c.selectRecord}">
+        <span id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+
+            <span class="slds-media__body">
+
+                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!retl.Name}</span>
+
+            </span>
+        </span>
+                                    </li>
+
+                                </aura:iteration>
+                            </ul>
+
+
+                        </div>
+                        <aura:set attribute="footer">
+                            <c:cp_addRetailers objectAPIName="Account"
+                                               IconName="standard:account"
+                                               lstSelectedRecords="{!v.selectedAccountRecords}"
+                                               relRets="{!v.relRets}"
+                                               label="Search for a Retailer"/>
+                        </aura:set>
+                    </lightning:card>
+                    <aura:set attribute="else">
+
+                        <lightning:card >
+                            <aura:set attribute="title">
+                                <header class="slds-media slds-media_center slds-has-flexi-truncate slds-bord">
+                                    <div class="slds-media__figure">
+                                        <lightning:icon iconName="standard:account" />
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <h2 class="slds-card__header-title">
+                                            <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Account Create?Edit">
+                                                <span>Add Properties</span>
+                                            </a>
+                                        </h2>
+                                    </div>
+
+                                </header>
+                            </aura:set>
+                            <div class="slds-card__body slds-p-right--small slds-p-left--small">
+                                <c:cp_addProperties objectAPIName="Property__c"
+                                                    IconName="standard:proposition"
+                                                    lstSelectedRecords="{!v.selectedLookUpRecords}"
+                                                    relProps="{!v.relProps}"
+                                                    label="Search for a Property"/>
+                            </div>
+                        </lightning:card>
+                        <lightning:card >
+                            <aura:set attribute="title">
+                                <header class="slds-media slds-media_center slds-has-flexi-truncate slds-bord">
+                                    <div class="slds-media__figure">
+                                        <lightning:icon iconName="standard:account" />
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <h2 class="slds-card__header-title">
+                                            <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Account Create?Edit">
+                                                <span>Add Retailers</span>
+                                            </a>
+                                        </h2>
+                                    </div>
+
+                                </header>
+                            </aura:set>
+                            <div class="slds-card__body slds-p-right--small slds-p-left--small">
+                                <c:cp_addRetailers objectAPIName="Account"
+                                                   IconName="standard:account"
+                                                   lstSelectedRecords="{!v.selectedAccountRecords}"
+                                                   label="Search for a Retailer"/>
+                            </div>
+                        </lightning:card>
+                    </aura:set>
+                </aura:if>
+
+            </lightning:layoutItem>
+
+        </aura:set>
+
+        </aura:if>
+
+        <lightning:layoutItem size="12">
+            <c:cp_recordTypeModal isOpen="{!v.isOpen}"/>
+        </lightning:layoutItem>
+    </lightning:layout>
+</aura:component>

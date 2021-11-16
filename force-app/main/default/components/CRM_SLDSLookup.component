@@ -1,0 +1,45 @@
+<apex:component >
+    <script type="text/ng-template" id="slds-lookup.html">
+        <div class="slds-lookup" ng-class="{'slds-has-selection': recordId}" data-select="single" data-scope="single" data-typeahead="false">
+        <div class="slds-input-has-icon slds-input-has-icon--right">
+          <svg aria-hidden="true" class="slds-input__icon">
+            <use xlink:href="{{sldsResourceLoc+'/assets/icons/utility-sprite/svg/symbols.svg#edit'}}"></use>
+          </svg>
+          <div class="slds-pill__container slds-hide" ng-class="{'slds-show':recordId}">
+            <a href="javascript:void(0)" class="slds-pill">
+              <svg aria-hidden="true" class="slds-icon slds-icon-standard-{{objectIcon | lowercase}} slds-pill__icon" ng-show="objectIcon">
+                <use xlink:href="{{sldsResourceLoc+'/assets/icons/standard-sprite/svg/symbols.svg#'+objectIcon}}"></use>
+              </svg>
+              <span class="slds-pill__label" title="{{recordName}}">{{recordName}}</span>
+              <button class="slds-button slds-button--icon-bare slds-pill__remove" ng-click="clearLookup()">
+                <svg aria-hidden="true" class="slds-button__icon">
+                  <use xlink:href="{{sldsResourceLoc+'/assets/icons/utility-sprite/svg/symbols.svg#close'}}"></use>
+                </svg>
+                <span class="slds-assistive-text">Remove</span>
+              </button>
+            </a>
+          </div>
+          <input id="lookup" ng-show="!placeHolder" ng-model="searchStr" ng-change="fetchRecords()" placeholder="{!$Label.CRM_Type_to_Search}" class="slds-input" ng-focus="showList=true" ng-class="{'slds-hide':recordId}" type="text" aria-autocomplete="list" role="combobox" aria-expanded="false" aria-activedescendant="" />
+          <input id="lookup" ng-show="placeHolder" ng-model="searchStr" ng-change="fetchRecords()" placeholder="{{placeHolder}}" class="slds-input" ng-focus="showList=true" ng-class="{'slds-hide':recordId}" type="text" aria-autocomplete="list" role="combobox" aria-expanded="false" aria-activedescendant="" />
+        </div>
+      
+      <div class="slds-lookup__menu slds-hide" role="listbox" ng-class="{'slds-show':showList && matchingRecords.length > 0}">
+        <ul class="slds-lookup__list" role="presentation">
+          <li class="slds-lookup__item" ng-repeat="rec in matchingRecords">
+            <a id="{{rec.SObjectId}}" href="javascript:void(0)" ng-click="setLookupRecord(rec)" role="option">
+              <div class="slds-grid">
+                <svg aria-hidden="true" class="slds-icon slds-icon-standard-{{objectIcon | lowercase}} slds-icon--small" ng-show="objectIcon">
+                  <use xlink:href="{{sldsResourceLoc+'/assets/icons/standard-sprite/svg/symbols.svg#'+objectIcon}}"></use>
+                </svg>
+                <div>
+                <span>{{rec.SObjectLabel}}</span>
+                <span style="font-size:75%;display:block" ng-show="rec.SObjectLabel2">{{rec.SObjectLabel2}}</span>
+                </div>
+              </div>
+            </a>
+          </li>
+        </ul> 
+      </div>
+    </div>
+    </script>
+</apex:component>

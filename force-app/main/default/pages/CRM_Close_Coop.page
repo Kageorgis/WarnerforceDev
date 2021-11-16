@@ -1,0 +1,193 @@
+<apex:page standardController="Opportunity" recordSetVar="deal" extensions="CRM_EditOpportunityController" 
+           applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+    <html
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+        </head>
+        <script type="text/javascript">
+        angular.module('CloseCoopApp', [])
+        .controller('CloseCoopCtrl', function($scope) {
+            $scope.invokedFromList = ('{!ISNULL(deal)}' == 'true' ? true : false);
+            $scope.failedDealRecords;
+            $scope.showSpinner = false;
+            $scope.spinnerText;
+            $scope.msgText;
+            $scope.msgSeverity;
+            
+            $scope.backToDeal = function(){
+                /*if($scope.invokedFromList) {
+                    window.location.href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}";
+                }
+                else {
+                    window.location.href="/{!deal.Id}";
+                }
+                window.open('/lightning/o/Opportunity/list','_parent');*/ 
+                
+                 var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                //console.log('isLightningExperienceOrSf1 ',isLightningExperienceOrSf1);
+                
+                            if (isLightningExperienceOrSf1){
+                               window.history.go(-1);}
+                            else{
+                                   if($scope.invokedFromList) {
+                                       // console.log('($Action.Opportunity.Tab ',$Action.Opportunity.Tab );
+                                       //console.log('$ObjectType.Opportunity ',Opportunity);
+                                                    window.location.href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}";
+                                								}
+                                        else {
+                                            window.location.href="/{!deal.Id}";
+                                        }
+                            }
+                // document.location.href = url;
+            };
+            
+            $scope.closeCoop = function() {
+                $scope.showSpinner = true;
+                var dealIds = [];
+                
+                if ('{!ISNULL(deal)}' != 'true') {
+                    dealIds.push('{!deal.Id}');
+                } else {
+                    <apex:repeat var="opty" value="{!lstDeals}" >
+                        dealIds.push('{!opty.Id}');
+                    </apex:repeat>
+                    
+                    if(dealIds.length == 0) {
+                        $scope.msgText = '{!$Label.CRM_No_Deal_Selected_for_Co_op}';
+                        $scope.msgSeverity = 'error';
+                        $scope.showSpinner = false;
+                        
+                        return false;
+                    }
+                }
+                
+                var totalDeals = dealIds.length;
+                
+                (function closeCoopForDeals(rowsToProcess, failedRecords) {
+                    console.log('rowsToProcess', rowsToProcess.length, 'failedRecords', failedRecords.length);
+                    
+                    if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                        $scope.showSpinner = false;
+                        return;
+                    }
+                    
+                    var chunkSize = 5, // Recursive batch size
+                        chunkedData = rowsToProcess.splice(0, chunkSize);
+                    
+                    CRM_EditOpportunityController.closeCoop(chunkedData, function(result, event) {
+                        
+                        if (!event.status) {
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                        } else if (rowsToProcess.length > 0) {
+                            failedRecords = failedRecords.concat(result);
+                            
+                            // Update progress text for user
+                            $scope.spinnerText = (totalDeals - rowsToProcess.length) + ' / ' + totalDeals;
+                            
+                            closeCoopForDeals(rowsToProcess, failedRecords);
+                        } else {
+                            failedRecords = failedRecords.concat(result);
+                            
+                            $scope.failedDealRecords = failedRecords;
+                            
+                            // Update UI
+                            $scope.spinnerText = '';
+                            $scope.showSpinner = false;
+                            
+                            if(failedRecords.length > 0){
+                                $scope.msgText = '{!$Label.CRM_Deal_Update_Failed_Msg}';
+                                $scope.msgSeverity = 'error';
+                            }
+                            else {
+                                $scope.msgText = '{!$Label.CRM_Deal_Update_Success_Msg}';
+                                $scope.msgSeverity = 'success';
+                            }
+                        }
+                        
+                        $scope.$apply();
+                        
+                    }, {
+                        escape: false,
+                        timeout: 120000,
+                        buffer: false
+                    });
+                })(dealIds, []);
+            };
+        });
+        
+        </script>
+        
+        
+        <body>
+            <div class="slds" xmlns:ng="http://angularjs.org" id="ng-app" ng-init="closeCoop();" ng-app="CloseCoopApp" ng-controller="CloseCoopCtrl" ng-cloak="ngCloak">
+                
+                <div class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <nav class="slds-m-bottom--xx-small" role="navigation">
+                                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                    <li class="slds-list__item slds-text-heading--label">
+                                        <a href="{!URLFOR($Action.Opportunity.Tab, $ObjectType.Opportunity)}">{!$ObjectType.Opportunity.labelPlural}</a>
+                                    </li>
+                                    <li class="slds-list__item slds-text-heading--label" ng-hide="{!ISNULL(deal)}">
+                                        <a href="/{!deal.Id}">{!deal.Name}</a>
+                                    </li>
+                                </ol>
+                            </nav>
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <h1 class="slds-text-heading--medium slds-truncate" title="Close Coop">Close Coop</h1>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-col slds-no-flex slds-align-bottom">
+                            <div class="slds-button-group" role="group">
+                                <button class="slds-button slds-button--neutral" ng-click="backToDeal()" >Back</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slds-size--1-of-1 slds-spinner--small" ng-show="showSpinner">
+                    <div class="slds-text-heading--small">
+                        <img style="height:36px" src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" /> Processing {{spinnerText}} ...
+                    </div>
+                </div>
+                
+                <div ng-hide="showSpinner" class="slds-size--1-of-1 slds-notify slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert" rendered="display">
+                    <div class="notify__content slds-grid">
+                        <svg aria-hidden="true" class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex">
+                            <use xlink:href="{!URLFOR($Resource.SLDS0120)}/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+                        </svg>
+                        <div class="slds-col slds-align-middle">
+                            <h2 class="slds-text-heading--small">{{msgText}}</h2>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slds-grid">
+                    <div ng-show="failedDealRecords.length > 0" class="slds-size--1-of-1">
+                        <table class="slds-table slds-table--bordered">
+                            <tr class="slds-text-heading--label">
+                                <th class="slds-cell-shrink">Deal</th>
+                                <th class="slds-cell-shrink">Error</th>
+                            </tr>
+                            <tr class="slds-hint-parent" ng-repeat="opp in failedDealRecords">
+                                <td class="slds-truncate" data-label="Account Name">
+                                    <a href="/{{opp.id}}">{{opp.name}}</a>
+                                </td>
+                                <td class="slds-truncate" data-label="Account Name">{{opp.error}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </body>
+    </html>
+</apex:page>

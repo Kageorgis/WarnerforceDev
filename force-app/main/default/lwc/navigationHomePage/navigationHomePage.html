@@ -1,0 +1,15 @@
+<template>
+    <div style="width:100%;">  
+    <lightning-card title="Utility"  class="slds-text-title_bold" >
+        
+        <div class="slds-text-body_medium slds-grid slds-wrap">   
+        <template for:each={tabDataInfo} for:item="wrapper" >
+            <div key={wrapper.url} class="slds-dl_horizontal slds-size_1-of-2 slds-col--padded slds-p-vertical_xx-small" style="font-weight:normal;">
+                  <lightning-formatted-url style="padding:10px" value={wrapper.url} label={wrapper.label} tooltip={wrapper.label} target="_blank" ></lightning-formatted-url></div>
+        </template>
+        </div>
+             
+    
+  </lightning-card>
+</div> 
+</template>

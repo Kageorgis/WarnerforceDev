@@ -1,0 +1,543 @@
+<apex:page standardController="Order" extensions="CRM_EditAllRelatedOrdersCtrl" applyHtmlTag="true" applyBodyTag="true" showHeader="false" sidebar="false">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+            
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'css/EditProducts.css')}" /> 
+            
+            <script>
+                window.$Label = window.$Label || {}; 
+                window.$Label.updateSuccessMsg = "{!$Label.CRM_Edit_Related_Order_Message}";
+                window.$Label.selectRecordForAnyOperationMsg = "{!$Label.CRM_Select_Record_For_Any_Operation}";
+                window.$Label.delectSuccessMsg = "{!$Label.CRM_Related_Order_Deleted_Success_Message}";
+            </script>
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/moment.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular-sanitize.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/simplePagination.js')}"/>
+			<apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+			<apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library)}/datepicker/locales/bootstrap-datepicker.{!UserLocaleLanguage}.min.js" />
+            <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+            
+            <!-- to use the picklist component -->
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" />
+            <apex:includeScript value="../../soap/ajax/34.0/connection.js" />
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+            
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocale}.js"/>
+            <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/angular-input-masks.js"/>
+        </head>
+        
+        <script>
+            /* Login to sforce proxy service */
+            
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            /* Pass a few dynamic parameters */
+            angular.module("appConfig", ['ui.utils.masks'])
+                .service("appConfig", function() {
+                     return {
+                        resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                        recordType: 'Order',
+                        recordId: "{!$CurrentPage.parameters.Id}",
+                        apexController: CRM_EditAllRelatedOrdersCtrl,
+                        breadcrumbObjectName: '{!$ObjectType.Order.labelPlural}',
+                        breadcrumbObjectLink: '{!URLFOR($Action.Order.Tab, $ObjectType.Order)}',           
+                        breadcrumbRecordLink: '{!URLFOR($Action.Order.View,$CurrentPage.parameters.Id)}',
+                        breadcrumbRecordName: '{!order.OrderNumber}',
+                        userTerritory : '{!TEXT($User.Territory__c)}',           
+                        onSaveSuccessUrl: '{!URLFOR($Action.Order.View, $CurrentPage.parameters.Id)}',
+                        MaxRelatedOrderLimit: '{!MaxRelatedOrderLimit}',
+                        isActivated: {!isActivated},
+                        userDateFormat: '{!UserDateFormat}'
+                    };
+                });
+            
+            function checkUncheckAll() {
+                var val = $("#select-all").prop("checked");
+                $("input[id^='select-row-']").prop('checked', val);
+            }
+         </script>
+         <body>
+             <div class="mainContainer" xmlns:ng="http://angularjs.org" id="ng-app" ng-app="crmEditRelatedOrder" ng-cloak="ngCloak" ng-controller="crmEditRelatedOrderController" ng-init="loadRelatedOrders()">
+                 
+                 <c:CRM_SLDSPicklist />
+                 <c:CRM_SLDSLookup />
+  
+                 <div class="slds">
+                 
+                    <!------------Page Spinner Section Start-------------------------------->
+                    <div class="spinnerModel" ng-show="showSpinner">
+                        <div class="spinnerContent slds-spinner--large">
+                            <img src="{{appConfig.resourceSlds+'/assets/images/spinners/slds_spinner_brand.gif'}}" alt="Loading..." />
+                        </div>
+                    </div>
+                    <!------------Page Spinner Section End--------------------------------->
+                    
+                    <!---------------Page Header Section Start------------------------------>
+                    <div class="slds-page-header" role="banner">
+                        <div class="slds-grid">
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <nav class="slds-m-bottom--xx-small" role="navigation">
+                                    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                        <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.Tab, $ObjectType.Order)}'">{!$ObjectType.Order.labelPlural}</a></li>
+                                        <li class="slds-list__item slds-text-heading--label"><a href="{!URLFOR($Action.Order.View,$CurrentPage.parameters.Id)}">{!order.OrderNumber}</a></li>
+                                    </ol>
+                                </nav>
+                                <div class="slds-col slds-has-flexi-truncate">
+                                    <h1 class="slds-text-heading--medium slds-truncate" title="{!$Label.CRM_Edit_Order_Label}">{!$Label.CRM_Edit_Order_Label}</h1>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline" ng-show="showOrderLI">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="sample1">{!$Label.CRM_Search_Label_on_Add_Product_Page}</label>
+                                    <div class="slds-form-element__control">
+                                        <input class="slds-input slds-input--small"  ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-change="filter()"/>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element" ng-hide="appConfig.isActivated">
+                                    <div class="slds-form-element__control">     
+                                        <div class="slds-button-group slds-button-space-left" role="group">
+                                            <button ng-click="saveData(true)" class="slds-button slds-button--neutral">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                            <button ng-click="saveData(false)" class="slds-button slds-button--neutral">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-button-group" role="group">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!---------------Page Header Section End------------------------------->
+                    
+                    <!---------------Error Message Section Start--------------------------->
+                    <div class="slds-grid" ng-show="msgText">
+                        <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small" role="alert">
+                            <span class="slds-assistive-text">Info</span>
+                            <button class="slds-button slds-notify__close" ng-click="msgText=''">
+                                <svg aria-hidden="true" class="slds-button__icon slds-button--icon-inverse slds-m-right--small">
+                                    <use xlink:href="{{appConfig.resourceSlds+'/assets/icons/action-sprite/svg/symbols.svg#close'}}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                            <div class="notify__content slds-grid">
+                                <h2 class="slds-col slds-text-heading--small">{{msgText}}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <!---------------Error Message Section End----------------------------->
+                    
+                    <!---------------Update And Delete Order Section start----------------->
+                    <div class="slds-grid slds-max-small-hide" ng-show="showOrderLI">
+                        <div class="slds-col--padded slds-m-vertical--small slds-form--inline">
+                            <div class="slds-form-element">
+                                
+                                <label ng-hide="appConfig.isActivated" class="slds-form-element__label">{!$Label.CRM_Deal_Entry_Message}</label>
+                                <div class="slds-form-element__control" ng-hide="appConfig.isActivated">
+                                    <crm-multiselect-picklist options="updateRowFieldOptions" selectedOpts="updateRowsField" multiple="false" placeholder="{!$Label.CRM_Deal_Entry_Select_Field_Placeholder}"/>
+                                </div>
+                                <div class="slds-form-element__control" ng-hide="appConfig.isActivated">
+                                    <input class="slds-form-element slds-input" type="text" placeholder="{!$Label.CRM_Deal_Entry_To_Value_Placeholder}" ng-model="updateRowsFieldVal" style="width:150px;" ng-show="updateRowsField[0].value != 'requestedDeliveryDate'"/>
+                                    
+                                    <div class="slds-form-element__control" ng-show="updateRowsField[0].value == 'requestedDeliveryDate'">
+                                       <div class="slds-input-has-icon slds-input-has-icon--right">
+                                          <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                            <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                          </svg>
+                                          <input type="text" placeholder="{!$Label.CRM_Edit_All_Order_Date_Placeholder}" crm-datepicker="true" dp-model="updateRowsFieldValDate" dp-options="datepickerOptions" class="slds-input slds-input--small" ng-Locale="shortDate"/>
+                                       </div>
+                                    </div>
+                                </div>
+                             
+                                <div class="slds-form-element__control" role="group" ng-hide="appConfig.isActivated">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <button class="slds-button slds-button--neutral" ng-click="updateAllRows()">{!$Label.CRM_Deal_Entry_Update_All_Button}</button>
+                                        <button class="slds-button slds-button--neutral" ng-click="deleteAllRows()">{!$Label.CRM_Deal_Entry_Delete_All_Button}</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- New Pagination Code -->
+                                <div class="slds-form-element__control">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <c:CRM_EditAllProductPagination />
+                                    </div>  
+                                </div>
+                                <!-- End of New Pagination Code -->
+                            </div>
+                        </div>
+                    </div>    
+                    <!---------------Update And Delete Order Section End------------------->
+                    
+                    <!---------------Related Order ListView Section Start------------------>
+                    <div id="wb-listview">
+                        <table id="wb-listtable" class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal">
+                            <thead>
+                                <tr class="slds-text-heading--label">
+                                    <th scope="col" ng-hide="appConfig.isActivated">
+                                        <label class="slds-checkbox" for="select-all">
+                                            <input name="checkbox" type="checkbox" id="select-all" ng-model="isMasterChecked" ng-click="checkUncheckAll()"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select all</span>
+                                        </label>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Order.fields.OrderNumber.Label}</span>
+                                    </th>
+                                
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Account.fields.AccountNumber.Label}</span>
+                                    </th>
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Account.fields.Name.Label}</span>
+                                    </th>
+                                
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Order.fields.EffectiveDate.Label}</span>
+                                    </th>
+                                
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Order.fields.Customer_PO_Number__c.Label}</span>
+                                    </th>
+                    
+                                    <th scope="col">
+                                        <span class="slds-truncate">{!$ObjectType.Order.fields.Comments__c .Label}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="slds-hint-parent" ng-repeat="relatedOrder in filteredRelatedOrders = (relatedOrders| filter:search.text) | startFrom: pagination.page * pagination.perPage | limitTo: pagination.perPage">
+                                    <td class="slds-row-select" ng-hide="appConfig.isActivated">
+                                        <label class="slds-checkbox" for="select-row-{{$index}}">
+                                            <input name="select-row-{{$index}}" type="checkbox" id="select-row-{{$index}}" ng-model="relatedOrder.isSelected"/>
+                                            <span class="slds-checkbox--faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">select row-{{$index}}</span>
+                                        </label>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Order.fields.OrderNumber.Label}" class="wb-OrderNumber" role="row">{{relatedOrder.childOrder.OrderNumber}}</td>
+                                    <td data-label="{!$ObjectType.Account.fields.AccountNumber.Label}"><span class="slds-truncate" >{{relatedOrder.childOrder.Account.AccountNumber}}</span></td>
+                                    <td data-label="{!$ObjectType.Account.fields.Name.Label}"><span class="slds-truncate">{{relatedOrder.childOrder.Account.Name}}</span></td>
+                                    
+                                    <td data-label="{!$ObjectType.Order.fields.EffectiveDate.Label}" ng-show="appConfig.isActivated"><span class="slds-truncate">{{relatedOrder.requestedDeliveryDate | date: appConfig.userDateFormat}}</span></td>
+                                    <td data-label="{!$ObjectType.Order.fields.Customer_PO_Number__c.Label}" ng-show="appConfig.isActivated"><span class="slds-truncate">{{relatedOrder.childOrder.Customer_PO_Number__c}}</span></td>
+                                    <td data-label="{!$ObjectType.Order.fields.Comments__c.Label}" ng-show="appConfig.isActivated"><span class="slds-truncate">{{relatedOrder.childOrder.Comments__c}}</span></td>
+                                    
+                                    <td data-label="{!$ObjectType.Order.fields.EffectiveDate.Label}" ng-hide="appConfig.isActivated">
+                                        <div class="slds-form-element__control">
+                                           <div class="slds-input-has-icon slds-input-has-icon--right">
+                                              <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                              </svg>
+                                              <input type="text" placeholder="{!$Label.CRM_Edit_All_Order_Date_Placeholder}" crm-datepicker="true" dp-model="relatedOrder.requestedDeliveryDate" dp-options="datepickerOptions" class="slds-input slds-input--small" />
+                                           </div>
+                                        </div>
+                                        <span ng-show="!showOrderLI">{{relatedOrder.requestedDeliveryDate}}</span>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Order.fields.Customer_PO_Number__c.Label}" ng-hide="appConfig.isActivated">
+                                        <div class="slds-form-element" ng-show="showOrderLI">
+                                            <div class="slds-form-element__control">
+                                                <input class="slds-input slds-input--small" type="text" ng-model="relatedOrder.PoNumber" style="width:150px" ng-change="relatedOrder.isDirtyRow = true;"/>
+                                            </div>
+                                        </div>
+                                        <span ng-show="!showOrderLI ">{{relatedOrder.PoNumber}}</span>
+                                    </td>
+                                    <td data-label="{!$ObjectType.Order.fields.Comments__c.Label}" ng-hide="appConfig.isActivated">
+                                        <div class="slds-form-element" ng-show="showOrderLI">
+                                            <div class="slds-form-element__control">
+                                                <input class="slds-input slds-input--small" type="text" ng-model="relatedOrder.Comments" style="width:300px" ng-change="relatedOrder.isDirtyRow = true;"/>
+                                            </div>
+                                        </div>
+                                        <span ng-show="!showOrderLI ">{{relatedOrder.Comments}}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!---------------Related Order ListView Section End-------------------->
+                 </div>
+            </div>
+            
+            <script>
+                 $(function() {
+                      /**
+                      *Assistive Help
+                      */
+                      $('.wb-help-icon').hover(function(e) {
+                         $(e.currentTarget).next().show();
+                      },
+                      function(e) {
+                         $(e.currentTarget).next().hide();
+                      });
+                });
+                crmApp = angular.module('crmEditRelatedOrder', ['appConfig', 'crm-components','simplePagination','ngSanitize','ui.utils.masks'])
+                    .controller('crmEditRelatedOrderController', function($scope, $filter, getRelatedORderService, saveRelatedORderService, appConfig, Pagination) {
+                        
+                        $scope.appConfig = appConfig;
+                        console.log('$scope.pagination.numPages',$scope.appConfig.isActivated);
+                        //Added for Pagination
+                        $scope.MaxRelatedOrderLimit = $scope.appConfig.MaxRelatedOrderLimit;
+                        $scope.pagination = Pagination.getNew($scope.MaxRelatedOrderLimit);
+                        console.log('$scope.maxProductLimit',$scope.MaxRelatedOrderLimit);
+                        console.log('$scope.pagination.numPages',$scope.pagination.numPages);
+                        
+                        $scope.filter = function() {
+                            $scope.pagination = Pagination.getNew($scope.MaxRelatedOrderLimit);
+                            console.log('$scope.relatedOrders',$scope.relatedOrders);
+                            $scope.filteredArray = $filter('filter')($scope.relatedOrders, $scope.search.text);
+                    
+                            console.log('$scope.filteredArray.length',$scope.filteredArray.length);
+                            if ($scope.filteredArray.length === 0) {
+                                $scope.pagination.numPages = 1;
+                            } else {
+                                $scope.pagination.numPages = Math.ceil($scope.filteredArray.length/$scope.pagination.perPage);
+                            }
+                            $scope.pagination.page = 0;
+                        }
+                        //Added for Pagination
+    
+                        $scope.relatedOrders;
+                        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                        $scope.search = {};
+                        $scope.updateRowFieldOptions = [{label:"PO Number", value:"PoNumber"},{label:"Comments",value:"Comments"},{label:"Requested Delivery Date",value:"requestedDeliveryDate"}];
+                        $scope.updateRowsField = [];
+                        $scope.requestedDeliveryDate;
+                        $scope.updateRowsFieldVal;
+                        $scope.updateRowsFieldValDate;
+                        
+                        $scope.showSpinner;
+                        $scope.showOrderLI;
+                        $scope.msgText;
+                        $scope.msgSeverity;
+                        $scope.quickSave;
+                        console.log('$scope.appConfig.userDateFormat : '+$scope.appConfig.userDateFormat);
+                        $scope.datepickerOptions = {language : '{!userLocale}', format: $scope.appConfig.userDateFormat, todayHighlight: true};
+             
+                        $scope.updateAllRows = function(){
+                            console.log($scope.relatedOrders);
+                            var isAnyRowSelected = false
+                            angular.forEach($scope.relatedOrders, function(item, i) {
+                                if(item.isSelected) {
+                                    isAnyRowSelected = true;
+                                    console.log('$scope.updateRowsField[0].value : '+$scope.updateRowsField[0].value);
+                                    console.log('$scope.updateRowsFieldValDate '+$scope.updateRowsFieldValDate);
+                                    if($scope.updateRowsField[0].value == 'PoNumber' && $scope.updateRowsFieldVal) {
+                                        item.isDirtyRow = true;
+                                        item.PoNumber = $scope.updateRowsFieldVal;
+                                    }else if($scope.updateRowsField[0].value == 'Comments' && $scope.updateRowsFieldVal){
+                                        item.isDirtyRow = true;
+                                        item.Comments = $scope.updateRowsFieldVal;
+                                    }else if($scope.updateRowsField[0].value == 'requestedDeliveryDate' && $scope.updateRowsFieldValDate){
+                                        console.log('$scope.updateRowsFieldValDate '+$scope.updateRowsFieldValDate);
+                                        item.isDirtyRow = true;
+                                        item.requestedDeliveryDate = $scope.updateRowsFieldValDate;
+                                    } 
+                                }
+                            });
+                        
+                            // If any row is not selected to update the selected records then show a message
+                            if (!isAnyRowSelected) {
+                                $scope.addPageMessage($Label.selectRecordForAnyOperationMsg, 'success');
+                            }
+                        };
+                        
+                        $scope.deleteAllRows = function(){
+                            console.log($scope.relatedOrders);
+                            var isAnyRowSelected = false;
+                            angular.forEach($scope.relatedOrders, function(item, i) {
+                                if(item.isSelected) {
+                                    item.isDirtyRow = true;
+                                    item.isDelete = true;
+                                    console.log(item.isDelete);
+                                    isAnyRowSelected = true;
+                                }
+                            });
+         
+                            //Modified as part of Defect # 3475
+                            // If no rows are selected add a message to select any record else delete the records
+                            if (isAnyRowSelected) {
+                                $scope.addPageMessage(null, null);
+                                $scope.deleteData(true);
+                            } else {
+                                $scope.addPageMessage($Label.selectRecordForAnyOperationMsg, 'error');
+                            }
+                        };
+                        
+                        $scope.isMasterChecked = false;
+
+                        $scope.checkUncheckAll = function() {
+                            console.log('isChecked--->'+$scope.isMasterChecked);
+                            angular.forEach($filter('filter')($scope.relatedOrders, $scope.search.text), function(item, i) {
+                                item.isSelected = $scope.isMasterChecked;
+                            });
+                        };
+                        
+                        //Function to initially load the order products for a order
+                        $scope.loadRelatedOrders = function(){
+                            $scope.msgText = null;
+                            $scope.showSpinner = true;
+                            $scope.showOrderLI = true;
+                            console.log('****');
+                            console.log($scope.appConfig.recordId);
+                            console.log('****');
+                            
+                            getRelatedORderService($scope.appConfig.apexController, $scope.appConfig.recordId)
+                            .then(function(data){
+                                console.log('Data '+data);
+                                $scope.relatedOrders = data;
+                                $scope.pagination.numPages = Math.ceil($scope.relatedOrders.length/$scope.pagination.perPage);
+                                angular.forEach($scope.relatedOrders, function(item, i) {
+                                    $scope.DateObj = new Date(item.requestedDeliveryDate);
+                                    console.log('before : '+$scope.DateObj+'------'+$scope.DateObj.toUTCString());
+                                    $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                    $scope.DateObj.setMinutes($scope.totalMinute);
+                                    item.requestedDeliveryDate = $scope.DateObj;
+                                    console.log('After : '+$scope.DateObj+'-------'+item.requestedDeliveryDate.toUTCString());
+                                });
+                                
+                                $scope.showSpinner = false;
+                            },
+                            function(error){
+                              console.log(error);
+                              $scope.msgText = error.message;
+                              $scope.msgSeverity = 'error';
+                              $scope.showSpinner = false;
+                            });
+                        };
+                        
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                            if ($scope.isLightningExperienceOrSf1)
+                                sforce.one.navigateToURL(url);
+                            else
+                                document.location.href = url;
+                        };
+                        
+                        $scope.addPageMessage =  function(msg, sev) {
+                            $scope.msgText = msg;
+                            $scope.msgSeverity = sev;
+                        };
+                        
+                        // Bind the save function to the SFDC controller to commit the records
+                        $scope.saveData = function(qSave) {
+                            $scope.msgText = null;
+                            $scope.showSpinner = true;
+                            $scope.quickSave = qSave;
+
+                            console.log($scope.relatedOrders);
+
+                            saveRelatedORderService($scope.appConfig.apexController, $scope.appConfig.recordId, $scope.relatedOrders, $scope.quickSave)
+                            .then(
+                                function(data) {
+                                    console.log($scope.relatedOrders);
+                                    console.log(qSave);
+                                    if(qSave) {
+                                        $scope.addPageMessage($Label.updateSuccessMsg, 'success');
+                                        $scope.showSpinner = false;
+                                    }
+                                    else {
+                                        $scope.navigateToURL(appConfig.onSaveSuccessUrl);
+                                    }
+                                },
+                                function(data){
+                                    console.log(data.message);
+                                    $scope.addPageMessage(data.message, 'error');
+                                    $scope.showSpinner = false;
+                                }
+                            );
+                        };
+                        
+                        // Bind the delete records to save function of SFDC controller to delete the records and show deleted message after successful delete
+                        $scope.deleteData = function(qDelete) {
+                            $scope.msgText = null;
+                            $scope.showSpinner = true;
+                            saveRelatedORderService($scope.appConfig.apexController, $scope.appConfig.recordId, $scope.relatedOrders, true)
+                            .then(
+                                function(data) {
+                                    $scope.relatedOrders = data;
+                                    if (qDelete) {
+                                        $scope.addPageMessage($Label.delectSuccessMsg, 'success');
+                                        $scope.showSpinner = false;
+                                        $scope.isMasterChecked = false;
+                                    }
+                                },
+                                function(data){
+                                  $scope.addPageMessage(data.message, 'error');
+                                  $scope.showSpinner = false;
+                                }
+                            );
+                        };
+                    })
+                    
+                    .factory("getRelatedORderService", ['$q', '$rootScope', function($q, $rootScope) {
+                        return function(apexController, orderId) {
+                            var deferred = $q.defer();
+                    
+                            //Load the products from the salesforce controller
+                            apexController.getRelatedOrders(orderId,
+                                function(result, event) {
+                                    $rootScope.$apply(function() {
+                                        if (event.status) {
+                                            deferred.resolve(result);
+                                        } else {
+                                            deferred.reject(event);
+                                        }
+                                    })
+                                }
+                            );
+                            
+                            return deferred.promise;
+                        }
+                    }])
+                    
+                    .factory("saveRelatedORderService", ['$q', '$rootScope', function($q, $rootScope) {
+                        return function(apexController, recordId, relatedOrder, quickSave) {
+                            var deferred = $q.defer(); 
+                            console.log(relatedOrder);
+                            
+                            var selectedrelatedOrder = relatedOrder;
+                            console.log(selectedrelatedOrder);
+                           
+                            var relatedOrderSave = $.map(selectedrelatedOrder, function(x) {
+                               console.log('before Save : '+x.requestedDeliveryDate+'----'+x.requestedDeliveryDate.toUTCString());
+                               var rdDate = new Date(x.requestedDeliveryDate.setMinutes(x.requestedDeliveryDate.getMinutes() - x.requestedDeliveryDate.getTimezoneOffset()));
+                               console.log('After Save : '+rdDate.toUTCString());
+                               return {
+                                    OrderId: x.OrderId,
+                                    requestedDeliveryDate: rdDate.toUTCString(),
+                                    PoNumber: x.PoNumber,
+                                    Comments: x.Comments,
+                                    isSelected: x.isSelected,
+                                    isDelete: x.isDelete,
+                                    isDirtyRow: x.isDirtyRow,
+                                    childOrder: x.childOrder
+                                }
+                            }); 
+                            
+                            console.log(recordId);
+                            
+                            // Save the products to the salesforce controller
+                            apexController.saveRelatedOrders(recordId, relatedOrderSave, quickSave,
+                                function(result, event) {
+                                    $rootScope.$apply(function() {
+                                      if (event.status) {
+                                        deferred.resolve(result);
+                                      } else {
+                                        deferred.reject(event);
+                                      }
+                                    })
+                                }
+                            );
+                            return deferred.promise;
+                        }
+                    }]);    
+            </script> 
+        </body>
+    </html>
+</apex:page>

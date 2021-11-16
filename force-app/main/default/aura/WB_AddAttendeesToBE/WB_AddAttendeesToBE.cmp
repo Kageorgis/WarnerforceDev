@@ -1,0 +1,66 @@
+<aura:component controller="WB_AddAttendeesCtrl" implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="brandContact" type="object[]" default="[]" />
+    <aura:attribute name="columns" type="List"/>
+    <aura:attribute name="divHeight" type="String" default="500px"/>
+    <aura:attribute name="selectedBCList" type="object[]" default="[]"/>
+    <aura:attribute name="maxRowSelection" type="Integer" default="100"/>
+    <aura:attribute name="message" type="String" default=""/>
+    <aura:attribute name="isLoading" type="Boolean" default="true"/>
+    <aura:attribute name="selectedRows" type="list" default="[]"/>
+    <aura:html tag="style">
+        footer.slds-modal__footer{
+        	display: none !important;
+        }
+        .slds-modal__container{
+            max-width: 65rem !important;
+            width:70% !important;
+        }
+        .innerDiv {
+        	height:{!v.divHeight} !important;
+        	overflow-y: auto;
+        }
+        .modal-body{
+            overflow: hidden !important;
+            padding: 0px;
+            height: unset !important;
+            max-height: unset !important;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+        .cuf-content{
+        	padding: 0px !important; 
+        }
+        .slds-modal__content,.quick-actions-panel{
+        	overflow: hidden !important;
+        	padding: 0px !important;
+        	height: unset !important;
+            max-height: unset !important;
+        }
+    </aura:html>
+    <div class="innerDiv">
+        <aura:if isTrue="{! v.isLoading }">
+            <lightning:spinner alternativeText="Loading"/>
+        </aura:if>
+        <aura:if isTrue="{!v.brandContact.length > 0}">
+            <lightning:datatable
+                                 aura:id="ltngCmp"
+                                 keyField="Id"
+                                 data="{! v.brandContact}"
+                                 columns="{! v.columns }"
+                                 selectedRows="{! v.selectedRows }"
+                                 maxRowSelection="{! v.maxRowSelection }"
+                                 onrowselection="{! c.updateSelectedText }"
+                                 />
+            <aura:set attribute="else">
+                <div style="text-align: center;padding:20px;font-size: 15px;color:#565656;">
+                     <aura:unescapedHtml value="{!v.message}" />
+			</div>
+            </aura:set>
+        </aura:if>
+    </div>
+    <div aura:id="footerDiv" size="12" class="slds-modal__footer slds-text-align--right">                        
+        <lightning:button type="submit" name="cancel" label="Cancel" onclick="{! c.handleClick }"/>
+        <lightning:button disabled="{!v.brandContact.length == 0}" variant="brand" type="submit" name="Add" label="Add" onclick="{! c.addAttendees }"/>
+    </div>
+</aura:component>

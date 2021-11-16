@@ -1,0 +1,22 @@
+<aura:component description="cp_prodUploadContainer" implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="cp_prodUploaderGridContoller">
+    <aura:attribute name="fieldSetList" type="List" />
+    <aura:attribute name="valSets" type="List" />
+    <aura:attribute name="parsedData" type="Object" />
+    <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}"/>    
+    <aura:attribute name="lstContentDoc" type="List"/>
+    
+    <ltng:require styles="{!join(',',$Resource.agGrid + '/ag-grid-community/dist/styles/ag-grid.css',
+                          $Resource.agGrid + '/ag-grid-community/dist/styles/ag-theme-alpine.css')}"
+                  scripts="{!join(',',$Resource.agGrid + '/ag-grid-community/dist/ag-grid-community.min.noStyle.js',
+                           $Resource.jsXLSX + '/js-xlsx-master/dist/xlsx.full.min.js')}"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>    
+    <aura:method name="reInit" action="{!c.doInit}" description="Runs the init method again " />
+    
+    <lightning:layout>     
+        <lightning:layoutItem aura:id="gridColumn" size="12" class="slds-box slds-theme_default">
+            <lightning:spinner aura:id="gridSpinner" class="" alternativeText="Loading" size="large" />
+            {!v.body}
+        </lightning:layoutItem>
+    </lightning:layout>
+</aura:component>

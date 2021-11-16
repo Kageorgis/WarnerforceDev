@@ -1,0 +1,96 @@
+<aura:component>
+    <!--use boolean attribute for Store true/false value,
+    make default to "false" so modal box are not display on the load of component.
+    -->
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+    <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="noGridData" type="Boolean"/>
+    <aura:registerEvent name="errEvt" type="c:cp_errorEvent"/>
+
+    <!--Use "slds-m-around_xx-large" class to add standard X-Large padding to the component-->
+    <div class="slds-m-around_xx-large">
+        <!--Use aura:if tag to display Model Box, on the bese of conditions. [isOpen boolean attribute] -->
+        <aura:if isTrue="{!v.isOpen}">
+
+            <!--###### MODAL BOX Start######-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header slds-theme--error">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Oops!</h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <lightning:layout multipleRows="true" >
+                            <lightning:layoutItem size="12">
+
+                                <h1 class="slds-text-heading_large">
+                                    <span class="slds-avatar slds-avatar_circle slds-avatar_large">
+                                    <img src="{!$Resource.BugsBunnyLogoNew}"/>
+                                    </span>
+                                    What's up Doc?</h1>
+
+                                <aura:if isTrue="{!v.noGridData}">
+                                <h2 class="slds-p-top_medium"> No Data was Entered in the Grid</h2>
+
+                                    <p class="slds-p-top_medium">If you uploaded a file and saw Data in the table, check if the first Licensee Name cell is populated.</p>
+                                    <p class="slds-p-bottom_small slds-p-top_medium">Also, please share this message with the Support Team if the error persists</p>
+                                    <div class="slds-box slds-theme--info ">
+
+                                        The Apex Controller did not receive any Data from the grid.
+
+                                    </div>
+                                    <aura:set attribute="else">
+                                        <p class="slds-p-top_medium">An error occurred because there's data in the grid that is incorrectly formatted.</p>
+
+                                        <p class="slds-p-top_small">Most likely there's a special character like a dollar sign ($) or an accent mark (&eacute;) somewhere in your source file.
+
+                                        </p>
+                                        <p class="slds-p-top_small">
+                                            Check any cells with these characters in the following columns:
+                                        </p>
+                                        <ul class="slds-list_dotted slds-p-around_medium">
+                                            <li>Retailer</li>
+                                            <li>RSP ($)</li>
+                                            <li>Sub Category</li>
+                                        </ul>
+
+                                        <p class="slds-p-bottom_small slds-p-top_medium">Also, please share this message with the Support Team if the error persists</p>
+                                        <div class="slds-box slds-theme--info ">
+
+                                            {!v.errorMessage}
+
+                                        </div>
+                                    </aura:set>
+                                </aura:if>
+
+
+
+                            </lightning:layoutItem>
+
+                        </lightning:layout>
+
+
+
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="Close"
+                                          title="Close"
+                                          onclick="{! c.closeModel }"/>
+
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            <!--###### MODAL BOX Part END Here ######-->
+
+        </aura:if>
+    </div>
+</aura:component>

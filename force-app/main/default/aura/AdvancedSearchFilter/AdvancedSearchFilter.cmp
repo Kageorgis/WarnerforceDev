@@ -1,0 +1,82 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="CRM_UploadComponentController">
+    <aura:attribute name="searchText" type="String" />
+    <aura:attribute name="data" type="sObject"/>
+    <aura:attribute name="columns" type="Object"/>
+    <aura:attribute name="opptId" type="String" />
+    <aura:attribute name="fullData" type="sObject"/>
+    <aura:attribute name="searchFields" type="List" />
+    <aura:attribute name="PCsuggestions" type="string[]" />
+    <aura:attribute name="badgelist" type="List" default="[]"/>
+    <aura:attribute name="searchfieldsList" type="List"  />
+    <aura:attribute name= "ser" type="List" />
+    <aura:attribute name = "queryFieldName" type= "List" default = "[]" />
+    <aura:attribute name="sObjectName" type="String" />
+    <aura:attribute name ="ChildCall" type="Boolean" />
+    <aura:attribute name= "filterData" type= "sObject" />
+    <aura:attribute name="onloadValues" type="Boolean" default="false" />
+    <aura:attribute name="searchedData" type="List" />
+    <aura:attribute name="selectedboxes" type="List" default="[]"/>
+    <aura:attribute name="startDate" type="List" default="[]"/>
+    <aura:attribute name="dataFields" type="List" default="[]"/>
+    <aura:attribute name= "selectedOption" type= "String" />
+    <aura:attribute name= "filterDataSetting" type= "String" />
+    <aura:attribute name="length" type="Integer"/>
+    <aura:attribute name="arrayMapKeys" type="List" />
+    <aura:method name="callAdvancedSearch" action="{!c.init}" />
+    <div class="slds-m-around_xx-large">
+        <aura:if isTrue="{!v.ChildCall}">
+            <section role="dialog" tabindex="-1" aria-labelledby="header43" aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container"  >
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$Label.c.CRM_AdvancedSearch_label}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium slds-grid slds-wrap" >
+                        <aura:iteration items = "{!v.searchfieldsList}" var = "serField"><br /><br />
+                            <div class="slds-col slds-size_1-of-6 auto-fit" >
+                                <aura:if isTrue="{!serField.key.Type__c == 'Picklist'}">
+                                    <lightning:buttonmenu class ="slds-align-space margin"  aura:id="buttonMenu" label="{!serField.key.Label}" >
+                                        <aura:iteration items="{!serField.value}" var = 'fieldValue'>
+                                            <div class="slds-grid slds-align-spread slds-gutters drop-down-css">
+                                                <div class="slds-col slds-size_1-of-3 data-in-drop-down check-box-style">
+                                                    <span><lightning:input checked="{!fieldValue.checked}" name="{!serField.key.Field_Name__c}" aura:id="checkboxSelection" type="checkbox-button" value="{!fieldValue.val}" label="{!fieldValue.val}" onchange="{!c.handleFilterCheckboxes}"></lightning:input></span>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-3 data-in-drop-down" >
+                                                    <span class="data-in-drop-down"> {!fieldValue.val} </span>
+                                                </div>
+                                            </div>
+                                        </aura:iteration>
+                                    </lightning:buttonmenu>
+                                    <aura:set attribute="else">
+                                        <aura:if isTrue="{!serField.key.Type__c == 'Date'}">
+                                            <lightning:select aura:id="SelectedDate" name="select1"  onchange="{!c.onChangeDate}">
+                                                <option value="" label="{! 'Choose ' + serField.key.Label + ' Range'}"></option>
+                                                <option value="Equals">Equals</option>
+                                                <option value="Greaterthan">Greater than</option>
+                                                <option value="Lessthan">Less than</option>
+                                            </lightning:select>
+                                        </aura:if>
+                                        <lightning:input label="{!serField.key.Type__c == 'Date'? '': serField.key.Label}" type="{!serField.key.Type__c}" aura:id="startDateSelection" name="{!serField.key.Field_Name__c}"  value="{!serField.value.val}"  onchange="{!c.getValues}"/>
+                                    </aura:set>
+                                </aura:if> 
+                            </div>
+                        </aura:iteration>
+                        <br /><br />
+                        <aura:if isTrue="{!v.badgelist.length > 0}" >
+                            <div class="slds-grid slds-grid_vertical" ><p class="slds-col filter-css">Filters applied   <lightning:icon iconName="utility:filterList" alternativeText="Filters" size="x-small"/> : {!v.badgelist.length > 0 ? '' : 'None'}
+                                <aura:iteration items = "{!v.badgelist}" var = "b">
+                                    <aura:iteration items="{!b.value}" var="s">
+                                        <lightning:pill label="{!s}"  name = "{!b}" onremove="{!c.handleRemove}" class="slds-badge"></lightning:pill>
+                                    </aura:iteration>
+                                </aura:iteration>
+                                </p>
+                            </div></aura:if></div>
+                    <footer class="slds-modal__footer">          
+                        <lightning:button aura:id="searchId" name="Search" label="Search" onclick="{!c.handleAdvancedSearch}" disabled="true" variant="brand"/>
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{! c.closeModel }"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </div>
+</aura:component>

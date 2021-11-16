@@ -1,0 +1,882 @@
+<apex:page standardController="Promotion__c" extensions="WB_UploadPromotionTitlesController" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+    
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" charset="utf8" >
+        <head>
+            <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+    
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+    
+    <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.js')}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.full.min.css')}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource[handsontableversion], 'handsontable.min.css')}"/>
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'ngHandsontable.min.js')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'languages/all.js')}"/>
+    
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/languages.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'numbro/numbro.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource[handsontableversion], 'moment/moment.js')}"/>
+    <!------------ handsontable Pro JS AND CSS (US : 989)-------------------->
+    
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+    
+    <script src="/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+    <script src="/soap/ajax/35.0/apex.js" type="text/javascript"></script>
+    <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/> 
+    <style>
+        .wordWrapClass {
+        text-overflow: ellipsis;
+        white-space: nowrap !important;
+        max-width: 20px;    
+        }
+        .slds .slds-notify--toast {
+        margin: 8px 8px 5px;   
+        }
+        .handsontable thead th {
+        background-color: #4F6A92 !important;
+        color: white !important;
+        }
+        .slds .slds-page-header{
+        padding: 11px !important;
+        }
+        .picklistClass .slds-button,.buttonGroupheight{
+        height: 31px;
+        }
+        .picklistClass span:first-of-type{
+        color:#636875 !important;
+        line-height: initial;
+        }
+        .picklistClass span:nth-child(2),.picklistClass span:nth-child(3){
+        line-height: initial;
+        }
+        html body.sfdcBody{
+        padding:0px;
+        }
+        .slds-lookup{
+        width: 240px;
+        }
+        .slds-pill__container, #lookup{
+        min-height:31px !important;
+        height:31px;
+        }
+        .slds .slds-pill{
+        height: 27px !important;
+        line-height: 1.25 !important;  
+        padding-left: 14px;
+        }
+        .slds .slds-lookup__item > a, .slds .slds-dropdown__item > a{
+        padding: 6px 0px 6px 12px !important;
+        }
+        #spinnerText{
+        font-size: 18px;
+        }
+        #hot-display-license-info
+        {
+            visibility: hidden;
+        }
+    </style>
+    
+    <script type="text/javascript"> 
+    
+    sforce.connection.sessionId = '{!$Api.Session_ID}';
+    
+    /* Pass a few dynamic parameters */
+    angular.module("appConfig", [])     
+    .service("appConfig", function() {
+        return {
+            userLocal: '{!UserLocale}',
+            userDateFormat: '{!UserDateFormat}',
+            pickWrapJSONString: '{!pickWrapJSONString}',
+            promotionId: '{!Promotion__c.Id}', 
+            show: '{!show}',
+            resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+            handsontableProLicenseKey: '{!HandsonTable_Pro_Licencekey}',
+            ptSizeLimit : '{!ptSizeLimit}',
+            ptPTChunkSize: '{!ptPTChunkSize}'
+        };
+    });
+    
+    angular.module("UploadPromotionTitles", ['appConfig', 'crm-components','ngLocale'])
+    .controller("UploadPromotionTitlesController", ['$scope', '$timeout', 'appConfig','$locale', function($scope, $timeout, appConfig,$locale) {
+        
+        var handsonLocale = new Set(['bg','cs-CZ','da-DK','de-AT','de-CH','de-DE','de-LI','el','en-AU','en-GB','en-IE','en-NZ','en-US','en-ZA',
+                                     'es-AR','es-CL','es-CO','es-CR','es-ES','es-MX','es-NI','es-PE','es-PR','es-SV','et-EE','fa-IR','fi-FI',
+                                     'fil-PH','fr-CA','fr-CH','fr-FR','he-IL','hu-HU','id','it-CH','it-IT','ja-JP','ko-KR','lv-LV','nb','nb-NO',
+                                     'nl-BE','nl-NL','nn','pl-PL','pt-BR','pt-PT','ro-RO','ru-RU','ru-UA','sk-SK','sl','sr-Cyrl-RS','sv-SE','th-TH',
+                                     'tr-TR','uk-UA','zh-CN','zh-MO','zh-SG','zh-TW']);
+        
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.showSpinner = false;
+        $scope.appConfig = appConfig;
+        $scope.promotionTitles = [];
+        $scope.promotionTitlesLoad = [];
+        $scope.itemsBackup = [];
+        //console.log('appConfig.pickWrapJSONString --------',appConfig.pickWrapJSONString); 
+        $scope.picklistWrap = angular.fromJson(appConfig.pickWrapJSONString);
+        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        //Invalid Value Checker Set
+        var invalidValueSet = new Set();
+        invalidValueSet.add("");
+        invalidValueSet.add(null);
+        invalidValueSet.add(undefined);
+        //Picklist Values
+        var formatValues = $scope.picklistWrap.formatValues.picklist;
+        /*formatValues.push("All 2D");
+        formatValues.push("All");*/
+        $scope.channelList = $scope.picklistWrap.channelValues.picklist;
+        //$scope.formatList = $scope.picklistWrap.formatValues.picklist;
+        $scope.formatList = $scope.picklistWrap.formatValues.picklist;
+        $scope.wspCurrencyList = $scope.picklistWrap.wspCurrencyValues.picklist;
+        
+        console.log('channelList==='+$scope.channelList);
+        console.log('formatList==='+$scope.formatList);
+        //Filters
+        $scope.filter = {
+            vvText : [],
+            channel: [],
+            format: []
+        };
+        
+        var initalHeight = ($(window).height() - $('#headerDiv').height() - 26);
+        $scope.height = initalHeight;
+        
+        $scope.resultFilterValues = [{label:"All", value:"all"},{label:"Error",value:"error"},{label:"Success",value:"success"}];
+        $scope.resultFilter = [];
+        
+        $scope.sortObj = {column:0,order:"none"};
+        $scope.filterdColIndex = [];
+        
+        var initalHeight = ($(window).height() - $('#headerDiv').height() - 50);
+        $scope.height = initalHeight;
+        
+        var container = document.getElementById('tableDiv');
+        var hot = new Handsontable(container,
+                                   {
+                                       data: $scope.promotionTitles,
+                                       colHeaders: true,
+                                       renderAllRows: true,
+                                       height: $scope.height,
+                                       trimDropdown: false,
+                                       contextMenu: {
+                                           items: {
+                                               "remove_row": {
+                                                   name: '{!$Label.CRM_Upload_Message_RemoveRow}'
+                                               }
+                                           }
+                                       },
+                                       colHeaders: [
+                                           '{!$ObjectType.Promotion_Title__c.fields.Title__c.Label}',
+                                           '{!$ObjectType.Title__c.fields.Video_Version__c.Label}' ,
+                                           '{!$ObjectType.Promotion_Title__c.fields.Channel__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.Format__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.WSP_Currency__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}',
+                                           '{!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label}',
+                                           '{!$Label.CRM_Upload_Field_Validation}'
+                                       ], 
+                                       columns: [
+                                           { data: 'title',type: 'text',readOnly: true},
+                                           { data: 'videoVersion',type: 'text'},
+                                           { data: 'channel', type: 'dropdown',source: $scope.channelList.sort()},
+                                           { data: 'format', type: 'dropdown',source: $scope.formatList.sort()},
+                                           { data: 'priceCode',type: 'text'},
+                                           { data: 'priceTier',type: 'text'},
+                                           { data: 'WSP' , type: 'numeric',numericFormat: { pattern: '0,0.00',culture: handsonLocale.has($scope.UserLocal) ? $scope.UserLocal : 'en-US'}},
+                                           { data: 'wspCurrency', type: 'dropdown',source: $scope.wspCurrencyList.sort()},
+                                           { data: 'vendorId',type: 'text'},
+                                           { data: 'retailerId',type: 'text'},
+                                           { data: 'validation',type: 'text', readOnly: true}
+                                       ], 
+                                       cells: function(row, col, prop) {
+                                           var cellProperties = {};
+                                           cellProperties.renderer = $scope.myRenderer;
+                                           return cellProperties;
+                                       },
+                                       
+                                       afterChange: function(changes, source) {
+                                           var ele = this;
+                                           $scope.date = new Date();
+                                           $scope.isDateChanged = false;
+                                           if (changes && changes.length > 0) {
+                                               $.each(changes, function(index, element) {
+                                                   if (element) {
+                                                       var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                                       var actualRowIdex = changes[index][0];
+                                                       var prop = changes[index][1];
+                                                       var oldValue = changes[index][2];
+                                                       var newValue = changes[index][3];
+                                                       if ($scope.promotionTitles && changes[index][2] != changes[index][3] && prop != 'validation') {
+                                                           var item = $scope.promotionTitles[ele.toPhysicalRow(changes[index][0])];
+                                                           if(item){
+                                                               
+                                                               if(!(!oldValue && newValue == "")){
+                                                                   item.isRowModified = true;
+                                                               }
+                                                           }
+                                                       }
+                                                   }
+                                               });
+                                               
+                                               var currentEle = this;
+                                               if((source === 'edit' || source === 'loadData ' || source === 'Autofill.fill' || source === 'CopyPaste.paste') && $scope.isDateChanged){
+                                                   currentEle.render();
+                                               }
+                                           }
+                                       },
+                                       beforeRemoveRow: function(index, amount, visualRows) {
+                                           var ele = this;
+                                           if (!confirm('{!$Label.CRM_Upload_Message_Remove_Row}')) {
+                                               return false;
+                                           }
+                                           var visualIndex = 0;
+                                           if($scope.promotionTitles){
+                                               for(i=index;i<index+amount;i++) {
+                                                   var item;
+                                                   if(visualRows[visualIndex] && $scope.promotionTitles[visualRows[visualIndex]]){
+                                                       $scope.promotionTitles[visualRows[visualIndex]].isRowRemoved = true;
+                                                       item =  $scope.promotionTitles[visualRows[visualIndex]];
+                                                   }else{
+                                                       $scope.promotionTitles[i].isRowRemoved=true;
+                                                       item = $scope.promotionTitles[i];
+                                                   }
+                                                   if(item){
+                                                       item.isRowRemoved = true;
+                                                       item.errorOccured = false;
+                                                       item.validation = '';
+                                                   }
+                                                   visualIndex++;
+                                               }
+                                           }
+                                           
+                                           $scope.$apply();
+                                           this.render();
+                                           return false;
+                                       },
+                                       columnSorting: true, 
+                                       copyPaste: {
+                                           columnsLimit: 100,
+                                           rowsLimit: 2500
+                                       },
+                                       beforePaste: (data, coords) => {
+                                           console.log('Before',data);
+                                           angular.forEach(data, function(value, index){
+                                           Object.keys(value).forEach(function(key) {
+                                           value[key] = typeof value[key] === 'string' ? value[key].trim() : value[key];
+                                       });
+                                   });
+        console.log(data);
+    },
+                                                    //minSpareRows: 1, 
+                                                    manualColumnResize: true,
+                                                    stretchH: 'all',
+                                                    dropdownMenu: ['clear_column','alignment','filter_by_condition','filter_operators','filter_by_condition2','filter_by_value','filter_action_bar'],
+                filters: true,
+                licenseKey: appConfig.handsontableProLicenseKey,
+                afterColumnSort: function(column,order){
+        $scope.sortObj.column = column;
+        $scope.sortObj.order = order;
+    },
+        afterLoadData: function(){
+            if(hot){
+                //hot.updateSettings({minSpareRows: 0});
+            }
+        }
+    });
+    
+    $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+        
+        if(cellProperties.type == 'text'){
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+        }else if(cellProperties.type == 'numeric'){
+            Handsontable.renderers.NumericRenderer.apply(this, arguments);
+        }else if(cellProperties.type == 'dropdown'){
+            Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+        }
+        
+        if($scope.promotionTitles){
+            var realIndex = row;
+            
+            var item = $scope.promotionTitles[cellProperties.row];
+            if(item){
+                
+                //if(item.existingId && (prop == 'validation' || prop == 'channel' || prop == 'format' || prop == 'title' || prop == 'videoVersion')){
+                if(item.existingId && (prop == 'validation' || prop == 'title' || prop == 'videoVersion' || prop == 'retailerId' || prop == 'vendorId')){
+                    cellProperties.readOnly = true;
+                    td.style.color = '#777';
+                }
+                
+                if(item.isRowRemoved && item.isRowRemoved == true){
+                    td.style.backgroundColor = 'grey';
+                    td.style.color = 'white';
+                    item.isRowModified = false;
+                }
+                
+                if(item.errorOccured  && item.errorOccured == true){
+                    td.style.backgroundColor = 'red';
+                    td.style.color = 'white';
+                }
+            }
+        }
+    };
+    
+    
+    $scope.init = function(){
+        $scope.showSpinner = true;
+        jQuery('#vvDisplay').prop( "disabled", true );
+        $scope.GetTitleItems('{!Promotion__c.Id}');
+    };
+    //reset all the filters and reload the page
+    $scope.resetFilters = function(){
+        $scope.showSpinner = true;
+        document.location.reload();
+    };
+    $scope.exportCSVFile = function(){
+        hot.getPlugin('exportFile').downloadFile('csv', {
+            filename: 'Promotion Title Download',
+            columnHeaders: true       // default false, exports the column headers
+        });
+    };
+    $scope.removeMsgBlock= function(){
+        $scope.msgText = '';
+        $scope.errorMsgForDp = '';
+        $scope.height = initalHeight;
+    };
+    
+    $scope.GetTitleItems = function(promotionId){
+        console.log('show==='+appConfig.show);
+        
+        //hot.updateSettings({minSpareRows: 0});
+        
+        $scope.msgText=null;
+        $scope.showSpinner = true;
+        $scope.spinnerText = '{!$Label.WB_EAD_spinnerText_Loading}';
+        
+        WB_UploadPromotionTitlesController.getPromotionTitleRecords(promotionId,$scope.filter,function(result, event) {  
+            
+            if(!event.status){
+                $scope.$apply(function() {
+                    $scope.msgText = event.message;
+                    $scope.msgSeverity = 'error';
+                    $scope.showSpinner = false;
+                });
+            }
+            $scope.promotionTitles = result;
+            $scope.itemsBackup = result;
+            console.log('items in backup after load ---',$scope.itemsBackup);
+            hot.loadData($scope.promotionTitles); 
+            $scope.showSpinner = false;
+            hot.updateSettings({minSpareRows: 1});
+            $scope.$apply();
+        },{
+            escape: false, timeout: 120000
+        });
+        
+    };
+    
+    $scope.expandPage = function(promotionId){
+        console.log('window.location.href'+window.location.href);
+        $scope.nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+        if(!$scope.nonEmptyRowCount === 0){
+            $scope.savePromotionTitles(promotionId);
+        }
+        window.open(window.location.href+"&show=1",'_top');
+    };
+    
+    $scope.backPage = function(promotionId){
+        //window.close();
+        console.log('promotionId'+promotionId);
+        $scope.nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+        if(!$scope.nonEmptyRowCount === 0){
+            $scope.savePromotionTitles(promotionId);
+        }
+        $scope.navigateToURL('/lightning/r/Promotion__c/'+promotionId+'/view');
+    };
+    
+    $scope.navigateToURL = function(url) {
+        console.log('url==='+url);
+        var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+        
+        if ($scope.isLightningExperienceOrSf1) {
+            sforce.one.navigateToURL(url);
+        } else {
+            document.location.href = url;
+        }
+    };
+    
+    $scope.savePromotionTitles = function(promotionId){
+        
+        var saveStartTime = new Date();
+        var timeDiff = 0;
+        
+        $scope.msgText = '';
+        $scope.msgSeverity = '';
+        $scope.showSpinner = true;
+        $scope.spinnerText = '{!$Label.WB_EAD_spinnerText_Processing}';
+        
+        $scope.nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+        if($scope.nonEmptyRowCount === 0){ $scope.showSpinner = false; $scope.nonEmptyRowCount = -1; $scope.$apply();}
+        $scope.failedRecCount = 0;
+        $scope.filteredGridData = $scope.promotionTitles.slice(0,$scope.nonEmptyRowCount);
+        console.log('$scope.filteredGridData : ',$scope.filteredGridData);
+        var chunkTime = new Date();
+        console.log('Time Elapsed for chunk is Validation Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+        var setVideoVersions = new Set();
+        $.each($scope.filteredGridData, function(rowKey, promoTitleObj) { 
+            $scope.spinnerText = '{!$Label.WB_EAD_spinnerText_Processing}';
+            setVideoVersions.add(promoTitleObj.videoVersion);
+            if(promoTitleObj.isRowModified && !promoTitleObj.isRowRemoved){
+                var validationMsg = $scope.validateRcRecord(promoTitleObj);
+                if(validationMsg.length != 0){
+                    $scope.failedRecCount++;
+                    promoTitleObj.errorOccured = true;
+                    promoTitleObj.validation = validationMsg;
+                }else{
+                    promoTitleObj.errorOccured = false;
+                    promoTitleObj.validation = '';
+                }
+            }else{
+                promoTitleObj.errorOccured = false;
+                promoTitleObj.validation = '';
+            }
+        });
+        
+        
+        var chunkTime = new Date();
+        console.log('Time Elapsed for chunk is Validation Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+        console.log('ptSizeLimit==='+appConfig.ptSizeLimit);
+        if ($scope.failedRecCount > 0 || setVideoVersions.size > appConfig.ptSizeLimit) {
+            console.log('setVideoVersions===',setVideoVersions);
+            console.log('setVideoVersions size===',setVideoVersions.size);
+            if(setVideoVersions.size > appConfig.ptSizeLimit)
+            {
+                $scope.msgText = "Promotion Titles more than "+ appConfig.ptSizeLimit +" not allowed.";
+            }
+            else
+            {
+                $scope.msgText = $scope.failedRecCount.toString() + " {!$Label.WB_Msg_SaveError}";
+            }
+            $scope.msgSeverity = 'error';
+            $scope.promotionTitles = $scope.filteredGridData;
+            hot.loadData($scope.promotionTitles); 
+            $scope.showSpinner = false;
+            $scope.spinnerText = '';
+            $timeout(setHeight,2);
+        }else if($scope.failedRecCount == 0 && $scope.filteredGridData.length > 0){
+            console.log('setVideoVersions===',setVideoVersions);
+            console.log('setVideoVersions size===',setVideoVersions.size);
+            /**
+                             * rowsToProcess - Array of records to save back to salesforce
+                             * returnedResults - Rows already saved to Salesforce
+                            */
+            (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                var lastIndex = (hot.countRows() - hot.countEmptyRows());
+                console.log('rowsToProcess',rowsToProcess);
+                var chunkSize = appConfig.ptPTChunkSize; // Recursive batch size
+                chunkedData = rowsToProcess.splice(0, chunkSize); 
+                $.each(chunkedData, function(rowKey, ptObj) { 
+                    console.log('chunkedData',chunkedData);
+                    if(typeof ptObj.WSP != 'number'){
+                        ptObj.WSP = null;
+                    }
+                    
+                });
+                console.log('chunkedData : ',chunkedData);
+                WB_UploadPromotionTitlesController.savePromotionTitleRecords(chunkedData,promotionId,function(result, event){
+                    if (!event.status) {
+                        $scope.$apply(function() {
+                            $scope.msgText = event.message;
+                            $scope.msgSeverity = 'error';
+                            $scope.showSpinner = false;
+                            $timeout(setHeight,2);
+                        });
+                    }else if ($scope.filteredGridData.length > 0) { 
+                        // If successful add results to the main array
+                        returnedResults = returnedResults.concat(result);
+                        
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                        failedRecCount += failedCount;
+                        
+                        // Update progress text for user
+                        $scope.$apply(function() {
+                            $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                        });
+                        
+                        var chunkTime = new Date();
+                        console.log('Time Elapsed for chunk is Controller Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                        
+                        // Call salesforce again with remaining rows
+                        runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                    }else{
+                        console.log('result : ',result);
+                        $scope.promotionTitlesLoad=[];
+                        $scope.promotionTitles = returnedResults.concat(result);
+                        $scope.itemsBackup = $scope.promotionTitles;
+                        if($scope.resultFilter && $scope.resultFilter.length > 0){
+                            $scope.filterRecords($scope.itemsBackup);
+                        }else{
+                            hot.updateSettings({minSpareRows: 1});
+                            console.log('promotionTitles==='+$scope.promotionTitles);
+                            hot.loadData($scope.promotionTitles);
+                        }
+                        console.log('result==='+result);
+                        var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                        failedRecCount += failedCount;
+                        
+                        if (failedRecCount > 0) {
+                            $scope.msgText = failedRecCount.toString() + " records failed";
+                            $scope.msgSeverity = 'error';
+                        } else {
+                            $scope.msgText = "Records saved successfully.";
+                            //hot.updateSettings({minSpareRows: 0});
+                            $scope.msgSeverity = 'success';
+                        }
+                        
+                        var chunkTime = new Date();
+                        console.log('Time Elapsed for chunk is Controller Last : ', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                        
+                        $scope.spinnerText = '';
+                        //hot.updateSettings({minSpareRows: 1});
+                        $scope.showSpinner = false;
+                        $timeout(setHeight,2);  
+                        
+                        // Update UI
+                        $scope.$apply();
+                    }
+                },{
+                    escape: false,
+                    timeout: 120000,
+                    buffer: false  
+                });
+            })($scope.filteredGridData, [], 0);
+        }
+    };
+    
+    $scope.validateRcRecord= function(promoTitle){
+        $scope.errorColName = [];
+        
+        if(
+            (
+                (invalidValueSet.has(promoTitle.retailerId) && invalidValueSet.has(promoTitle.vendorId) && invalidValueSet.has(promoTitle.videoVersion))
+                ||
+                (!invalidValueSet.has(promoTitle.retailerId) && !invalidValueSet.has(promoTitle.vendorId))
+                ||
+                (!invalidValueSet.has(promoTitle.retailerId) && !invalidValueSet.has(promoTitle.videoVersion))
+                ||
+                (!invalidValueSet.has(promoTitle.vendorId) && !invalidValueSet.has(promoTitle.videoVersion))
+            )
+            &&
+            invalidValueSet.has(promoTitle.existingId)
+        )
+        {
+            $scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Title__c.fields.Video_Version__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}');
+        }
+        /*if(invalidValueSet.has(promoTitle.priceTier)){
+                            $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}');
+                        }
+                        if(invalidValueSet.has(promoTitle.channel)){
+                            $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Channel__c.Label}');
+                        }
+                        if(invalidValueSet.has(promoTitle.format)){
+                            $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Format__c.Label}');
+                        }
+                        if(invalidValueSet.has(promoTitle.priceTier)){
+                            $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}');
+                        }
+                        
+                        if(invalidValueSet.has(promoTitle.WSP)){
+                            $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+                        }else if(promoTitle.WSP < 0){
+                            $scope.negativeCurrencyError.push('{!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+                        }*/
+        if(!invalidValueSet.has(promoTitle.videoVersion) && invalidValueSet.has(promoTitle.existingId))
+        {
+            console.log('In VVs');
+            if(!invalidValueSet.has(promoTitle.retailerId) && !invalidValueSet.has(promoTitle.vendorId))
+            {
+                $scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Title__c.fields.Video_Version__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}');
+                //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label}');
+                //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}');
+            }
+            else if(!invalidValueSet.has(promoTitle.retailerId))
+            {
+                console.log('In Ret Id');
+                $scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Title__c.fields.Video_Version__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label}');
+                //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Retailer_ID__c.Label}');
+            }
+                else if(!invalidValueSet.has(promoTitle.vendorId))
+                {
+                    console.log('In Ven Id');
+                    $scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Title__c.fields.Video_Version__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}');
+                    //$scope.errorColName.push('{!$ObjectType.Title__c.fields.Video_Version__c.Label}');
+                    //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Vendor_ID__c.Label}');
+                }
+        }
+        
+        if(invalidValueSet.has(promoTitle.channel) && invalidValueSet.has(promoTitle.format))
+        {
+            $scope.errorColName.push('Please Enter the following values: {!$ObjectType.Promotion_Title__c.fields.Channel__c.Label} and {!$ObjectType.Promotion_Title__c.fields.Format__c.Label}');
+        }
+        else 
+        {
+            if(invalidValueSet.has(promoTitle.channel))
+            {
+                $scope.errorColName.push('Please Enter the following values: {!$ObjectType.Promotion_Title__c.fields.Channel__c.Label}');
+            }
+            else if(invalidValueSet.has(promoTitle.format))
+            {
+                $scope.errorColName.push('Please Enter the following values: {!$ObjectType.Promotion_Title__c.fields.Format__c.Label}');
+            }
+        }
+        
+        if((!invalidValueSet.has(promoTitle.priceTier) && !invalidValueSet.has(promoTitle.WSP) && !invalidValueSet.has(promoTitle.priceCode)) || (invalidValueSet.has(promoTitle.priceTier) && invalidValueSet.has(promoTitle.WSP) && invalidValueSet.has(promoTitle.priceCode)))
+        {
+            $scope.errorColName.push('Only one price value is allowed. Please enter either {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label}, {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}.');
+            //$scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+            //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}');
+            //$scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+        }
+        else
+        {
+            if(!invalidValueSet.has(promoTitle.priceTier) && !invalidValueSet.has(promoTitle.WSP))
+            {
+                $scope.errorColName.push('Only one price value is allowed. Please enter either {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}.');
+                //$scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+            }
+            else if(!invalidValueSet.has(promoTitle.priceTier) && !invalidValueSet.has(promoTitle.priceCode))
+            {
+                $scope.errorColName.push('Only one price value is allowed. Please enter either {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}.');
+                //$scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label}');
+            }
+			else if(!invalidValueSet.has(promoTitle.priceCode) && !invalidValueSet.has(promoTitle.WSP))
+            {
+            	$scope.errorColName.push('Only one price value is allowed. Please enter either {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}.');
+                //$scope.errorColName.push('Please Enter any one of the following values: {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}');
+			}
+            else if((!invalidValueSet.has(promoTitle.priceCode) || !invalidValueSet.has(promoTitle.priceTier)) && !invalidValueSet.has(promoTitle.wspCurrency))
+            {
+                $scope.errorColName.push('Please remove {!$ObjectType.Promotion_Title__c.fields.WSP_Currency__c.Label} for {!$ObjectType.Promotion_Title__c.fields.Price_Code__c.Label} or {!$ObjectType.Promotion_Title__c.fields.Price_Tier__c.Label} entered, {!$ObjectType.Promotion_Title__c.fields.WSP_Currency__c.Label} is valid only for {!$ObjectType.Promotion_Title__c.fields.WSP__c.Label}.');
+            }
+            else if(!invalidValueSet.has(promoTitle.WSP) && invalidValueSet.has(promoTitle.wspCurrency))
+            {
+                $scope.errorColName.push('{!$ObjectType.Promotion_Title__c.fields.WSP__c.Label} value is entered, please enter {!$ObjectType.Promotion_Title__c.fields.WSP_Currency__c.Label}.');
+            }
+        }
+        
+        return $scope.errorColName;
+        //return $scope.errorMessage;
+    };
+    
+    
+    //Filter the result set to Success,error and all records on the page after save.
+    $scope.filterRecords = function(itemsBackup){
+        
+        if($scope.resultFilter != null && $scope.resultFilter !='' && $scope.resultFilter != 'undefined'){
+            console.log('Inside function',$scope.resultFilter[0].value);
+            filteredItems = [];
+            $scope.promotionTitles = itemsBackup;
+            console.log('$scope.promotionTitles inside filter ----',$scope.itemsBackup);
+            if($scope.resultFilter[0].value == 'error'){
+                for(index=0;index<$scope.itemsBackup.length;index++){
+                    item = $scope.itemsBackup[index]; 
+                    if(item.validation != null && item.validation !='' && item.validation != 'Success' && item.validation != 'Updated')
+                        filteredItems.push(item);
+                }
+                $scope.promotionTitles = filteredItems;
+                hot.loadData($scope.promotionTitles);
+            }else if($scope.resultFilter[0].value == 'success'){
+                for(index=0;index<$scope.itemsBackup.length;index++){
+                    item = $scope.itemsBackup[index]; 
+                    if((item.validation == 'Success' || item.validation == 'Updated') && item.validation != 'Validation')
+                        filteredItems.push(item);
+                }
+                
+                $scope.promotionTitles = filteredItems;
+                hot.loadData($scope.promotionTitles);
+            }else{
+                $scope.promotionTitles  = $scope.itemsBackup;
+                hot.loadData($scope.promotionTitles);
+                //hot.updateSettings({minSpareRows: 1});
+            }
+        }
+    };
+    
+    //show hide VV table 
+    $scope.showHideModal = function(modalId,mode){
+        
+        jQuery('#'+modalId).toggleClass('slds-fade-in-open');
+        jQuery('#backDrop').toggleClass('slds-backdrop--open');
+        if(mode == 'close'){
+            console.log('inside close mode');
+            $scope.filter.vvText = [];
+            $.each($scope.vvList, function(rowKey, ptObj) { 
+                if(ptObj.videoversions){
+                    $scope.filter.vvText.push(ptObj.videoversions);
+                }
+            });
+        }
+        
+        console.log('inside modal',$scope.filter.vvText);
+    }; 
+    $scope.vvList =[];
+    var container = document.getElementById('tableDivVV');
+    var hot1 = new Handsontable(container,
+                                {
+                                    data: $scope.vvList,
+                                    colHeaders: true,
+                                    //minSpareRows: 1,
+                                    renderAllRows: true,
+                                    columnSorting: true,
+                                    trimDropdown: false,
+                                    colHeaders: [
+                                        '{!$ObjectType.Title__c.fields.Video_Version__c.Label}' ,
+                                    ], 
+                                        columns: [
+                                        { data: 'videoversions',type: 'text'},
+                                    ], 
+                                    cells: function(row, col, prop) {
+                                        var cellProperties = {};
+                                        cellProperties.renderer = $scope.vvRenderer;
+                                        return cellProperties;
+                                    }
+                                });
+    $scope.vvRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+        
+        console.log('$scope.vvList --------',$scope.vvList); 
+        Handsontable.renderers.TextRenderer.apply(this, arguments);
+        return td;
+    };
+    
+    function setHeight() {
+        $scope.height = (initalHeight - $("#msgDiv").height());
+        $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+        $("#tableDiv").css("height",$scope.height);
+    };
+    
+    }
+    ]);//end of angular class
+    </script>
+</head>
+<body>
+    <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="UploadPromotionTitles" ng-controller="UploadPromotionTitlesController" ng-init="init()" class="slds" ng-cloak="ngCloak">
+        <!-- ===========================Spinner================================= -->   
+        <div class="spinnerModel" ng-show="showSpinner">
+            <div class="spinnerContent slds-spinner--large">
+                <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                <div id="spinnerText">{{spinnerText}}</div>
+            </div>
+        </div>
+        <!-- ===========================Spinner================================= --> 
+        <!-- =========================== HEADER BANNER ================================-->     
+        <div id="headerDiv" class="slds-page-header" role="banner">
+            <div class="slds-grid slds-wrap"> 
+                <div class ="slds-col slds-size--10-of-10">
+                    <div class="slds-col">
+                        <!--Back To Home Link  -->
+                        <div>
+                            <div class="slds-form-element">
+                            </div> 
+                            <div class ="slds-col" style="float: right;align:top;">
+                                <!-- Quick Save and Search button -->
+                                <div class="slds-form-element">
+                                    <!--<div class="slds-form-element__control"> -->
+                                    <div class="slds-button-group slds-button-space-left slds-m-bottom--m-small" role="group">
+                                        <button id="expandBtn" ng-hide="appConfig.show" ng-click="expandPage('{!Promotion__c.Id}')" class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" style="line-height: inherit;">{!$Label.WB_Expand_Button}</button>
+                                        <button id="backBtn" ng-show="appConfig.show" ng-click="backPage('{!Promotion__c.Id}')" class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" style="line-height: inherit;">{!$Label.WB_Return_Button}</button>
+                                        <!--button ng-click="init()" class="buttonGroupheight slds-button slds-button--neutral" style="line-height: inherit;">{!$Label.WB_Search_Records_Button}</button-->
+                                        <button id="quickSaveBtn" ng-click="savePromotionTitles('{!Promotion__c.Id}')" class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" style="background:white;colo:#d8dde6;line-height: inherit;">{!$Label.WB_Save_Records_Button}</button>
+                                        <button id="resetButton" ng-click="resetFilters()" class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" style="line-height: inherit;">{!$Label.WB_Reset_Button}</button> 
+                                        <button class="buttonGroupheight slds-button slds-button--neutral .slds-has-flexi-truncate" style="line-height: inherit;" ng-click="exportCSVFile()">{!$Label.WB_Export_Button}</button>
+                                    </div>
+                                    <!--</div> -->
+                                </div>
+                                <div class="slds-button-group" role="group"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class ="slds-grid"> 
+                        <div class ="slds-col slds-p-top--large">
+                            <!-- Quick Search Text ::  -->
+                            <div class ="slds-form-element">
+                                <div class="slds-form-element__control">
+                                </div>
+                            </div>  
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- ============================== VV dialog box ============================== -->
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal" id="vvModal">
+            <div class="slds-modal__container" style="width: 150px;">
+                <div class="slds-modal__header">
+                    <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" ng-click="showHideModal('vvModal','close')">
+                        <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                            <use xlink:href="{!URLFOR($Resource.SLDS0120,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="header43" class="slds-text-heading--medium">Video Version#</h2>
+                </div>
+                <div  class="slds-modal__content slds-p-around--medium">
+                    <div id="tableDivVV" class="hot handsontable" style="margin: 3px 3px 0;"></div>
+                </div>
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--brand" ng-click="showHideModal('vvModal','close')">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================== VV dialog box end============================== -->
+        <!-- ===========================Exception=============================== -->
+        <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+            <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small slds-theme--alert-texture" role="alert">
+                <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="notify__content slds-grid" ng-show="msgText">
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                    </svg>
+                    <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                        <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                    </svg>
+                    <div class="slds-col slds-align-middle">
+                        <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===========================Exception=============================== -->
+        
+        <!-- ===========================Dynamic Div================================= -->
+        <div id="tableDiv" class="hot handsontable" style="margin: 3px 3px 0;"></div>
+        <c:CRM_SLDSPicklist />
+        <c:CRM_SLDSLookup />
+    </div>                
+</body>
+</html>
+</apex:page>

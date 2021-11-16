@@ -1,0 +1,101 @@
+input[type="number"].slds-input::-webkit-inner-spin-button, input[type="number"].slds-input::-webkit-outer-spin-button,
+input[type="number"].slds-input--small, input[type="number"].slds-input--small::-webkit-outer-spin-button,
+input[type="number"].slds-input--medium, input[type="number"].slds-input--medium::-webkit-outer-spin-button,
+input[type="number"].slds-input--large, input[type="number"].slds-input--large::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+
+.spinnerModel {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 99999;
+    height: 100%;
+    width: 100%;
+}
+
+.spinnerContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+}
+
+.slds .ascending .slds-button,
+.slds .descending .slds-button {
+    visibility: visible
+}
+            
+.wb-orderqty-zero {
+  color: #999999;
+}
+
+.wb-item {
+  width: 250px;
+  font-size: 14px;
+}
+
+.slds ol li {
+  margin-left: 0;
+}
+
+.slds-media__figure {
+  width: 90px;
+  height: 128px;
+  overflow: hidden;
+}
+
+.slds-picklist__label {
+  font-size: 14px !important;
+}
+
+#sidebar {
+  max-width: 264px;
+  background-color: #F4F6F9;
+  color: white;
+  padding-top: 10px;
+}
+
+.slds .slds-picklist__label {
+  min-width: 100%;
+  position: initial;
+  width: auto;
+}
+
+.slds .slds-picklist .slds-dropdown {
+    width: 100%;
+}
+
+html body.sfdcBody, .slds .slds-page-header {
+  padding: 0 !important;
+}
+
+#you-are-here {
+  margin: 15px;
+}
+
+#wb-panel-chatter {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#productMoreInfoPopup .slds-modal__content {
+	height: 80%;
+	padding: 0px;
+	overflow:hidden;
+}
+
+#wb-moreInfo {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+.slds .slds-picklist .slds-dropdown__item.slds-is-selected {background-color: #f4f6f9;}

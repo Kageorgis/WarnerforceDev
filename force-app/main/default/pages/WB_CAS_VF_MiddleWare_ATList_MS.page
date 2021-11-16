@@ -1,0 +1,23 @@
+<apex:page StandardController="Announcement_Rule__c" extensions="WB_Manage_ScheduleInfo_Controller" recordSetVar="Announcement__c">
+<script type = "text/javascript">
+    function pageLoad(){
+        ////window.open("/apex/WB_Manage_ScheduleInfo?ID="+Id+"&param=AnnocementTypeListView","_blank"); 
+        var SelectedARsize = '{!selectedARsize1}';
+        var selectedRecs = ('{!selectedAR1}').split(",");
+        if(SelectedARsize == 0){
+            alert("Please select at least one row");
+            history.back();
+        }else{
+            var ids = selectedRecs.join(',');
+            ids = ids.replace(/\s|\[|\]/g,"");
+            var newWin = window.open("apex/WB_Manage_ScheduleInfo?ID="+ids+"&param=AnnocementTypeListView","_blank"); 
+            if(!newWin || newWin.closed || typeof newWin.closed=='undefined'){ 
+                    alert('Please allow the pop-up and Refresh the Page.');
+            }else{
+                    history.back();
+            }
+        }
+    }
+    window.onload = pageLoad;
+</script> 
+</apex:page>

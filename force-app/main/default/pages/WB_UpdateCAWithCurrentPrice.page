@@ -1,0 +1,7 @@
+<apex:page controller="WB_UpdateCAWithCurrentPriceController">
+  <apex:form >
+      <apex:pageBlock title="Update Client Avails with Current Price">
+          <apex:commandButton value="Run the Batch" action="{!RunBatch}"/>
+      </apex:pageBlock>
+  </apex:form>
+</apex:page>

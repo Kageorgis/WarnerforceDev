@@ -1,0 +1,41 @@
+<apex:page StandardController="Title__c">
+<script type = "text/javascript">
+function pageLoad(){
+     var detectUserUI = "{!$User.UIThemeDisplayed}";
+        //alert('detectUserUI ======='+detectUserUI);  
+    var Id = '{!$CurrentPage.parameters.Id}';
+   // alert('Id====== '+ Id);
+    
+}
+window.onload = pageLoad;
+</script>     
+<style>
+    .linkClass {
+        color: var(--lwc-brandTextLink,rgb(0, 109, 204));
+        text-decoration: none;
+        transition: color .1s linear;
+        font-size: var(--lwc-inputStaticFontSize,0.875rem);
+        font-weight: var(--lwc-inputStaticFontWeight,400);
+    }
+    
+    .linkClass1 {
+        color: #000;
+    cursor: pointer;
+    text-decoration: underline;
+}
+</style>
+<apex:form >
+<apex:outputPanel rendered="{!$User.UIThemeDisplayed == 'Theme4d'}">
+    <apex:outputLink styleClass="linkClass" value="/lightning/r/Report/00O0B000003Sv6f/view?fv0={!Id}" target="_blank">Major Market Release Schedule</apex:outputLink><br/><br/>
+    <apex:outputLink styleClass="linkClass" value="/lightning/r/Report/00O0B000003SvNg/view?fv0={!Id}" target="_blank">Worldwide Release Schedule</apex:outputLink><br/><br/>
+    <apex:outputLink styleClass="linkClass" value="/lightning/r/Report/00O0B000003SvGa/view?fv0={!Id}" target="_blank">Available Languages List</apex:outputLink><br/><br/>
+</apex:outputPanel>
+
+<apex:outputPanel rendered="{!$User.UIThemeDisplayed == 'Theme3'}"> 
+    <apex:outputLink styleClass="linkClass1" value="/00O0B000003Sv6f?pv0={!Id}" target="_blank">Major Market Release Schedule</apex:outputLink><br/><br/>
+    <apex:outputLink styleClass="linkClass1" value="/00O0B000003SvNg?pv0={!Id}" target="_blank">Worldwide Release Schedule</apex:outputLink><br/><br/>
+    <apex:outputLink styleClass="linkClass1" value="/00O0B000003SvGa?pv0={!Id}" target="_blank">Available Languages List</apex:outputLink><br/><br/>
+
+</apex:outputPanel>
+</apex:form>
+</apex:page>

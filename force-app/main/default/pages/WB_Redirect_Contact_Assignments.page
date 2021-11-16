@@ -1,0 +1,3 @@
+<apex:page standardController="EC_Tracker__c" extensions="WB_RedirectContactAssignment" action="{!redirect}">
+  
+</apex:page>

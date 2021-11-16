@@ -1,0 +1,126 @@
+<aura:component extensible="true">
+	<aura:attribute name="isActive" type="Boolean" default="false" required="true" />
+    <aura:attribute name="blockPanel" type="Boolean" required="true" />
+    <aura:attribute name="filters" type="DealsWrapper.Filter[]" required="true" />
+    <aura:attribute name="filtersEdited" type="DealsWrapper.Filter[]" required="true" />
+    <aura:attribute name="showEditCancel" type="Boolean" default="false" />
+    <aura:attribute name="maxHeight" type="Integer" default="0" />
+    <aura:registerEvent name="updatefilters" type="c:UpdateFilters" />
+    <aura:registerEvent name="loadEditFilter" type="c:LoadEditFilterPopover" />
+    <aura:handler event="c:LoadEditFilterPopover" action="{! c.handleUpdateFilters}" />
+    <aura:handler name="init" value="{! this }" action="{! c.init}" />
+    <aura:if isTrue="{!v.isActive}">
+        <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-panel_drawer slds-is-open" 
+             style="{! 'height: 100%;  max-height: '+v.maxHeight+'px; overflow-x: hidden;'}"
+             aria-hidden="false">
+            <div style="{! if(v.blockPanel,'
+                        background: linear-gradient(0deg,rgba(200,200,200,0.3),rgba(10,10,10,0.2));
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 1;
+                        visibility: visible;
+                        cursor: no-drop;','
+                        background: linear-gradient(0deg,rgba(200,200,200,0.3),rgba(10,10,10,0.2));
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 1;
+                        visibility: hidden;
+                        cursor: no-drop;')}"/>
+            <div class="slds-panel__header">
+                <aura:if isTrue="{! v.showEditCancel}">
+                    <div class="slds-grid slds-grid_vertical-align-center" style="width: 100%;">
+                        <lightning:button aura:id="restartFilters"
+                                          label="Cancel"
+                                          class="slds-col_bump-right"
+                                          onclick="{! c.handleCancelEdit}"/>
+                        <lightning:button aura:id="saveNewFilters"
+                                          label="Save"
+                                          variant="brand"
+                                          type="submit"
+                                          class="slds-col_bump-left"
+                                          onclick="{! c.handleSaveEdit}"/>
+                    </div>
+                    <aura:set attribute="else">
+                        <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Filter">Filter</h2>
+                        <lightning:buttonIcon alternativeText="Close Panel"
+                                              title="Close Panel"
+                                              onclick="{!c.handleClosePanel}"
+                                              iconName="utility:forward"
+                                              variant="container"
+                                              size="small"
+                                              class="slds-panel__close" />
+                    </aura:set>
+                </aura:if>
+            </div>
+            <div class="slds-panel__body">
+                <div class="slds-filters">
+                    <ol class="slds-list_vertical slds-list_vertical-space">
+                        <aura:iteration items="{! v.filtersEdited}" var="editFilter">
+                            <aura:if isTrue="{! editFilter.isRestricted}">
+                                <li class="slds-item slds-hint-parent">
+                                    <div aura:id="filter" class="slds-filters__item slds-grid slds-grid_vertical-align-center" title="{! editFilter.tableId}">
+                                        <lightning:button value="{! editFilter.tableId}"
+                                                          class="slds-button_reset slds-grow slds-has-blur-focus" 
+                                                          variant="base"
+                                                          onclick="{! c.handleLoadFilter}">
+                                            <span class="slds-assistive-text">Edit filter:</span>
+                                            <span class="slds-show slds-text-body_x-small">{! editFilter.label}</span>
+                                            <span class="slds-show">{! editFilter.operatorLabel}</span>
+                                        </lightning:button>
+                                    </div>
+                                </li>
+                            </aura:if>
+                        </aura:iteration>
+                    </ol>
+                    <aura:if isTrue="{! v.filtersEdited.length > 1}">
+                        <h3 class="slds-text-body_small slds-m-vertical_x-small">Matching all these filters</h3>
+                    </aura:if>
+                    <ol class="slds-list_vertical slds-list_vertical-space">
+                        <aura:iteration items="{! v.filtersEdited}" var="editFilter">
+                            <aura:if isTrue="{! !editFilter.isRestricted}">
+                                <li class="slds-item slds-hint-parent">
+                                    <div aura:id="filter" class="slds-filters__item slds-grid slds-grid_vertical-align-center" title="{! editFilter.tableId}">
+                                        <lightning:button value="{! editFilter.tableId}"
+                                                          class="slds-button_reset slds-grow slds-has-blur-focus" 
+                                                          variant="base"
+                                                          onclick="{! c.handleLoadFilter}">
+                                            <span class="slds-assistive-text">Edit filter:</span>
+                                            <span class="slds-show slds-text-body_x-small">{! editFilter.label}</span>
+                                            <span class="slds-show">{! editFilter.operatorLabel}</span>
+                                        </lightning:button>
+                                        <lightning:buttonIcon alternativeText="{! 'Remove filter: '+editFilter.label+' '+editFilter.operatorLabel}"
+                                                              title="{! 'Remove filter: '+editFilter.label+' '+editFilter.operatorLabel}"
+                                                              value="{! editFilter.tableId}"
+                                                              iconName="utility:close"
+                                                              size="small"
+                                                              variant="container"
+                                                              class="slds-button__icon_hint"
+                                                              onclick="{! c.handleRemoveFilter}"/>
+                                    </div>
+                                </li>
+                            </aura:if>
+                        </aura:iteration>
+                    </ol>
+                    <div class="slds-filters__footer slds-grid slds-shrink-none">
+                        <lightning:button aura:id="addFilter"
+                                          label="Add filter"
+                                          variant="base"
+                                          onclick="{! c.handleAddFilter}"
+                                          class="slds-col_bump-right" />
+                        <lightning:button aura:id="removeAllFilters"
+                                          label="Remove All"
+                                          variant="base"
+                                          onclick="{! c.handleRemoveAllFilters}"
+                                          class="slds-col_bump-left" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

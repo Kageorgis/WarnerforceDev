@@ -1,0 +1,17 @@
+<aura:component controller="WB_ButtonApexController" implements="flexipage:availableForRecordHome,force:hasRecordId" access="global" >
+    
+    <aura:attribute name="delButton" type="Boolean" default="true"/>
+    <aura:attribute name="commitButton" type="Boolean" default="true"/>
+    <aura:attribute name="valPromoButton" type="Boolean" default="true"/>
+    <aura:attribute name="cancelButton" type="Boolean" default="true"/>
+    <aura:attribute name="promoObj" type="Promotion__c"/>
+    <aura:attribute name="promodtitleObj" type="Promotion_Title_Detail__c"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+   
+    <lightning:button variant="Neutral" label="Validate" title="Validate" disabled="{!v.valPromoButton}" onclick="{! c.onValidate }"/>
+    <!--lightning:button variant="Neutral" label="Validate" title="Validate" onclick="{! c.handleClick }"/-->
+    <lightning:button variant="Neutral" label="Commit" title="Commit" disabled="{!v.commitButton}" onclick="{! c.onCommit }"/>
+    <lightning:button variant="Neutral" label="Cancel" title="Cancel" disabled="{!v.cancelButton}" onclick="{! c.onCancel }"/>
+    <lightning:button variant="Neutral" label="Delete" title="Delete" disabled="{!v.delButton}" onclick="{! c.deleteRec }"/>
+    
+</aura:component>

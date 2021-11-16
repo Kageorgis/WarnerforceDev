@@ -1,0 +1,1016 @@
+<apex:page controller="CRM_UpdateAllTradeTactics" showHeader="false" sidebar="false" applyHtmlTag="true" applyBodyTag="true">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" charset="utf8" >
+    <head>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/handsontable.full.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_US_Games_HandsOnJS, 'handsontable.full.js')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/handsontable.full.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/css/main.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_DealProductFileUpload, 'CRM_DealProductFileUpload/js/ngHandsontable.min.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/crm-components.js')}" />
+        
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/js/bootstrap-datepicker.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library)}/datepicker/locales/bootstrap-datepicker.{!UserLocaleLanguage}.min.js" />
+        <apex:stylesheet value="{!URLFOR($Resource.CRM_Resource_Library, 'datepicker/css/bootstrap-datepicker3.standalone.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Dynamic_Locale)}/js/locale/angular-locale_{!userLocaleLowerCase}.js"/>
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" /> 
+        
+        <apex:includeScript value="{!URLFOR($Resource.CRM_AddProducts_Resources, 'js/data-service.js')}" /> 
+        <apex:includeScript value="../../soap/ajax/34.0/connection.js" /> 
+         
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/event.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/supplemental.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/dist/cldr/unresolved.js')}" />
+        
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/globalize.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.CRM_Jquery_Globalize_Library, '/globalize/number.js')}" />
+        <style>
+            .wordWrapClass {
+                text-overflow: ellipsis;
+                white-space: nowrap !important;
+                max-width: 20px;
+            }
+            .slds .slds-notify--toast {
+                margin: 8px 8px 5px;   
+            }
+            #coopReasonPicklist .slds-button,.buttonGroupheight{
+                height: 32px;
+            }
+        </style>
+
+        <script type="text/javascript">  
+            window.$Label = window.$Label || {};
+            window.$Label.maxLimitReached = "{!$Label.CRM_MultiTactic_Max_limit_Msg}";  
+            
+            /* Pass a few dynamic parameters */
+            angular.module("appConfig", [])
+                .service("appConfig", function() {
+                     return {
+                        resourceSlds: '{!URLFOR($Resource.SLDS0120)}'.replace('?isdtp=p1', ''),
+                        apexController: CRM_UpdateAllTradeTactics,
+                        userLocal: '{!UserLocale}',
+                        userDateFormat: '{!UserDateFormat}' 
+                     };
+                 });
+            </script>
+
+            <script>
+                angular.module("UploadTactics", ['ngHandsontable', 'appConfig', 'crm-components', 'sfdcDataService'])
+                    .controller("UploadTacticsController", ['$scope', '$timeout', 'appConfig', 'getSelectOptionsService', function($scope, $timeout, appConfig, getSelectOptionsService) {   
+                        $scope.showSpinner = false;
+                        $scope.appConfig = appConfig;
+                        $scope.tacticData = [];  
+                        $scope.isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+                        $scope.coopReasonOptions =[];
+                        $scope.coopReasonOptionsForAccruingTactics =[];
+                        $scope.coopReasonOptionsForNonAccruingTactics =[];
+                        $scope.DealProductStatus = [];
+                        
+                        $scope.UserLocal = $scope.appConfig.userLocal; 
+                        $scope.UserDateFormat = $scope.appConfig.userDateFormat;
+                        $scope.UserDateFormatInUpperCase = $scope.UserDateFormat.toUpperCase();
+                        
+                        //US#975 starts
+                        $scope.search = {};
+                        $scope.streetDateFromVal ='';
+                        $scope.streetDateToVal = '';
+                        $scope.isinvalidFrom = false;
+                        $scope.isinvalidTo = false;
+                        $scope.datepickerOptions = {language : '{!userLocale}',format: '{!UserDateFormat}', clearBtn: true, todayHighlight: true};
+                        $scope.OptionsPicklist = [];
+                        var selectedCoopReason =[];
+                        var mapOfDPVVToTotalCoopBudgetAmt = new Map(); 
+                        var mapOfDPVVToTotalCoopActualAmt = new Map();
+                        $scope.coopReasonForPicklist = '';
+                        //US#975 ends
+
+
+                        <!-------- Defect 4654 ------->
+                        function convertDate(dateVal) {
+                            $scope.DateObj = new Date(dateVal);
+                            $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                            $scope.DateObj.setMinutes($scope.totalMinute);
+                            return $scope.DateObj.toLocaleDateString($scope.UserLocal);
+                        };   
+                        <!-------- Defect 4654 ------->
+
+                        var initalHeight = ($(window).height() - $('#headerDiv').height() - 40);
+                        $scope.height = initalHeight; 
+
+                        var committedStageFields = new Set();
+                        committedStageFields.add('startDate');
+                        committedStageFields.add('endDate');
+                        committedStageFields.add('coopComments');
+                        committedStageFields.add('coopReason');
+                        committedStageFields.add('posRebate');
+                        committedStageFields.add('posActual');
+                        committedStageFields.add('coopActualAmt');
+                        committedStageFields.add('custReference');
+                        committedStageFields.add('digitalMembership');
+                        committedStageFields.add('status');
+
+                        var plannedStageFields = new Set();
+                        plannedStageFields.add('startDate');
+                        plannedStageFields.add('endDate');
+                        plannedStageFields.add('coopComments');
+                        plannedStageFields.add('coopReason');
+                        plannedStageFields.add('posRebate');
+                        plannedStageFields.add('posForecast');
+                        plannedStageFields.add('custReference');
+                        plannedStageFields.add('coopActualAmt');
+                        plannedStageFields.add('coopReqAmount');
+                        plannedStageFields.add('digitalMembership');
+                        plannedStageFields.add('status');
+                        plannedStageFields.add('productCode');
+
+                        $scope.profileName = '{!$Profile.Name}';
+                        $scope.isTFMUser = false;
+                        if($scope.profileName == '{!$Label.CRM_TFM_Profile}'){
+                            $scope.isTFMUser = true;
+                        } 
+                        $scope.init = function() {
+                            $scope.showSpinner = false;
+                            $.when(
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/likelySubtags.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library, '/cldrjs-0.4.5/supplemental/numberingSystems.json')}", function(data){Globalize.load(data)} ),
+                                $.getJSON("{!URLFOR($Resource.CRM_Jquery_Cldr_Library)}/cldrjs-0.4.5/main/{!UserLocale}/numbers.json", function(data){Globalize.load(data)} )
+                           
+                            ).then(function() { 
+                                var locale = '{!UserLocale}';  
+                                var de = Globalize.locale(locale);
+                            });
+                        } 
+               
+                        var container = document.getElementById('tableDiv'); 
+                        console.log('=====$scope.tacticData====',$scope.tacticData.length);
+                        var hot = new Handsontable(container,
+                        {
+                         
+                            data: $scope.tacticData,
+                            colHeaders: true,
+                            height: $scope.height,
+                            startRows: 1,  
+                            trimDropdown: false,
+                            colHeaders: [
+                                '{!$ObjectType.Opportunity.fields.Name.Label}', 
+                                '{!$ObjectType.Product2.fields.Name.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.ProductCode.Label}', 
+                                '{!$ObjectType.OpportunityLineItem.fields.Start_date__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.End_date__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Comments__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.POS_Rebate__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.POS_Forecast__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Co_op_Requested_Amount__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Pos_Actual__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Co_op_Actual_Amount__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Status__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Customer_Reference__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Commitment_Number__c.Label}',
+                                '{!$ObjectType.OpportunityLineItem.fields.Digital_Membership__c.Label}',
+                                '{!$Label.CRM_Upload_Field_Validation}'   
+                            ], 
+                            columns: [
+                                { data: 'deal.Name', readOnly: true}, 
+                                { data: 'productName',readOnly: true},
+                                { data: 'productCode', type: 'text'},
+                                { data: 'startDate', type: 'date', dateFormat: $scope.UserDateFormatInUpperCase,defaultDate: $scope.startDate}, 
+                                { data: 'endDate' , type: 'date', dateFormat: $scope.UserDateFormatInUpperCase, defaultDate: $scope.closeDate},
+                                { data: 'coopReason' , type: 'dropdown',source: $scope.coopReasonOptions},
+                                { data: 'coopComments', type: 'text' , editor: 'maxlength' , maxLength : 255},
+                                { data: 'posRebate' , type: 'numeric',format: '0.00'},
+                                { data: 'posForecast', type: 'numeric'},
+                                { data: 'coopReqAmount', type: 'numeric',format: '0.00'},
+                                { data: 'posActual', type: 'numeric',readOnly: true},
+                                { data: 'coopActualAmt', type: 'numeric',readOnly: true,format: '0.00'},
+                                { data: 'status'},
+                                { data: 'custReference', type: 'text'}, 
+                                { data: 'commitmentNum', type: 'numeric', readOnly: true},
+                                { data: 'digitalMembership', type: 'text'}, 
+                                { data: 'validation',type: 'text', readOnly: true}
+                            ],  
+                            cells: function(row, col, prop) {
+                                var cellProperties = {};
+                                cellProperties.renderer = $scope.myRenderer;
+                                return cellProperties;
+                            }, 
+                            beforeChange: function(changes, source) {
+                                var ele = this;
+                                if (changes && changes.length > 0) {
+                                    $.each(changes, function(index, element) {
+                                        if (element) { //Added For US : 820
+                                            var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                            var sortedRowIndex = changes[index][0];
+                                            var prop =elem.prop;
+                                            var oldValue =element[2];
+                                            var newValue =element[3];
+                                            
+                                            // check if previous and new value of the cell is difference and 
+                                            // cell is not the last column i.e. validation error/message
+                                            if ($scope.tacticData && changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                                                var item;
+                                                if(ele.sortIndex && ele.sortIndex[sortedRowIndex] && ele.sortOrder != undefined){
+                                                    item = $scope.tacticData[ele.sortIndex[sortedRowIndex][0]];
+                                                }else{
+                                                    item = $scope.tacticData[sortedRowIndex];
+                                                }
+                                                
+                                                if (item) {
+                                                    if(!(!oldValue && newValue == "")){
+                                                        if(prop == 'coopActualAmt' || prop == 'coopReqAmount'){
+                                                            $scope.updateMapOFVVToCoopActualAmt(item,newValue,oldValue);
+                                                        }
+                                                    }
+                                                    
+                                                    // DEF#4676 - Set boolean to identify that Status is locally changed to Cancelled
+                                                    if (oldValue != newValue && newValue == 'Cancelled') {
+                                                        item.isStatusCancelledLocally = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            },
+                            afterChange: function(changes, source) {
+                                var ele = this;
+                                if (changes && changes.length > 0) {
+                                    $.each(changes, function(index, element) {
+                                        
+                                        if (element) { //Added For US : 820
+                                            var elem = ele.getCellMeta(element[0], ele.propToCol(element[1]));
+                                            var sortedRowIndex = changes[index][0];
+                                            var col= elem.col;
+                                            var prop =elem.prop;
+                                            var oldValue =element[2];
+                                            var newValue =element[3];
+                                            // check if previous and new value of the cell is difference and 
+                                            // cell is not the last column i.e. validation error/message 
+                                            if ($scope.tacticData && changes[index][2] != changes[index][3] && elem.prop != 'validation') {
+                                                
+                                                var item;
+                                                if(ele.sortIndex && ele.sortIndex[sortedRowIndex] && ele.sortOrder != undefined){
+                                                    item = $scope.tacticData[ele.sortIndex[sortedRowIndex][0]];
+                                                }else{
+                                                    item = $scope.tacticData[sortedRowIndex];
+                                                }
+                                                
+                                                if (item) { 
+                                                    /* US#914 Reason = POS Rebate check below condition 
+                                                        If deal/tactic is in Planned stage and reason is changed then coopReqAmount = coopActualAmt = posRebate * posForecast 
+                                                        If deal/tactic is in Planned stage and posRebate/posForecast is changed then coopReqAmount = coopActualAmt = posRebate * posForecast
+                                                        If deal/tactic is in Revised stage and posRebate/posForecast is changed and  posRebate & posForecast are equal then coopReqAmount = coopActualAmt = posRebate * posForecast
+                                                    */
+                                                    if((elem.prop == 'coopReason' && newValue == 'POS Rebate') || 
+                                                        ((elem.prop == 'posRebate' || elem.prop == 'posForecast') && item.coopReason == 'POS Rebate')){
+
+                                                        if( ((item.posRebate && item.posForecast) || item.posRebate == 0 || item.posForecast == 0) && 
+                                                            (typeof  item.posRebate == 'number') && 
+                                                            (typeof  item.posForecast == 'number') && 
+                                                            (
+                                                                 
+                                                                (
+                                                                    (item.deal.StageName === '{!$Label.CRM_Status_Revised}' || item.deal.StageName === '{!$Label.CRM_Status_Planned}') && 
+                                                                    //If TFM user adds new tactic with reason POS Rebate then calculation will flow only in Co-op Actual Amount
+                                                                    //OR even if POS Forcast / POS Rebate value is changed by TFM then Co-op Actual Amount should not be calculated
+                                                                    (
+                                                                        (
+                                                                            $scope.isTFMUser && 
+                                                                            (
+                                                                                (item.coopActualAmt == undefined || item.coopActualAmt == null || item.coopActualAmt == 0) 
+                                                                                || 
+                                                                                (item.coopReqAmount != undefined && item.coopReqAmount != null && item.coopReqAmount == item.coopActualAmt)
+                                                                            )
+                                                                        ) || 
+                                                                        (!$scope.isTFMUser && item.coopReqAmount == item.coopActualAmt)
+                                                                    ) && 
+                                                                    item.status == '{!$Label.CRM_Status_Planned}'
+                                                                )
+                                                            )
+                                                        ){
+                                                            if(!$scope.isTFMUser){
+                                                                item.coopReqAmount = (hot.getDataAtCell(sortedRowIndex,7)  * hot.getDataAtCell(sortedRowIndex,8));
+                                                                item.coopActualAmt = item.coopReqAmount;
+                                                            } 
+                                                            // If TFM user adds new tactic with reason POS Rebate then calculation will flow only in Co-op Actual Amount
+                                                            else {
+                                                                // If not set null then throws error as type is set as number so we cannot allow undefined value in it
+                                                                if (item.coopReqAmount == undefined) {
+                                                                    item.coopReqAmount = null;
+                                                                }
+                                                                item.coopActualAmt = (hot.getDataAtCell(sortedRowIndex,7)  * hot.getDataAtCell(sortedRowIndex,8));
+                                                            }
+                                                            hot.setDataAtCell(sortedRowIndex,9,item.coopReqAmount);  
+                                                            hot.setDataAtCell(sortedRowIndex,11,item.coopActualAmt);
+                                                        }
+                                                    }else if (!$scope.isTFMUser && elem.prop == 'coopReqAmount' && (item.deal.StageName === '{!$Label.CRM_Status_Planned}' || (item.deal.StageName === '{!$Label.CRM_Status_Revised}' && (item.coopActualAmt == oldValue)))){
+                                                        item.coopActualAmt = newValue;
+                                                        hot.setDataAtCell(sortedRowIndex,11,item.coopActualAmt);
+                                                    }
+
+                                                    if(!(!oldValue && newValue == "")){
+                                                        document.getElementById("quickSaveBtn").style.background ='#c23934';
+                                                        document.getElementById("quickSaveBtn").style.color = 'white';
+                                                        document.getElementById("quickSaveBtn").disabled = false;
+                                                        item.isRowModified = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            },
+                            columnSorting: true, 
+                            copyRowsLimit:2500, 
+                            manualColumnResize: false 
+                        });
+               
+                        (function (Handsontable) {
+
+                            'use strict';
+                            
+                            var MaxLengthEditor = Handsontable.editors.TextEditor.prototype.extend();
+                            
+                            MaxLengthEditor.prototype.prepare = function () {
+                                Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
+                                this.TEXTAREA.maxLength = this.cellProperties.maxLength;
+                            };
+                            
+                            Handsontable.editors.registerEditor('maxlength', MaxLengthEditor);
+                        
+                        })(Handsontable);
+                
+                        $scope.myRenderer = function(instance, td, row, col, prop, value, cellProperties) {
+                            Handsontable.renderers.TextRenderer.apply(this, arguments);
+                            
+                            //Added to truncate Co-op Comments Column value
+                            if(prop == 'coopComments'){
+                                $(td).addClass("wordWrapClass");
+                            }
+                            
+                            if($scope.tacticData){
+                                //Added For US : 820
+                                var realIndex = row;
+                                if(cellProperties.instance.sortIndex && cellProperties.instance.sortOrder != undefined && cellProperties.instance.sortIndex[row]){
+                                    realIndex = cellProperties.instance.sortIndex[row][0];
+                                } 
+                                var item = $scope.tacticData[realIndex];
+                                var cell = instance.getCell(realIndex, col);
+                            
+                                if(item && item.errorOccured  && item.errorOccured == true){
+                                    td.style.backgroundColor = 'red';
+                                    td.style.color = 'white';
+                                    
+                                    if (typeof item.previouslySelectedForRemoval != 'undefined' && !item.previouslySelectedForRemoval) {
+                                        item.isRowModified = true;
+                                    }
+                                            
+                                }else if(item && mapOfDPVVToTotalCoopActualAmt.has((item.deal.Deal_Code__c+'_'+item.videoVersion)) && (item.deal.Deal_Code__c+'_'+item.videoVersion) in mapOfDPVVToTotalCoopBudgetAmt){
+                                    $scope.totalCAA = mapOfDPVVToTotalCoopActualAmt.get(item.deal.Deal_Code__c+'_'+item.videoVersion);
+                                    $scope.totalCBA = mapOfDPVVToTotalCoopBudgetAmt[(item.deal.Deal_Code__c+'_'+item.videoVersion)];
+                                    if($scope.totalCAA > $scope.totalCBA){ 
+                                        td.style.backgroundColor = '#e7b439';
+                                        //td.style.color = 'black';
+                                        $scope.mesList = '{!$Label.CRM_UploadExtractTactic_LocalData_Info_Msg}'.split(',');
+                                        item.validation = $scope.mesList[0]+$scope.totalCAA+$scope.mesList[1]+$scope.totalCBA+$scope.mesList[2]+" \'"+item.localTitleName+"\'";
+                                    }else{
+                                        td.style.backgroundColor = null;
+                                        td.style.color = null;
+                                        if(item.validation != '{!$Label.CRM_Upload_Message_Updated}' && item.validation != '{!$Label.CRM_Upload_Message_Created}'){
+                                            item.validation = ''
+                                        }
+                                    }
+                                }else{ //Added For US : 820
+                                    td.style.backgroundColor = null;
+                                    td.style.color = null;
+                                }
+                                 //US#914
+                                 /*
+                                    If Reason = POS Rebate ,Deal stage = Planned then coopReqAmount & coopActualAmt should be readOnly
+                                    If Reason = POS Rebate ,Deal stage = Revised then coopReqAmount & coopActualAmt should be readOnly if posRebate != posForecast
+                                    
+                                 */
+                                 
+                                 if(item){
+                                    //DEF#4714 Pos Actual should be editable in Planned, Revised and Committed Deal Stage until Credit Note is not Linked ,removed code for Pos actual Field    
+                                    if(prop != 'productName' && prop != 'validation' && prop != 'commitmentNum'){ 
+                                        cellProperties.readOnly = false;
+                                    }
+                                    
+                                    // Defect : 4650 : TFM profile should not be able to edit POS Forecast field in any Deal Stage
+                                    if( prop == 'posForecast' &&  $scope.isTFMUser){
+                                        cellProperties.readOnly = true;
+                                    } 
+                                    if(prop == 'status'){
+                                        $scope.DealProductStatus = []; 
+                                        if(item.existingId && (item.status == '{!$Label.CRM_Status_Committed}' || item.status == '{!$Label.CRM_Status_Planned}') && !item.isValidCreditNoteItemLinked){
+                                            $scope.DealProductStatus.push(item.status);
+                                            item.prevStatusBeforeCancelLocally = item.status;
+                                            $scope.DealProductStatus.push('Cancelled');
+                                            cellProperties.type = 'dropdown';
+                                            cellProperties.source = $scope.DealProductStatus;
+                                        } 
+                                        // DEF#4676 - Condition added so that status is populated with picklist with Previously selected value along with Cancelled Status
+                                        else if (item.existingId && item.status == 'Cancelled' && item.isStatusCancelledLocally && !item.isValidCreditNoteItemLinked) {
+                                            $scope.DealProductStatus.push(item.prevStatusBeforeCancelLocally);
+                                            $scope.DealProductStatus.push('Cancelled');
+                                            cellProperties.type = 'dropdown';
+                                            cellProperties.source = $scope.DealProductStatus;
+                                        } else{
+                                            // DEF#4676 - Condition added so that status is set as text only if it is not locally changed to Cancelled
+                                            if (!(item.isStatusCancelledLocally && item.status == 'Cancelled')) {
+                                                cellProperties.type = 'text';
+                                                cellProperties.readOnly = true;
+                                            }
+                                        }
+                                     }
+                                   
+                                     if(prop == 'coopReason' && item.existingId && item.existingId != ""){
+                                        if(item.accruingTactic){
+                                            $scope.coopReasonOptions = $scope.coopReasonOptionsForAccruingTactics;
+                                            cellProperties.source = $scope.coopReasonOptions;
+                                        }else{
+                                            $scope.coopReasonOptions = $scope.coopReasonOptionsForNonAccruingTactics;
+                                            cellProperties.source = $scope.coopReasonOptions;
+                                        }
+                                     }
+                                     
+                                     
+                                     if(item.existingId && prop == 'productCode'){
+                                         cellProperties.readOnly = true;
+                                     }
+                                     
+                                     //Removed Customer Reference as it needs to be read only if status is Payment in Progress, Paid, Cancelled AND Tactic is an Accruing Tactic
+                                     
+                                     if((item.status && item.status != '{!$Label.CRM_Status_Planned}' && item.status != '{!$Label.CRM_Status_Committed}' && item.status != '' && prop != 'coopComments' && item.accruingTactic) ||
+                                        (prop != 'coopComments' && item.accruingTactic && item.isValidCreditNoteItemLinked)
+                                     ){
+                                         // DEF#4676 - Condition added so that status is not set as read-only when status is locally changed to Cancelled
+                                         if (!(item.isStatusCancelledLocally && prop == 'status' && item.status == 'Cancelled')) {
+                                             cellProperties.readOnly = true;
+                                         }
+                                     }
+                                     
+                                     if((item.status == '{!$Label.CRM_Status_Committed}' || (item.deal.StageName === '{!$Label.CRM_Status_Committed}' && item.status == '{!$Label.CRM_Status_Paid}' && !item.accruingTactic)) && !committedStageFields.has(prop)){
+                                         //The Start date, end date, comments, Co-op Reason/Tactic, POS Rebate, POS Actual, Co-op Actual Amount and Customer Reference
+                                         cellProperties.readOnly = true;
+                                     }else if(prop == 'posActual' && ((item.status == '{!$Label.CRM_Status_Committed}' && !item.isValidCreditNoteItemLinked) || (item.deal.StageName === '{!$Label.CRM_Status_Committed}' && item.status == '{!$Label.CRM_Status_Paid}' && !item.accruingTactic))){
+                                          cellProperties.readOnly = false;
+                                     }
+                                     
+                                     if( item.status == '{!$Label.CRM_Status_Planned}' || ((item.deal.StageName === '{!$Label.CRM_Status_Planned}' || item.deal.StageName === '{!$Label.CRM_Status_Revised}') && item.status == '{!$Label.CRM_Status_Paid}' && !item.accruingTactic)){
+                                        //the start date, end date, co-op requested amount, comment, POS Rebate, POS Forecast, Co-op Reason, customer reference should all be editable  
+                                        if( !plannedStageFields.has(prop) ){
+                                            if(prop != 'posActual' && !$scope.isTFMUser){ // Defect : 4650 : TFM profile should be able to edit POS Actual field in all Deal Stages
+                                                cellProperties.readOnly = true;
+                                            }
+                                        }
+                                        if(item.deal.StageName === '{!$Label.CRM_Status_Planned}' && ((prop == 'coopActualAmt' && !$scope.isTFMUser) || (prop == 'coopReqAmount' && item.coopReason == 'POS Rebate'))){
+                                            cellProperties.readOnly = true;
+                                        }else if(item.deal.StageName === '{!$Label.CRM_Status_Planned}' && prop == 'coopReqAmount' && item.coopReason != 'POS Rebate'){
+                                            if (!$scope.isTFMUser) {
+                                                cellProperties.readOnly = false;
+                                            } else {
+                                                cellProperties.readOnly = true;
+                                            }
+                                        }
+                                        
+                                        if(item.deal.StageName === '{!$Label.CRM_Status_Revised}' && (item.coopActualAmt != item.coopReqAmount) && prop == 'coopReqAmount'){
+                                            cellProperties.readOnly = true;
+                                        }else if(item.deal.StageName === '{!$Label.CRM_Status_Revised}' && ((!$scope.isTFMUser && item.coopActualAmt == item.coopReqAmount) || $scope.isTFMUser)){
+                                            if(!$scope.isTFMUser){
+                                                if(item.coopReason == 'POS Rebate' && (prop == 'coopActualAmt' || prop == 'coopReqAmount')){
+                                                    cellProperties.readOnly = true;
+                                                }else if(item.coopReason != 'POS Rebate' && prop == 'coopActualAmt'){
+                                                    cellProperties.readOnly = true;
+                                                }
+                                            }
+                                            // For TFM user, Co-op Requested Amount field is always readonly
+                                            else{
+                                                if(prop == 'coopReqAmount'){
+                                                    cellProperties.readOnly = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //Make readonly fields slightly lighter on upload/extract 
+                                    if(cellProperties.readOnly == true && prop != 'validation' && item.errorOccured == false ){
+                                         td.style.color = '#949494'; 
+                                    } 
+                                } 
+                                if(cellProperties.change  && prop != 'validation') {
+                                    $(cell).addClass('has-changed');
+                                    item.isRowModified = true;
+                                }
+                            }
+                        }; 
+              
+                        //Co-op Reason/Tactic drop down list
+                        getSelectOptionsService(appConfig.apexController, 'OpportunityLineItem', 'Reason__c','').then(function(data) {
+                            var dealData =[];
+                            //ER-007552 - Added crmJvCoopReasons checking exclusion of SDS Coop-Reason
+                            var crmJvCoopReasons = '{!$label.CRMJV_POS_DFI_Reason_PickList_Values}';
+                            angular.forEach(data, function(item, i) {
+                            var str= item.label; 
+                                 if(str  != 'Budget' && !str.includes('Advertising') && str != 'Space' && !crmJvCoopReasons.includes(str)){
+                                    $scope.OptionsPicklist.push({label:item.label, value:item.value});
+                                    $scope.coopReasonOptions.push(str);
+									//ER-006847 - Add Co-op Reason Tactic: Digital – Subscription
+                                    if( !str.includes('3rd Party Invoice Payment') && !str.includes('Digital – Site Promo') && !str.includes('Digital – WB Promo') && !str.includes('Digital – Subscription') && !str.includes('Digital Media Spend')){
+                                        $scope.coopReasonOptionsForAccruingTactics.push(str);
+                                    }else{
+                                        $scope.coopReasonOptionsForNonAccruingTactics.push(str);
+                                    }
+                                }
+                            }); 
+                        });
+                        
+                        $scope.getLineItemRecords = function() {
+                            document.getElementById("quickSaveBtn").style.background ='white';
+                            document.getElementById("quickSaveBtn").style.color = '#d8dde6';
+                            document.getElementById("quickSaveBtn").disabled = true;
+                            if($scope.checkForEmpty($scope.search.text) && $scope.checkForEmpty($scope.streetDateFromVal) 
+                                && $scope.checkForEmpty($scope.streetDateToVal) && (!$scope.selectedCoopReason || $scope.selectedCoopReason.length == 0)){
+                                    $scope.msgText = '{!$label.CRM_MultiTactic_SearchError}';
+                                    $scope.msgSeverity = 'error';     
+                                    $scope.tacticData = [];
+                                    hot.loadData($scope.tacticData);
+                                    $timeout(setHeight,2);
+                            }else{  
+                                $scope.GetLineItems($scope.search);
+                            }
+                        }
+                        
+                        //Method to check for blank/null data
+                        $scope.checkForEmpty = function(search) {
+                             if(search === '' || search === null || search === undefined){
+                                 return true;
+                             }
+                             return false;
+                        } 
+                       
+                        // Get & Search the data to be displayed on the grid
+                        $scope.GetLineItems = function(search) {
+                             
+                            $scope.showSpinner = true;
+                            var startTime = new Date();
+                            $scope.integerFormatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                            $scope.decimalFormatter = Globalize.numberFormatter({ maximumFractionDigits: 2 });
+                            
+                            if($scope.streetDateFromVal && $scope.streetDateToVal){
+                                $scope.search.streetDateFrom =new Date($scope.streetDateFromVal.setMinutes($scope.streetDateFromVal.getMinutes() - $scope.streetDateFromVal.getTimezoneOffset())).toUTCString();
+                                $scope.search.streetDateTo =new Date($scope.streetDateToVal.setMinutes($scope.streetDateToVal.getMinutes() - $scope.streetDateToVal.getTimezoneOffset())).toUTCString();
+                            }else{
+                                $scope.search.streetDateFrom = null;
+                                $scope.search.streetDateTo = null;
+                            }
+                            
+                            if($scope.selectedCoopReason && $scope.selectedCoopReason[0] != undefined){
+                                $scope.coopReasonForPicklist = $scope.selectedCoopReason[0].value; 
+                            }else{
+                                $scope.coopReasonForPicklist ='';
+                            }
+                            
+                            
+                            $scope.formatter = Globalize.numberFormatter({ maximumFractionDigits: 0 });
+                            $scope.showSpinner = true;
+                            $scope.spinnerText = '{!$label.CRM_MultiOrder_spinnerText_Loading}';  
+                            var prodRows;
+                            CRM_UpdateAllTradeTactics.getOpportunityLineItemTactics(search,$scope.coopReasonForPicklist,function(result, event) {  
+                                if (event.status) {
+                                    var finalWrapper = result;
+                                    if(finalWrapper.dealProdWrap.length > 0){
+                                        $.each(finalWrapper.dealProdWrap, function( rowKey, tacticObject) {  
+                                            if(tacticObject.startDate != null && tacticObject.startDate != undefined){
+                                                tacticObject.startDate = convertDate(tacticObject.startDate); //Defect 4654
+                                            }
+                                            if(tacticObject.endDate != null && tacticObject.endDate != undefined){
+                                                tacticObject.endDate = convertDate(tacticObject.endDate);  //Defect 4654
+                                            } 
+                                            //Defect:4714
+                                            $scope.updateNullFieldsValue(tacticObject); 
+                                         
+                                            //For checking co-op actual amount amber display of the records
+                                            if(!mapOfDPVVToTotalCoopActualAmt.has(tacticObject.deal.Deal_Code__c+'_'+tacticObject.videoVersion)){
+                                                mapOfDPVVToTotalCoopActualAmt.set(tacticObject.deal.Deal_Code__c+'_'+tacticObject.videoVersion,tacticObject.coopActualAmt);    
+                                            }else{
+                                                var coopActualAmt = mapOfDPVVToTotalCoopActualAmt.get(tacticObject.deal.Deal_Code__c+'_'+tacticObject.videoVersion) + tacticObject.coopActualAmt;
+                                                mapOfDPVVToTotalCoopActualAmt.set(tacticObject.deal.Deal_Code__c+'_'+tacticObject.videoVersion,coopActualAmt);
+                                            }
+                                        
+                                        });
+                                    }else{
+                                        $scope.msgText = '{!$label.CRM_AddTacticRecordInfoLabel}';
+                                        $scope.msgSeverity = 'error'; 
+                                    }
+                                    
+                                    //Display Info Message if the record returned are exactly 200 to apply more filters
+                                    if(finalWrapper.maxLimitExceeded){
+                                        $scope.msgText = $Label.maxLimitReached;
+                                        $scope.msgSeverity = 'Info'; 
+                                    } 
+                                    mapOfDPVVToTotalCoopBudgetAmt = finalWrapper.mapOfDPVVToTotalCBAA;
+                                   
+                                   //Convert the dates filter back for the display
+                                    if($scope.streetDateFromVal){
+                                        $scope.DateObj = new Date($scope.streetDateFromVal);
+                                        $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                        $scope.DateObj.setMinutes($scope.totalMinute);
+                                        $scope.streetDateFromVal = $scope.DateObj;
+                                    }else{
+                                        $scope.streetDateFromVal = null;
+                                    }
+                                    
+                                    if($scope.streetDateToVal){
+                                        $scope.DateObj = new Date($scope.streetDateToVal);
+                                        $scope.totalMinute = ($scope.DateObj.getMinutes() + $scope.DateObj.getTimezoneOffset());
+                                        $scope.DateObj.setMinutes($scope.totalMinute);
+                                        $scope.streetDateToVal = $scope.DateObj;
+                                    }else{
+                                        $scope.streetDateToVal = null;
+                                    }
+                                      
+                                    $scope.showSpinner = false;
+                                    $scope.tacticData = result.dealProdWrap;
+                                    hot.loadData($scope.tacticData); 
+                                    $timeout(setHeight,2);
+                                    $scope.$apply();
+                                }
+                            },{
+                                escape: false, timeout: 120000
+                            }); 
+                        };
+              
+                        // Validates and saves the data changed on the grid
+                        $scope.saveTactics = function(allowedToSaveData){
+                            var saveStartTime = new Date();
+                            var timeDiff = 0;
+                            
+                            $scope.msgText = '';
+                            $scope.msgSeverity = '';
+                            $scope.msgTextDialog = '';
+                            $scope.msgSeverityDialog = '';
+                            $scope.tacticLineItems = [];
+                            $scope.sucessRecords = [];
+                            $scope.failedRecords = [];
+                            
+                            //US : 935
+                            $scope.totalCoopActualAmount = 0;
+                        
+                            var nonEmptyRowCount = (hot.countRows() - hot.countEmptyRows());
+                            if(nonEmptyRowCount === 0){ nonEmptyRowCount = -1; }
+                            var cleanedGridData = hot.getData().slice(0,nonEmptyRowCount); 
+                                            
+                            $.each(cleanedGridData, function(rowKey, tacticObj) { 
+                                if(tacticObj.startDate != '' && tacticObj.startDate != null && tacticObj.startDate != undefined){
+                                    tacticObj.startDate = new Date(tacticObj.startDate).toLocaleDateString($scope.UserLocal);
+                                }else{
+                                    tacticObj.startDate = null;
+                                }
+                                        
+                                if(tacticObj.endDate != '' &&  tacticObj.endDate != null && tacticObj.endDate != undefined){
+                                    tacticObj.endDate = new Date(tacticObj.endDate).toLocaleDateString($scope.UserLocal);
+                                }else{
+                                    tacticObj.endDate = null;
+                                } 
+                                        
+                                if(typeof  tacticObj.posRebate != 'number'){
+                                    tacticObj.posRebate = null;
+                                }
+                                if(typeof tacticObj.posForecast != 'number'){
+                                    tacticObj.posForecast = null;
+                                }
+                                if(typeof tacticObj.coopReqAmount != 'number'){
+                                    tacticObj.coopReqAmount = null;
+                                }
+                                if(typeof tacticObj.posActual != 'number'){
+                                    tacticObj.posActual =null;
+                                }
+                                if(typeof tacticObj.coopActualAmt != 'number'){
+                                    tacticObj.coopActualAmt = null;
+                                }
+                                tacticObj.validation = '';
+                                tacticObj.errorOccured = false;
+                                //US : 935
+                                $scope.totalCoopActualAmount += tacticObj.coopActualAmt;
+                                
+                            }); 
+                            
+                                $scope.showSpinner = true;
+                                /**
+                                 * rowsToProcess - Array of records to save back to salesforce
+                                 * returnedResults - Rows already saved to Salesforce
+                                */
+                                (function runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount) {
+                                    
+                                    if (typeof rowsToProcess == 'undefined' || rowsToProcess.length == 0) {
+                                        $scope.showSpinner = false;
+                                        return;
+                                    }
+    
+                                    var chunkSize = {!ChunkSizeForTradeTactics}; // Recursive batch size
+                                    chunkedData = rowsToProcess.splice(0, chunkSize); 
+                                    
+                                    var chunkTime = new Date();
+                                    console.log('Time Elapsed for chunk is', (chunkTime - saveStartTime)+'---'+(((chunkTime - saveStartTime)-timeDiff)/1000));
+                                    timeDiff = (chunkTime - saveStartTime);
+                                
+                                    // Call the controller class method which returns the list with validations
+                                    CRM_UpdateAllTradeTactics.setOpportunityLineItemTactics(chunkedData , $scope.isTFMUser, function(result, event) {
+                                        
+                                        if (!event.status) {
+                                            $scope.$apply(function() {
+                                                $scope.msgText = event.message;
+                                                $scope.msgSeverity = 'error';
+                                                $scope.showSpinner = false;
+                                            });
+                                        }else if (cleanedGridData.length > 0) { 
+                                            
+                                            // If successful add results to the main array
+                                            returnedResults = returnedResults.concat(result);
+
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+
+                                            // Update progress text for user
+                                            $scope.$apply(function() {
+                                                $scope.spinnerText = returnedResults.length + ' / ' + (rowsToProcess.length + returnedResults.length);
+                                            });
+                                            
+                                            //Format dates 
+                                            $.each(returnedResults, function(rowKey, tacticObj) { 
+                                                if(tacticObj.startDate && tacticObj.startDate != ''){
+                                                    tacticObj.startDate = new Date(tacticObj.startDate).toLocaleDateString($scope.UserLocal);
+                                                }
+                                                if(tacticObj.endDate && tacticObj.endDate != ''){
+                                                    tacticObj.endDate = new Date(tacticObj.endDate).toLocaleDateString($scope.UserLocal);    
+                                                }
+                                                
+                                                //Defect:4714
+                                                $scope.updateNullFieldsValue(tacticObj);
+                                            }); 
+                                            
+                                            // Call salesforce again with remaining rows
+                                            runSaveToSalesforce(rowsToProcess, returnedResults, failedRecCount);
+                                        
+                                        } else { 
+                                            
+                                            $scope.tacticData = returnedResults.concat(result);
+                                            hot.loadData($scope.tacticData); 
+                                            
+                                            //Format dates 
+                                            $.each(returnedResults.concat(result), function(rowKey, tacticObj) { 
+                                                if(tacticObj.startDate != '' && tacticObj.startDate != null && tacticObj.startDate != undefined){
+                                                    tacticObj.startDate = new Date(tacticObj.startDate).toLocaleDateString($scope.UserLocal);
+                                                }
+                                                if(tacticObj.endDate != '' &&  tacticObj.endDate != null && tacticObj.endDate != undefined){
+                                                    tacticObj.endDate = new Date(tacticObj.endDate).toLocaleDateString($scope.UserLocal);    
+                                                }
+                                                
+                                                $scope.updateNullFieldsValue(tacticObj);
+                                            });
+                                            
+                                            var failedCount = (typeof result[0] == 'undefined' || typeof result[0].numFailedRecords == 'undefined') ? 0 : result[0].numFailedRecords;
+                                            failedRecCount += failedCount;
+                                            
+                                            if (failedRecCount > 0) {
+                                                $scope.msgText = failedRecCount.toString() + " {!$Label.CRM_UploadExtract_Msg_SaveError}";
+                                                $scope.msgSeverity = 'error';
+                                            } else {
+                                                $scope.msgText = "{!$Label.CRM_UploadExtract_Msg_SaveSuccess}";
+                                                document.getElementById("quickSaveBtn").style.background ='white';
+                                                document.getElementById("quickSaveBtn").style.color = '#d8dde6';
+                                                document.getElementById("quickSaveBtn").disabled = true;
+                                                $scope.msgSeverity = 'success';
+                                            }
+                                            
+                                            var endTime = new Date();
+                                            console.log('SaveRecords Time22: ',endTime - saveStartTime);
+                                            
+                                            $scope.spinnerText = '';
+                                            $scope.showSpinner = false;
+                                            $timeout(setHeight,2);
+                                            
+                                            // Update UI
+                                            $scope.$apply();
+                                        }
+                                    },{
+                                        escape: false,
+                                        timeout: 120000,
+                                        buffer: false  
+                                    })
+                                })(cleanedGridData, [], 0);
+                        };
+               
+                        $scope.BackToDeal = function(url) {
+                            $scope.navigateToURL(url);
+                        };
+                        
+                        $scope.navigateToURL = function(url) {
+                            var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+
+                            if ($scope.isLightningExperienceOrSf1){
+                                sforce.one.navigateToURL(url);
+                            }else{
+                                document.location.href = url;
+                            }
+                        };  
+                        function setHeight() {
+                            $scope.height = (initalHeight - $("#msgDiv").height());
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        }
+                        
+                        $scope.removeMsgBlock= function(){
+                            $scope.msgText = '';
+                            $scope.height = initalHeight;
+                            $("#tableDiv .ht_master .wtHolder").css("height",$scope.height);
+                            $("#tableDiv").css("height",$scope.height);
+                        }; 
+                        
+                        $scope.updateMapOFVVToCoopActualAmt = function(item,newValue,oldValue){
+                            var newVal = 0;
+                            var oldVal = 0;
+                            
+                            if(newValue){
+                                newVal = parseFloat(newValue);
+                            }
+                            if(oldValue){
+                                oldVal = parseFloat(oldValue);
+                            }
+                            var diffOfCoopActualAmt = (newVal - oldVal);
+                             
+                            // 975
+                            if(!mapOfDPVVToTotalCoopActualAmt.has(item.deal.Deal_Code__c+'_'+item.videoVersion)){
+                                mapOfDPVVToTotalCoopActualAmt.set(item.deal.Deal_Code__c+'_'+ item.videoVersion,diffOfCoopActualAmt);
+                            }else{
+                                var coopActualAmt = mapOfDPVVToTotalCoopActualAmt.get(item.videoVersion) + diffOfCoopActualAmt;
+                                mapOfDPVVToTotalCoopActualAmt.set(item.deal.Deal_Code__c+'_'+item.videoVersion,coopActualAmt);
+                            }
+                        };
+                         
+                        <!-----Defect:4714------------>
+                        $scope.updateNullFieldsValue = function(tactic){
+                            if(!tactic.posRebate){
+                                tactic.posRebate = "";
+                            }
+                            
+                            if(!tactic.posForecast){
+                                tactic.posForecast = "";
+                            }
+                            
+                            if(!tactic.coopReqAmount){
+                                tactic.coopReqAmount = "";
+                            }
+                            
+                            if(!tactic.posActual){
+                                tactic.posActual = "";
+                            }
+                            
+                            if(!tactic.coopActualAmt){
+                                tactic.coopActualAmt = "";
+                            }
+                            
+                            if(!tactic.coopComments){
+                                tactic.coopComments = "";
+                            }
+                            
+                            if(!tactic.custReference){
+                                tactic.custReference = "";
+                            }
+                            
+                            if(!tactic.digitalMembership){
+                                tactic.digitalMembership = "";
+                            }
+                         };
+                    }]
+                );//end of angular class
+            </script>
+        </head>
+        <body  style="padding:0px;">
+            <div  xmlns:ng="http://angularjs.org" id="ng-app" ng-app="UploadTactics" ng-controller="UploadTacticsController" class="slds" ng-init="init()" ng-cloak="ngCloak">
+    
+                <!-- ===========================Spinner================================= -->   
+               <div class="spinnerModel" ng-show="showSpinner">
+                    <div class="spinnerContent slds-spinner--large">
+                        <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="{{spinnerText}}" />
+                        <div id="spinnerText">{{spinnerText}}</div>
+                    </div>
+                </div>
+                <!-- ===========================Spinner================================= -->  
+                
+                    <!-- =========================== HEADER BANNER ================================-->     
+                <div id="headerDiv" class="slds-page-header" role="banner">
+                     <div class="slds-grid"> 
+                        <div class ="slds-col slds-has-flexi-truncate slds-align-top slds-form--inline">
+                              <div class="slds-form-element">
+                                  <nav class="slds-m-bottom--m-small" role="navigation">
+                                    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                                    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                                      <li class="slds-list__item slds-text-heading--label"><a href="/home/home.jsp">{!$label.CRM_Mass_Update_NR_Page_Back_Button}</a></li>
+                                    </ol>
+                                  </nav>
+                              </div>
+                        </div>
+                        <!-- Quick Search Text ::  -->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                             <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-form-element__control">
+                                      <input class="slds-input slds-input--small"  ng-model="search.text" type="text" placeholder="{!$Label.CRM_Quick_Search_Placeholder}" ng-keyup="msgText=null;$event.keyCode == 13 ? getLineItemRecords() : null"/>                            
+                                  </div>
+                                </div>
+                             </div>
+                        </div> 
+                        
+                        <!-- Start Date  ::  -->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                             <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-input-has-icon slds-input-has-icon--right">
+                                         <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                              <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                         </svg>
+                                         <input type="text" id="FromDate" name="DateFrom" placeholder="Start Date From" crm-datepicker="true" dp-model="streetDateFromVal" dp-options="datepickerOptions" class="slds-input slds-input--small"  ng-Locale="shortDate"/>                                              
+                                     </div>
+                                </div>
+                            </div>
+                        </div>   
+                        
+                        <!-- End Date  ::  -->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-input-has-icon slds-input-has-icon--right">
+                                         <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                              <use xlink:href="{!URLFOR($Resource.SLDS0120, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                         </svg>
+                                         <input type="text" id="ToDate" placeholder="End Date To"  dp-model="streetDateToVal" crm-datepicker="true" dp-options="datepickerOptions" class="slds-input slds-input--small"  ng-Locale="shortDate" />                                                                                         
+                                     </div>
+                                </div>
+                            </div>
+                        </div> 
+                        
+                        <!--Co-op Reason ::  -->
+                        <c:CRM_SLDSPicklist />
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                             <div class="slds-form-element">
+                                <div id="coopReasonPicklist" class="slds-form-element__control">
+                                    <crm-multiselect-picklist options="OptionsPicklist" selectedOpts="selectedCoopReason" multiple="false" placeholder="{!$ObjectType.OpportunityLineItem.fields.Reason__c.Label}"/>
+                                </div>
+                             </div>
+                        </div>
+                        
+                        <!-- Quick Save and Search button -->
+                        <div class="slds-col slds-no-flex slds-align-bottom slds-form--inline">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <div class="slds-button-group slds-button-space-left" role="group">
+                                        <button ng-click="msgText=null;getLineItemRecords()" class="buttonGroupheight slds-button slds-button--neutral">{!$Label.CRM_Search_Label_on_Add_Product_Page}</button>
+                                        <button id="quickSaveBtn" ng-click="saveTactics(false)" class="buttonGroupheight slds-button slds-button--neutral" disabled="true">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-button-group" role="group"></div>
+                        </div>
+                    </div>
+                </div>
+                 
+                 <!-- ===========================Exception=============================== -->
+                <div Id="msgDiv" ng-show="msgText"  class="slds-grid">
+                    <div class="slds-col slds-notify  slds-theme--{{msgSeverity}} slds-notify--toast slds-box--x-small slds-theme--alert-texture" role="alert">
+                        <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="removeMsgBlock()">
+                            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <div class="notify__content slds-grid" ng-show="msgText">
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'sucess'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#sucess')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'error'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                            </svg>
+                            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex" ng-show="msgSeverity == 'Info'">
+                                <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                            </svg>
+                            <div class="slds-col slds-align-middle">
+                                <p class="slds-col slds-text-heading--small" style="font-size: 15px !important;">{{msgText}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===========================Exception=============================== -->
+             
+                <!-- ===========================Dynamic Div================================= -->
+                <div id="tableDiv" style="margin: 3px 3px 0;"></div> <!-- style="overflow:auto; width:{{width}}px; height:{{height}}px;"></div> -->
+            </div>
+        </body> 
+    </html>
+</apex:page>

@@ -1,0 +1,307 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction,lightning:actionOverride" access="global" controller="GWSController">
+    <aura:attribute name="listOfSearchRecords" type="List" />
+    <aura:attribute name="contactRec" type="Contact" default="null"/>
+    <aura:attribute name="SearchKeyWord" type="String" />
+    <aura:attribute name="submitterInfo" type="Boolean" default="false"/>
+    <aura:attribute name="Message" type="String" default=""/>
+    
+    <aura:attribute name="wbProjectObj" type="WB_Project__c" default="{
+                                                                      'sobjectType': 'WB_Project__c',
+                                                                      'Submitter_First_Name__c':'',
+                                                                      'Submitter_Last_Name__c':'',
+                                                                      'Submitter_Email_Id__c':'',
+                                                                      'Submitter_Phone_Number__c':'',
+                                                                      'Project_Name__c':'',
+                                                                      'Project_Requester__c':'',
+                                                                      'Project_Owner__c':'',
+                                                                      'Requesting_DivisionDepartment__c':'',
+                                                                      'Executive_Sponsor__c':'',
+                                                                      'Technology_Sponsor__c':'',
+                                                                      'Project_Type__c':'',
+                                                                      'If_other_please_describe__c':'',
+                                                                      'Business_or_Technology_Problems__c':'',
+                                                                      'Users_Level__c':'',
+                                                                      'Project_Approved__c':'',
+                                                                      'If_no_expected_approval_date__c':'',
+                                                                      'Project_Funded__c':'',
+                                                                      'If_no_expected_funding_date__c':'',
+                                                                      'Number_of_impacted_user__c':'',
+                                                                      'Impacted_user_groups__c':'',
+                                                                      'Locations_of_impacted_users__c':'',
+                                                                      'Users_are_in_each_location__c':'',
+                                                                      'Project_align_to_specific_business__c':'',
+                                                                      'Service_Type__c':''
+                                                                      }"/>
+    <aura:attribute name="valuesRequest_Type" type="List" default="[]"/>
+    <aura:attribute name="valuesRequired_Services" type="List" default="[]"/>
+    <aura:attribute name="valuesLocations_of_impacted_users" type="List" default="[]"/>
+    <aura:attribute name="valuesService_Type" type="List" default="[]"/>
+    <aura:attribute name="Project_Type" type="String[]" default="New Product,New Service,Modify Existing Product/Service"/>
+    <aura:attribute name="Users_Level" type="String[]"/>
+    <!--aura:attribute name="Locations_of_impacted_users" type="String[]"/-->
+    <aura:attribute name="Locations_of_impacted_users" type="List" />
+    <!--aura:attribute name="Service_Type" type="String[]" default="Workplace Support,Workplace Engineering,Collabration,Architect,Asset Management"/-->
+    <aura:attribute name="Service_Type" type="List" default="[
+                                                             {label:'Asset Management',value: 'Asset Management'},
+                                                             {label:'Architect',value: 'Architect'},
+                                                             {label:'Collaboration',value: 'Collaboration'},
+                                                             {label:'Workplace Engineering',value: 'Workplace Engineering'},
+                                                             {label:'Workplace Support',value: 'Workplace Support'},
+                                                             ]"/>
+    <aura:attribute name="Request_Type" type="List" default="[
+                                                             {label:'Training',value: 'Training'},
+                                                             {label:'Advisory Consultation',value: 'Advisory Consultation'},
+                                                             {label:'Project Planning &amp; Design',value: 'Project Planning &amp; Design'},
+                                                             {label:'Migration',value: 'Migration'},
+                                                             {label:'Other',value: 'Other'}
+                                                             ]"/>
+    <aura:attribute name="Required_Services" type="List" default="[
+                                                                  {label:'SCCM',value: 'SCCM'},
+                                                                  {label:'JAMF',value: 'JAMF'},
+                                                                  {label:'SharePoint',value: 'SharePoint'},
+                                                                  {label:'Asset Management',value: 'Asset Management'},
+                                                                  {label:'OKTA',value: 'OKTA'},
+                                                                  {label:'I Don\'t Know',value: 'I Don\'t Know'}
+                                                                  ]"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    <aura:handler name="oSelectedRecordEvent" event="c:SelectedRecordEvent" action="{!c.handleComponentEvent}"/>
+    <!--aura:attribute name="fields" type="String[]" default="['Name','Submitter_First_Name__c',
+                                                           'Submitter_Last_Name__c',
+                                                           'Submitter_Email_Id__c',
+                                                           'Submitter_Phone_Number__c','Project_Name__c',
+                                                           'Project_Requester__c','Project_Owner__c',
+                                                           'Requesting_DivisionDepartment__c',
+                                                           'Executive_Sponsor__c','Technology_Sponsor__c',
+                                                           'Project_Type__c','Request_Type__c',
+                                                           'If_other_please_describe__c',
+                                                           'Business_or_Technology_Problems__c',
+                                                           'Required_Services__c','Users_Level__c',
+                                                           'Project_Approved__c','If_no_expected_approval_date__c',
+                                                           'Project_Funded__c','If_no_expected_funding_date__c',
+                                                           'Number_of_impacted_user__c','Impacted_user_groups__c',
+                                                           'Locations_of_impacted_users__c','Users_are_in_each_location__c',
+                                                           'Project_align_to_specific_business__c',
+                                                           'Service_Type__c']" />
+    <aura:attribute name="recordId" type="Id"/>
+    
+    <lightning:card iconName="custom:custom19" title="WBT Intake Form">
+                <div class="slds-p-left_large slds-p-right_medium">	
+                    <lightning:recordForm
+                                          recordId="{!v.recordId}"
+                                          objectApiName="WB_Project__c"
+                                          layoutType="Compact"
+                                          fields="{!v.fields}"
+                                          columns="3"
+                                          mode="edit" />
+                    
+                </div>
+                <lightning:button class="slds-align_absolute-center slds-m-top_small" variant="brand" label="NEXT" title="NEXT" onclick="{! c.handleClick }" />
+ </lightning:card-->
+    
+    <div aura:id="wbtEdit" class="slds-show slds-m-bottom_small">	
+        <lightning:card  class="slds-p-left_large slds-p-right_medium" title="WBT Intake Form">
+            <div onmouseleave="{!c.onblur}" class="slds-box">
+                <div aura:id="lookupId">
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        <div class="slds-text-heading_medium slds-section__title-action">
+                            Submitter Details
+                        </div>
+                        <div aura:id="lookupDiv" class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <div>
+                                <abbr class="slds-required" title="required">*</abbr>
+                                <label>Submitter Search</label>
+                                <div aura:id="lookupContact" class="slds-show slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right slds-lookup slds-is-close">
+                                    <ui:inputText click="{!c.onfocus}"
+                                                  updateOn="keyup"
+                                                  keyup="{!c.keyPressController}"
+                                                  class="slds-m-top_x-small slds-lookup__search-input slds-input"
+                                                  value="{!v.SearchKeyWord}"
+                                                  placeholder="Search"/>
+                                    <ul style="min-height:170px" class="slds-scrollable_y slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu slds" role="listbox">
+                                        <center> {!v.Message}</center>
+                                        <aura:iteration items="{!v.listOfSearchRecords}" var="singleRec">
+                                            <c:ResultLookup oRecord="{!singleRec}"/>
+                                        </aura:iteration>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div aura:id="lookupValue" class="slds-pill-container slds-hide"><!--class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right slds-lookup slds-is-close"-->
+                                <lightning:pill class="slds-input" label="{!v.contactRec.Name}" name="{!v.contactRec.Id}" onremove="{! c.clear }"/>
+                            </div>
+                            <div aura:id="errorId" class="slds-hide slds-form-element__help" id="form-error-01">This field is required</div>
+                        </div>
+                        <aura:renderIf isTrue="{!v.submitterInfo}">
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:input aura:id='wbtInput' label="Submitter First Name:" required="true" value="{!v.wbProjectObj.Submitter_First_Name__c}"/-->
+                                <label class="slds-form-element__label">Submitter First Name:</label>
+                                <ui:outputText class="slds-form-element__label slds-form-element__static" value="{!v.wbProjectObj.Submitter_First_Name__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:input aura:id='wbtInput' label="Submitter Last Name:" required="true" value="{!v.wbProjectObj.Submitter_Last_Name__c}"/-->
+                                <label class="slds-form-element__label">Submitter Last Name:</label>
+                                <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Last_Name__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:input aura:id='wbtInputEmail' label="Submitter Email Id:" required="true" value="{!v.wbProjectObj.Submitter_Email_Id__c}"/-->
+                                <label class="slds-form-element__label">Submitter Email Id:</label>
+                                <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Email_Id__c}"/>
+                            </div>
+                            <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                                <!--lightning:input aura:id='wbtInputPhNo' label="Submitter Phone Number:" required="true" value="{!v.wbProjectObj.Submitter_Phone_Number__c}"/-->
+                                <label class="slds-form-element__label">Submitter Phone Number:</label>
+                                <ui:outputText class="slds-form-element__static" value="{!v.wbProjectObj.Submitter_Phone_Number__c}"/>
+                            </div>
+                        </aura:renderIf>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Requesting Division/Department:" required="true" value="{!v.wbProjectObj.Requesting_DivisionDepartment__c}"/>
+                        </div>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-text-heading_medium slds-section__title-action">
+                            Project Administration Details
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Project Name:" required="true" value="{!v.wbProjectObj.Project_Name__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Project Requester:" required="true" value="{!v.wbProjectObj.Project_Requester__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Project Owner:" required="true" value="{!v.wbProjectObj.Project_Owner__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Executive Sponsor:" required="true" value="{!v.wbProjectObj.Executive_Sponsor__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input aura:id='wbtInput' label="Technology Sponsor:" required="true" value="{!v.wbProjectObj.Technology_Sponsor__c}"/>
+                        </div>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-text-heading_medium slds-section__title-action">
+                            Type of Request
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="projecttype" name="projecttype" label="Project Type: What can we help you with?" required="true">
+                                <aura:iteration items="{!v.Project_Type}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Type__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                            <lightning:dualListbox aura:id="typeofrequest"
+                                                   name="typeofrequest"  
+                                                   label= "Type of Request: What type of help do you need? Select all that apply"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Request_Type}"
+                                                   value="{!v.valuesRequest_Type}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_3-of-3">
+                            <lightning:textarea label="If other, please describe:" value="{!v.wbProjectObj.If_other_please_describe__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="projectapproved" name="projectapproved" required="true" label="Is your project approved?">
+                                <aura:iteration items="Yes,No" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Approved__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input type="date" label="If no,what is the expected approval date?" value="{!v.wbProjectObj.If_no_expected_approval_date__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3"/>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="projectfunded" name="projectfunded" label="Is your project funded?">
+                                <aura:iteration items="--None--,Yes,No" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_Funded__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input type="date" label="If no,what is the expected funding date?" value="{!v.wbProjectObj.If_no_expected_funding_date__c}"/>
+                        </div>
+                    </div>
+                    <div class="slds-m-top_medium slds-grid slds-gutters slds-wrap">
+                        <div class="slds-text-heading_medium slds-section__title-action">
+                            Project Objective/Background
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:textarea label="What business or technology problems are you trying to solve?" value="{!v.wbProjectObj.Business_or_Technology_Problems__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                            <lightning:dualListbox aura:id="whatservicesarerequired"
+                                                   name="whatservicesarerequired"  
+                                                   label= "What services are required?"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Required_Services}"
+                                                   value="{!v.valuesRequired_Services}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="userslevel" name="userslevel" label="If you require training, what level are you users:">
+                                <aura:iteration items="{!v.Users_Level}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Users_Level__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input label="Number of impacted user:" value="{!v.wbProjectObj.Number_of_impacted_user__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:input label="Impacted user groups:" value="{!v.wbProjectObj.Impacted_user_groups__c}"/>
+                        </div>
+                        <!--div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="locationofimpactedusers" name="locationofimpactedusers" label="Location(s) of impacted users:" required="true">
+                                    <aura:iteration items="{!v.Locations_of_impacted_users}" var="pt">
+                                        <option text="{!pt}" selected="{!pt==v.wbProjectObj.Locations_of_impacted_users__c}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                        </div-->
+                        <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                            <lightning:dualListbox aura:id="locationofimpactedusers"
+                                                   name="locationofimpactedusers"  
+                                                   label= "Location(s) of impacted users:"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Locations_of_impacted_users}"
+                                                   value="{!v.valuesLocations_of_impacted_users}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:textarea label="If known, how many users are in each location?" value="{!v.wbProjectObj.Users_are_in_each_location__c}"/>
+                        </div>
+                        <div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="projectaligntospecificbusiness" name="projectaligntospecificbusiness" label="Does this project align to specific business priority or policy requirement?">
+                                <aura:iteration items="Yes,No" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Project_align_to_specific_business__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <!--div class="slds-m-top_small slds-col slds-size_1-of-3">
+                            <lightning:select aura:id="servicetype" name="servicetype" required="true" label="Service Type:">
+                                <aura:iteration items="{!v.Service_Type}" var="pt">
+                                    <option text="{!pt}" selected="{!pt==v.wbProjectObj.Service_Type__c}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div-->
+                        <div class="slds-m-top_small slds-col slds-size_2-of-3">
+                            <lightning:dualListbox aura:id="servicetype"
+                                                   name="servicetype"  
+                                                   label= "Service Type:"
+                                                   required="true"
+                                                   sourceLabel="Available" 
+                                                   selectedLabel="Selected" 
+                                                   options="{!v.Service_Type}"
+                                                   value="{!v.valuesService_Type}"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-align_absolute-center slds-m-top_small" >
+                    <lightning:button variant="brand" label="Save" title="Save" onclick="{! c.handleClickWBTSave }" />
+                </div>
+            </div>
+        </lightning:card>
+    </div>
+</aura:component>

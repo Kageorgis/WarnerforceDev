@@ -1,0 +1,4 @@
+<apex:page standardController="EC_Tracker__c" sidebar="false" showHeader="false" cache="false">
+<iframe marginheight="0" marginwidth="0" width="100%" height="800" frameborder="0" border="0" 
+    src="/apex/c__MiniGrid_ECTracker?al=true&CF_ParentId={!EC_Tracker__c.Id}&CF_ParentType={!EC_Tracker__c.Type__c}&RequiredType={!$Label.ECTracker_Type}"></iframe>
+</apex:page>

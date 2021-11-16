@@ -1,0 +1,17 @@
+.THIS .ag-watermark{
+    display: none;
+}
+
+.THIS label.slds-form-element__label{
+    display: none;
+}
+
+.THIS .row-errors{
+    background-color: red !important;
+    color: white !important;
+    font-weight:bold !important;
+}
+
+.THIS .slds-button_neutral{
+    height: 36px;
+}

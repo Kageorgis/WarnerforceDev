@@ -1,0 +1,12 @@
+<!--
+   @Author Cognizant
+   @name WB_CreateCommercialAvail_Lightning.
+   @CreateDate 23 Jan 2018
+   @Description - Visualforce Page for Playlist Local Data button on Local Title
+   @Version <1.0>
+   @Requirement ER-1661
+-->
+
+<apex:page standardController="Local_Title__c" extensions="WB_ManagePlayListLocalData_Controller" action="{!forwardToListController}">
+ 
+</apex:page>

@@ -1,0 +1,8 @@
+<aura:event type="APPLICATION" description="Event template">
+    <aura:attribute name="tableId" type="Integer" />
+    <aura:attribute name="label" type="String" />
+    <aura:attribute name="apiName" type="String" />
+    <aura:attribute name="operator" type="String" />
+    <aura:attribute name="value" type="String" />
+    <aura:attribute name="action" type="String" />
+</aura:event>

@@ -1,0 +1,295 @@
+<apex:page standardController="Order" extensions="CRM_AddConfigToOrderController" showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<body style="margin:0">
+
+  <!-- REQUIRED SLDS WRAPPER -->
+  <div class="slds" ng-app="AddConfigApp" ng-controller="AddConfigCtrl" ng-init="loadConfigs()">
+    
+    <!-- MASTHEAD -->
+    <div class="slds-page-header" role="banner">
+      <div class="slds-grid">
+        <div class="slds-col slds-has-flexi-truncate">
+            <nav class="slds-m-bottom--xx-small" role="navigation">
+                <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+                <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Order.Tab, $ObjectType.Order)}">{!$ObjectType.Order.labelPlural}</a>
+                    </li>
+                    <li class="slds-list__item slds-text-heading--label">
+                        <a href="{!URLFOR($Action.Order.View, Id)}">{!Order.OrderNumber}</a>
+                    </li>
+                </ol>
+            </nav>
+            <div class="slds-col slds-has-flexi-truncate">
+                <h1 class="slds-text-heading--medium slds-truncate" title="Add Configs">Add Configs</h1>
+            </div>
+        </div>
+       
+       <!--#FR-3452 : Search Box-->
+        <div class="slds-form-element padd-right">
+          <div class="slds-form-element__control">
+            <label class="slds-form-element__label" for="text-input-01"></label>
+            <input id="searchBox" class="slds-input" ng-model="searchKeyword" type="text" placeholder="Search Config" ng-change="filter()" />
+          </div>
+        </div>
+       <!--#FR-3452 : Search Box-->
+       
+        <div class="slds-col slds-no-flex slds-align-bottom">
+            <div class="slds-button-group" role="group">
+                <button class="slds-button slds-button--neutral" ng-click="backToOrder()">{!$Label.CRM_Button_Back}</button>
+                <button class="slds-button slds-button--neutral" ng-disabled="configs.length==0" ng-click="addConfigsToOrder(true)">{!$Label.CRM_Quick_Save_Button_On_Add_Product_Page}</button>
+                <button class="slds-button slds-button--neutral" ng-disabled="configs.length==0" ng-click="addConfigsToOrder(false)">{!$Label.CRM_Save_Button_On_Add_Product_Page}</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- / MASTHEAD -->
+
+    <!-- PRIMARY CONTENT WRAPPER -->
+    <div class="slds-grid">
+
+      <!-- ================== SPINNER MODAL ================ -->
+      <div class="spinnerModel" ng-show="showSpinner">
+        <div class="spinnerContent slds-spinner--medium">
+          <img src="{!URLFOR($Resource.SLDS0120, '/assets/images/spinners/slds_spinner_brand.gif')}" alt="Loading..." />
+          <div class="slds-text-body--small slds-text-align--center" style="color: #1589EE" ng-bind="spinnerText" />
+        </div>
+      </div>
+
+      <!-- SUCCESS/ERROR MESSAGE -->
+      <div ng-show="msgText" class="slds-col slds-notify slds-notify--toast slds-box--x-small slds-theme--{{msgSeverity}}" role="alert">
+          <button class="slds-button slds-button--icon-inverse slds-notify__close slds-m-right--small" ng-click="msgText = '';">
+            <svg aria-hidden="true" class="slds-button__icon slds-button__icon--medium">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+            </svg>
+            <span class="slds-assistive-text">Close</span>
+          </button>
+
+          <div class="notify__content slds-grid">
+            <svg aria-hidden="true" class="slds-col slds-icon slds-icon--small slds-m-right--small slds-no-flex">
+              <use xlink:href="{!URLFOR($Resource.SLDS0120, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+            </svg>
+
+            <div class="slds-col slds-align-middle">
+                <h2 class="slds-text-heading--small" ng-show="msgText">{{msgText}}</h2>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- CONFIG PRODUCTS TABLE -->
+    <div class="slds-col slds-col--padded">
+      <div class="slds-card slds-m-top--small" ng-show="configs.length>0">
+          <div class="slds-card__header">
+              <span class="slds-text-heading--small">{!$Label.CRM_SelectConfigHeader}</span>
+              <!-- New Pagination Code -->
+              <c:CRM_EditAllProductPagination />
+               <!-- End of New Pagination Code -->
+          </div>
+          <div class="slds-card__body">
+            <table class="slds-table slds-table--bordered slds-no-row-hover slds-table--cell-buffer">
+              <thead>
+                <tr class="slds-text-heading--label">
+                  <th class="slds-cell-shrink">
+                      <label class="slds-checkbox">
+                        <input type="checkbox" name="options" ng-click="checkUncheckAll(checkAll)" ng-model="checkAll"/>
+                        <span class="slds-checkbox--faux"></span>
+                        <span class="slds-assistive-text">Select All</span>
+                      </label>
+                    </th>
+                  <th scope="col">{!$ObjectType.Config__c.fields.Config_Number_Txt__c.label}</th>
+                  <th scope="col">{!$ObjectType.Config__c.fields.Name.label}</th>
+                  <th scope="col">{!$ObjectType.Config__c.fields.Assortment__c.label}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="slds-hint-parent" ng-repeat="conf in filterconfigs = (configs| filter: searchKeyword) |startFrom: pagination.page * pagination.perPage | limitTo: pagination.perPage">
+                  <td class="slds-cell-shrink" data-label="Select Row">
+                      <label class="slds-checkbox">
+                        <input type="checkbox" name="options" ng-model="conf.isSelected" />
+                        <span class="slds-checkbox--faux"></span>
+                        <span class="slds-assistive-text">Select Row</span>
+                      </label>
+                    </td>
+                  <td>{{conf.Config_Number_Txt__c}}</td>
+                  <td>{{conf.Name}}</td>
+                  <td>{{conf.Assortment__r.Name}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+    </div>
+    <!-- / PRIMARY CONTENT WRAPPER -->
+
+  </div>
+  <!-- / REQUIRED SLDS WRAPPER -->
+
+</body>
+
+<head>
+  <title>Add Config Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+  <apex:stylesheet value="{!URLFOR($Resource.SLDS0120, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/jquery.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/angular.min.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_Resource_Library, 'js/svgxuse.js')}" />
+  <apex:includeScript value="{!URLFOR($Resource.CRM_EditAllProducts_Resources, 'js/simplePagination.js')}"/>
+
+  <style type="text/css">
+    .spinnerModel {
+        position: fixed;
+        font-family: Arial, Helvetica, sans-serif;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+    }
+    .spinnerContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+    }
+    .padd-right{
+        padding-right:10px;
+    }
+
+  </style>
+
+  <script type="text/javascript">
+    angular
+      .module('AddConfigApp', ['simplePagination'])
+
+      .controller('AddConfigCtrl', function($scope,$filter,Pagination){
+        $scope.configs = [];
+        $scope.showSpinner = false;
+        $scope.msgText;
+        $scope.msgSeverity;
+        $scope.maxConfigLimit = {!maxConfigLimit};
+        
+        
+        
+        /* Function to load the products initially */
+        $scope.loadConfigs = function(){
+        
+        $scope.showSpinner = true;
+          
+          CRM_AddConfigToOrderController.getConfigs('{!Order.Id}', 
+            function(result, event){
+                console.log(result, event);
+                
+                if (!event.status) {
+                  $scope.$apply(function(){
+                    $scope.msgText = event.message;
+                    $scope.msgSeverity = 'error';
+                    $scope.showSpinner = false;
+                  });
+                }
+                else {
+                  $scope.$apply(function(){
+                    $scope.configs = result;
+                    
+                    if($scope.configs.length ==0) {
+                        $scope.msgText = '{!$Label.CRM_NoConfigAvailableOnOrder}';
+                        $scope.msgSeverity = 'error';
+                    }
+                  
+                     console.log('**$scope.configs.length**',$scope.configs.length);
+                    //Added for Pagination-Start
+                    console.log('$scope.maxConfigLimit',$scope.maxConfigLimit);
+                        $scope.pagination = Pagination.getNew($scope.maxConfigLimit);
+                        $scope.pagination.numPages = 0;
+                        $scope.pagination.numPages = Math.ceil($scope.configs.length/$scope.pagination.perPage);
+                        console.log('*$scope.pagination.numPages**',$scope.pagination.numPages);
+                        console.log('*$scope.pagination.perpage**',$scope.pagination.perpage);
+                        console.log('*$scope.pagination.page**',$scope.pagination.page);
+                        //Added for Pagination-End
+                        $scope.showSpinner = false;
+                    
+                  });
+                }
+            }
+          );
+          
+        };
+        
+        /*Function For Pagination*/
+             $scope.filter = function() {
+               $scope.filteredArray = $filter('filter')($scope.configs, $scope.searchKeyword);
+               if ($scope.filteredArray.length === 0) {
+                        $scope.pagination.numPages = 1;
+               }
+               else {
+                $scope.pagination.numPages = Math.ceil($scope.filteredArray.length/$scope.pagination.perPage);
+               }
+              $scope.pagination.page = 0;
+             }
+        /*End of Function for Pagination*/
+
+        /* Function to check/uncheck all the config products */
+        $scope.checkUncheckAll = function(val){
+          angular.forEach($scope.configs, function(item, key){
+            item.isSelected = val;
+          });
+        };
+
+        /* Function to redirect user back to Order Detail page */
+        $scope.backToOrder = function() {
+          var isLightningExperienceOrSf1 = ((typeof sforce != 'undefined') && sforce && (!!sforce.one));
+          var url = "{!URLFOR($Action.Order.View, Id)}";
+
+          if (isLightningExperienceOrSf1)
+              sforce.one.navigateToURL(url);
+          else
+              document.location.href = url;
+        };
+
+        /* Function to save the config products */
+        $scope.addConfigsToOrder = function(quickSave){
+          $scope.showSpinner = true;
+          
+          var selectedConfigs = [];
+          
+          angular.forEach($scope.configs, function(item, key){
+            if(item.isSelected) {
+                selectedConfigs.push(item.Id);
+            }
+          });
+          
+          console.log(selectedConfigs);
+          
+          CRM_AddConfigToOrderController.addConfig('{!Order.Id}', selectedConfigs, 
+            function(result, event){
+                console.log(result, event);
+                
+                if (!event.status) {
+                  $scope.$apply(function(){
+                    $scope.msgText = event.message;
+                    $scope.msgSeverity = 'error';
+                    $scope.showSpinner = false;
+                  });
+                }
+                else {
+                  $scope.$apply(function(){
+                    $scope.msgText = '{!$Label.CRM_ConfigAddedSuccessfullyOrder}';
+                    $scope.msgSeverity = 'success';
+                    $scope.showSpinner = false;
+    
+                    if(!quickSave){
+                      $scope.backToOrder();
+                    }
+                  });
+                }
+            }
+          );
+        };
+      });
+  </script>
+</head>
+
+</html>
+</apex:page>

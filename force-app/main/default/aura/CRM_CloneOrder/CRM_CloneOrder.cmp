@@ -1,0 +1,72 @@
+<aura:component controller='CRM_OrderController' implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" >
+    <aura:attribute name="cloneOptions" type="List" default="[
+                                                        {'label': 'Clone With Products', 'value': 'CloneWithProducts'},
+                                                        {'label': 'Clone Without Products', 'value': 'CloneWithoutProducts'}
+                                                        ]"/>
+
+    <aura:attribute name="cloneOption" type="String" default="CloneWithProducts"/>
+    <aura:attribute name="hasError" type="Boolean" default="false"/>
+    <aura:attribute name="errorMessage" type="String" default=""/>
+    <aura:attribute name="IsSpinner" type="Boolean" default="false"/>
+
+    <!--Custom Styles for Modal Header and Footer--> 
+    <aura:html tag="style">
+        .cuf-content{
+        	padding: 0 0rem !important;
+        }
+        .slds-p-around--medium{
+        	padding: 0rem !important;
+        }       
+        .slds-modal__content{
+        	overflow-y:hidden !important;
+        	height:unset !important;
+        	max-height:unset !important;
+        	margin-top: 3%;
+        	margin-bottom: 3%;
+        }        
+        .closeIcon {
+        	display:none !important;
+    	}
+    </aura:html>
+    
+        <div class="slds-is-relative">
+            <aura:if isTrue="{!v.IsSpinner}">
+                <lightning:spinner variant="brand" size="medium" alternativeText="Cloning..." />
+            </aura:if>
+
+            <!--Modal Header--> 
+            <div class="modal-header slds-modal__header slds-size_1-of-1">
+                <h4 class="title slds-text-heading--medium">Clone Order</h4>
+            </div>
+            <!--End Modal Header--> 
+            
+            <!--Modal Body-->  
+            <div class="slds-modal__content slds-p-around--x-small slds-align_absolute-center slds-size_1-of-1 slds-is-relative">
+                <form class="slds-form--stacked">            
+                    <aura:if isTrue="{!v.hasError}">
+                        <div class="slds-notify slds-notify_toast slds-theme_error slds-align_absolute-center">
+                            <div class="slds-notify__content">
+                                <h3 class="slds-text-heading_small slds-align_absolute-center">Error Message </h3>
+                                <p class="slds-align_absolute-center">{!v.errorMessage}</p>                
+                            </div>
+                        </div>                
+                    </aura:if>
+                    <div class="slds-align_absolute-center">
+                        <lightning:radioGroup aura:id="clonegroup"
+                                            name="radioButtonGroup"
+                                            options="{!v.cloneOptions}"
+                                            value="{!v.cloneOption}" />
+                    </div>
+                </form>
+            </div>
+            <!--End of Modal Body-->
+
+            <!--Modal Footer-->
+            <div class="modal-footer slds-modal__footer slds-size_1-of-1">
+                <button type="button" class="slds-button slds-button_neutral" onclick="{!c.CloneOrder}">Clone</button>
+                <button type="button" class="slds-button slds-button_neutral" onclick="{!c.CloneCancel}">Cancel</button>
+            </div>
+            <!--End of Modal Footer-->
+        </div>
+    
+</aura:component>

@@ -1,0 +1,12 @@
+<!--
+   @Author Cognizant 
+   @name WB_CreateCommercialAvail_Lightning.
+   @CreateDate 23 Jan 2018
+   @Description - Visualforce button for Create Release Plan Detail button on Title
+   @Version <1.0>
+   @Requirement ER-1660
+-->
+
+<apex:page standardController="Title__c" extensions="WB_CreateCommercialAvail_Lightning" action="{!forwardToListController}">
+    <apex:pageMessage summary="{!titleMessage}" severity="normal" strength="3" rendered="true"/>
+</apex:page>

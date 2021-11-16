@@ -1,0 +1,40 @@
+<apex:page standardController="Title__c" recordSetVar="Title__c" extensions="WB_RequestRightsButton_Controller" action="{!passIDReferences}" >
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+            <apex:slds />
+            <script type = "text/javascript">
+                function closeTab(){
+                    history.back();
+                }
+            </script>
+        </head>
+        <body>
+            <apex:form >
+                <div class="slds-scope">
+                    <article id="headerDiv" class="slds-card">
+                    <!-- =========================== Header Starts =========================== -->
+                    <header class="slds-card__header slds-grid mainHeader" style="padding : 0;">
+                        <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                            <div class="slds-media__body slds-truncate">
+                                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_{!messageType}" role="alert">
+                                    <h2>
+                                        <apex:outputText styleclass="slds-text-heading--small" value="{!errorMessage}" />
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+                    </header> 
+                    <!---------------------Deal Table End---------------------->
+                    <footer class="slds-card__footer footerDiv">
+                        <apex:commandLink styleClass="slds-card__footer-action" value="OK" onclick="closeTab();return false;"/>
+                    </footer>
+                </article>
+                </div>
+            </apex:form>
+        </body>
+    </html>
+</apex:page>

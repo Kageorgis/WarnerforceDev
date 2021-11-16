@@ -1,0 +1,189 @@
+<apex:page controller="SLMETR.CA_ctrl_Analytics" showHeader="true" showChat="false" sidebar="false" title="CRM Calendar">
+    
+    <apex:includeScript value="{!URLFOR($Resource.SLCA2__ca3,'plugin/jquery-1.8.0.min')}" />
+    <style>
+        .group_title {
+        color: black
+        }
+        
+        .bodyDiv {
+        height: 800px
+        }
+        
+        div.group_empty_line {
+        background-color: rgba(0, 0, 0, 0.03) !important;
+        opacity: 1 !important;
+        }
+        
+        #productSearch {
+        position: absolute;
+        z-index: 10000;
+        }
+        
+        .group_title {
+        padding-right: 0 !important
+        }
+        
+        .group_title ._sum, .title > ._sum {
+        display: none !important
+        }
+        
+        .CA_l div[data-calendar="{!$Setup.CRM_Calendar_Settings__c.Product_Pricing_Calendar_Id__c}"]:not(.sel) { 
+        display: none
+        }
+    </style>
+    
+    <!--
+<div id="productSearch" style="display: none">
+{!$ObjectType.Product2.label} <input id="ProductName" />
+</div>
+-->
+
+<script>
+var aRequestList = [];
+var timeout_id;
+var newView, currentView = '';
+var mapCalendars = {};
+
+function fInitApi(oResultAPI){
+    oResultAPI.setFunc('request', function(aParams){
+        if (!jQuery.isArray(aParams)) {
+            aParams = [aParams];
+        }
+        var event, cid, map_cg_result;
+        if(aParams.length > 0) {
+            for (var nI = 0; nI < aParams.length; nI++) {
+                event, cid = null;
+                if(aParams[nI].data != null) {
+                    if(aParams[nI].data.event != undefined && (aParams[nI].data.event == 'getCalendarEventsForGroup' || aParams[nI].data.event == 'getVisibleCalendars' || aParams[nI].data.event == 'detailEventsInfo')) {
+                        event = aParams[nI].data.event;
+                        if(event == 'getCalendarEventsForGroup') {
+                            var newView = capitalizeFirstLetter(oResultAPI.getView());
+                            if(currentView != newView) {
+                                aRequestList.push(['setView ' + newView, null, '']);
+                                currentView = newView;
+                            }
+                        }
+                        if(aParams[nI].data.cid != undefined) cid = aParams[nI].data.cid;
+                        if(aParams[nI].data.event != 'getCalendarEventsForGroup') {
+                            aRequestList.push([event, cid, JSON.stringify(aParams[nI].data)]);
+                        }
+                    }
+                }
+            }
+
+            map_cg_result = handlingCalendarsGroups(aParams);
+            for(id in map_cg_result) {
+                aRequestList.push([ 'virtual_calendar_group', id, map_cg_result[id] ]);
+            }
+        }
+        timeOut();
+    });
+}
+
+function handlingCalendarsGroups(aParams) {
+    var mapResult = {};
+
+    var bFlag = false;
+    var mapCalendars_new = {};
+    for (var nI = 0; nI < aParams.length; nI++) {
+        if(aParams[nI].data != null && aParams[nI].data.event != null && aParams[nI].data.event == "getCalendarEventsForGroup") {
+            for(var i=0; i < aParams[nI].data.toload_calendars.length; i++) {
+                mapCalendars_new[aParams[nI].data.toload_calendars[i]] = 'calendar';
+                bFlag = true;
+            }
+            for(var i=0; i < aParams[nI].data.toload_groups.length; i++) {
+                mapCalendars_new[aParams[nI].data.toload_groups[i]] = 'group';
+                bFlag = true;
+            }
+        }
+    }
+
+    if(bFlag) {
+        var mapCompare = getMapDifference(mapCalendars, mapCalendars_new);
+        mapCalendars = mapCalendars_new;
+        var mapGeneral = mapCalendars;
+        for(id in mapCalendars_new) mapGeneral[id] = mapCalendars_new[id]
+        for(k in mapCompare) {
+            mapResult[k] = JSON.stringify( {id: k, switch: mapCompare[k]} );
+        }
+    }
+    return mapResult;
+}
+
+function getMapDifference(map1, map2) {
+    var result = {}
+    for(k in map1)
+        if(!map2[k]) 
+            result[k] = 'off';
+    for(k in map2)
+        if(!map1[k]) 
+            result[k] = 'on';
+    return result;
+}
+
+function timeOut() {
+    if(timeout_id != null) clearTimeout(timeout_id);
+    timeout_id = setTimeout(store, 700);
+}
+
+function store() {
+    Visualforce.remoting.Manager.invokeAction(
+        '{!$RemoteAction.CA_ctrl_Analytics.saveData}',
+        aRequestList,
+        function(result, event) {
+            aRequestList.length = 0;
+        }
+    );        
+}
+    
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+</script>
+
+<script>
+    /*
+window.onload = function() {
+    
+    jQuery('#productSearch').show();
+    jQuery('#ProductName').keypress(function(e) {
+        if(e.which == 13) {
+            var productName = jQuery('#ProductName').val();
+            var calId = '{!$Setup.CRM_Calendar_Settings__c.Product_Pricing_Calendar_Id__c}';
+            
+            if (productName.length >= 3) {
+                // Inactivate other calendars
+                var x = jQuery.calendarAnything.layout.getActiveCalendars();
+                for (let cal of x.calendar.concat(x.web).concat(x.group)) {
+                    jQuery.calendarAnything.layout.toggleCalendar(cal, true);
+                }
+                
+                // Increase the request timeout to 90s
+                jQuery.calendarAnything.options.userSettings.requestTimeout = 90;
+                
+                // Add the pricing calendar
+                jQuery.calendarAnything.layout.changeVisibleCalendar(calId,true)
+                
+                // Filter by product name
+                jQuery.calendarAnything._calendars.getCalendar(calId).filters = [{name:'product2id.name',oper:'contains',text:'',value:productName}];
+                
+                // Show calendar
+                jQuery.calendarAnything.layout.toggleCalendar(calId,false);
+            }
+        }
+    });
+} 
+*/
+</script>
+
+<SLCA2:calendar namespace="SLCA2"
+                calendar="{!$Setup.CRM_Calendar_Settings__c.Default_Calendars__c}"
+                enabled="{{!$Setup.CRM_Calendar_Settings__c.Calendar_Enabled__c}}"   
+                userAdditionalSettings="{{!$Setup.CRM_Calendar_Settings__c.UserAdditionalSettings__c}}"
+                settings="[{!$Setup.CRM_Calendar_Settings__c.User_Settings__c}]"
+                readonly="{contextCalendar:false}"
+                urlparams="{!$Setup.CRM_Calendar_Settings__c.URL_Params__c}"
+                func="{ready : fInitApi}">
+</SLCA2:calendar>
+</apex:page>
